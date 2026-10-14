@@ -126,10 +126,14 @@ npx appdimens-skills kit normalize --device medium-phone --text 14 16 20        
 npx appdimens-skills kit normalize --device medium-phone --xml 16               # Android XML: integer + resource bucket
 npx appdimens-skills kit normalize --frame 1080 --height 2400 --density 2.625 48  # design drawn in physical px
 npx appdimens-skills kit compare --device medium-phone --tablet medium-tablet --phone-value 16 --tablet-value 24
-npx appdimens-skills kit lint src/                                             # validate
+npx appdimens-skills kit lint src/                                             # validate the code
+npx appdimens-skills kit validate                                              # appdimens.config.json against its schema
+npx appdimens-skills kit validate --intent intents.json                        # layout-intent sheets against theirs
 ```
 
 Every strategy is supported (`--strategy scaled|auto|percent|power|fluid|interpolated|logarithmic|diagonal|perimeter|fit|fill|density`, `--axis s|h|w`, `--aspect`, `--space w|h|sw`), with the token printed in the project's syntax (`--syntax web|rn|…`). `lint` — and the Claude Code hook, on the lines each edit wrote — flags fixed literals that should be tokens (with a suggestion converted from the configured base screen, never the same number re-labelled), strategy tokens without their import/module, obsolete APIs, XML resources that don't exist, JS-only web tokens in CSS, `*Px` in React Native `fontSize` and mixed .NET families. Deliberately fixed values carry a reason: `// ad:fixed hairline`.
+
+The contract is validated before it is used. `appdimens.config.json` is checked against `schemas/appdimens.config.schema.json` and for platform ↔ library pairs. If it fails, `lint`, `detect`, `normalize` and the hook stop with exit 2 and name each field (`/design/baseScreen/width: must be number, got string`, `unknown property "widht" (did you mean "width"?)`). `validate` prints the same list and exits 1.
 
 ## Quality
 

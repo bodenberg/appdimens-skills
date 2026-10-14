@@ -31,7 +31,7 @@ valor base = (valor ÷ densidade) ÷ fator(estratégia, tela base [, eixo, propo
 16 dp num Medium Phone (411) com scaled → 16 ÷ 1,37 = 11,5.sdp → volta a ~15,8 dp nesse aparelho
 ```
 
-A tela base é **confirmada com o usuário** e gravada em `appdimens.config.json`, para não ser perguntada de novo.
+A tela base é **confirmada com o usuário** e gravada em `appdimens.config.json`, para não ser perguntada de novo. O arquivo é validado com o schema antes de ser usado: `"width": "411"` (texto em vez de número) ou um campo com erro de digitação interrompe o processamento, em vez de cair silenciosamente num padrão.
 
 ### 2. Intenção de cada elemento
 
@@ -57,7 +57,8 @@ Todas as estratégias são suportadas quando o usuário escolhe ou o layout pede
   - `detect`: plataformas e evidências da tela base no código;
   - `devices`: catálogo de telas;
   - `normalize`: todas as estratégias, eixo, densidade, sufixo `a`, `spaceW`;
-  - `lint`: validação do código.
+  - `lint`: validação do código;
+  - `validate`: confere o `appdimens.config.json` com o schema e com os pares plataforma ↔ biblioteca (e, com `--intent`, as fichas de intenção). Se o contrato for inválido, `lint`, `detect`, `normalize` e o hook param com exit 2 e apontam cada campo errado; um contrato inválido nunca é usado.
 - **Instalador npm** (`npx appdimens-skills`) para Claude Code, Codex, Gemini CLI, OpenClaw, Hermes, Cursor, Copilot e Windsurf, mais o **hook** do Claude Code e o plugin.
 - **Evals**: casos-ouro para medir as IAs e um teste visual com agentes cegos (`evals/visual/`).
 

@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { ConfigError, loadConfig } from './config.mjs';
 import { findProject } from './project.mjs';
 import { lintText } from './rules.mjs';
 
@@ -25,22 +26,23 @@ export function collectFiles(paths) {
 /**
  * Lints files. Files outside an AppDimens project are skipped unless `force` is set,
  * so the Claude Code hook stays silent in unrelated repositories.
+ * Throws ConfigError when the project's appdimens.config.json (or --config) fails the schema:
+ * linting with a contract that was not understood would give wrong suggestions.
  */
 export function lintFiles(paths, { force = false, configPath } = {}) {
   let explicit = null;
   if (configPath) {
-    try {
-      explicit = JSON.parse(readFileSync(configPath, 'utf8'));
-    } catch (e) {
-      explicit = { __error: `${configPath}: ${e.message}` };
-    }
+    const { config, errors } = loadConfig(configPath);
+    if (errors.length) throw new ConfigError(configPath, errors);
+    explicit = config;
   }
   const results = [];
   for (const file of collectFiles(paths)) {
     const found = findProject(file);
     const project = explicit ? { ...found, enabled: true, config: explicit } : found;
     if (!project.enabled && !force) continue;
-    const config = project.config && !project.config.__error ? project.config : null;
+    if (!explicit && project.configErrors?.length) throw new ConfigError(project.configPath, project.configErrors);
+    const config = project.config;
     if (config?.lint?.ignore?.some((s) => file.includes(s))) continue;
     let text;
     try {
@@ -52,7 +54,6 @@ export function lintFiles(paths, { force = false, configPath } = {}) {
     if (!lang) continue;
     const strict = !!config?.lint?.warningsAsErrors;
     const list = strict ? findings.map((f) => ({ ...f, severity: 'error' })) : findings;
-    if (project.config?.__error) list.unshift({ line: 1, col: 1, severity: 'error', rule: 'config', message: project.config.__error });
     results.push({ file, lang, findings: list, root: project.root });
   }
   return results;

@@ -40,6 +40,9 @@ test('project install for every agent, idempotent, then clean uninstall', () => 
   assert.ok(agentsMd.startsWith('# Team rules'));
   const settings = JSON.parse(readFileSync(join(app, '.claude', 'settings.json'), 'utf8'));
   assert.equal(settings.hooks.PostToolUse.length, 1);
+  // the contract the installer wrote passes the schema, checked by the installed copy of the kit
+  const validated = spawnSync(process.execPath, [join(app, '.appdimens/tools/appdimens-kit/cli.mjs'), 'validate'], { cwd: app, encoding: 'utf8' });
+  assert.equal(validated.status, 0, validated.stdout + validated.stderr);
   const skill = readFileSync(join(app, '.claude/skills/appdimens-layout-intent/SKILL.md'), 'utf8');
   assert.ok(!skill.includes('<package>') && skill.includes('.appdimens/tools/appdimens-kit/cli.mjs'));
   assert.equal(run(app, home, 'uninstall').status, 0);
