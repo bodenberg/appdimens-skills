@@ -1,0 +1,5 @@
+.card { padding: 16px; border: 1px solid #ddd; border-radius: 9999px; }
+.title { font-size: 20px; }
+.ok { padding: 16sdp; gap: 12asdp; }
+@media (min-width: 600px) { .x { color: red; } }
+.bad { margin: 4sdpPx; }

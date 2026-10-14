@@ -1,0 +1,15 @@
+{
+  "name": "appdimens-skills",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Layout-intent skills, platform skills and validation tooling that teach AI coding agents to implement AppDimens layouts.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=18" },
+  "bin": { "appdimens-kit": "tools/appdimens-kit/cli.mjs" },
+  "scripts": {
+    "test": "node --test tools/appdimens-kit/test/*.test.mjs",
+    "build:adapters": "node scripts/build-adapters.mjs",
+    "check": "node scripts/build-adapters.mjs --check && node --test tools/appdimens-kit/test/*.test.mjs"
+  }
+}

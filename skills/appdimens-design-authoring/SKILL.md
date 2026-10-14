@@ -1,0 +1,68 @@
+---
+name: appdimens-design-authoring
+description: Use when creating or editing a design (in Claude Design, Figma, or as a written/HTML mockup) that will later be implemented with AppDimens. Produces designs whose layout intent is explicit — Auto Layout everywhere, AppDimens-aligned variables (space, radius, text), intent tags in layer names, declared breakpoints and a handoff spec — so code generation needs no guessing. Trigger on "design a screen", "create a layout/mockup/prototype", "prepare this design for developers", design system setup, handoff prep.
+---
+
+# Authoring designs that are ready for AppDimens (create mode)
+
+The goal is a design where every element's behaviour is stated, not implied. The model and vocabulary come from `appdimens-layout-intent`.
+
+## 1. Set the frame and the scale contract first
+
+- **Base frame: 300 wide** (AppDimens' reference; `16` in the design is exactly `16.sdp`). If the team needs a familiar device frame, use 360 (Android) or 390 (iOS) and set `design.normalization: "match-frame"` in `appdimens.config.json`. Write the choice into the handoff note.
+- Decide `formFactors` with the user (phone only? tablet? TV? web desktop?). That decides the default policy (`scaled` vs `auto`).
+- Add one extra frame per real breakpoint the product supports (e.g. `sw600` tablet). Breakpoints are product decisions — ask, don't invent.
+
+## 2. Variables that map 1:1 to AppDimens tokens
+
+Create variable collections named so code can map them mechanically:
+
+| Collection | Names | Values (base, at 300) | Code |
+|---|---|---|---|
+| `space` | `space.2 … space.64` | 2, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 | `16.sdp` / `16.asdp` |
+| `radius` | `radius.sm / md / lg / pill` | 4, 8, 16, pill = shape | `8.sdp`; pill → shape |
+| `text` | `text.caption / body / title / headline / display` | 12, 14/16, 20, 24, 32 (+ line height) | `16.ssp` / `16.assp` |
+| `size` | `size.icon.sm/md/lg`, `size.touch.min`, `size.control.md` | 16/24/32, 48 (Android) / 44 (Apple), 48 | `24.sdp`; touch.min is **fixed** |
+| `stroke` | `stroke.hairline`, `stroke.focus` | 1, 2 | **fixed** (`1.dp`) |
+
+Colours, elevation and motion are not AppDimens' job; keep them in their own collections.
+
+## 3. Build with intent, not coordinates
+
+- Auto Layout on every container. No absolute positioning except true overlays (badge, FAB), and tag those `[overlay]`.
+- Every child's sizing is set on purpose: Fill for containers that share space, Hug for content, Fixed only for designed sizes.
+- Repeated content is built from one component instance repeated (that is what makes it a list/grid/carousel).
+- Use components with predictable names: `Button/Primary/Large`, `Card/Product`, `ListItem/TwoLine`.
+- Tag behaviour the structure can't express, in layer names (full list in `../appdimens-layout-intent/references/intent-model.md`):
+  `Products [grid] [sw600:cols=3]`, `Promos [carousel]`, `Divider [fixed-scale]`, `Hero [fraction:40h]`, `Title [truncate:2]`, `Price [fit-text]`.
+- Text uses `text.*` styles only. A text that must ignore the user's font size gets a note explaining why.
+
+## 4. Self-check before handoff
+
+Run this list against the file and fix what fails:
+
+- [ ] Every frame/container uses Auto Layout; no stray absolute children.
+- [ ] No raw spacing/radius/font values: all bound to variables.
+- [ ] Hairlines and minimum touch targets use the fixed variables.
+- [ ] Every repeated group is component instances, with a role tag if not obvious.
+- [ ] Scroll direction is clear for every frame taller/wider than the viewport.
+- [ ] Each declared breakpoint has a frame, and its differences are either value overrides or `adapt` tags.
+- [ ] Images have locked aspect ratios.
+
+## 5. Handoff spec
+
+Deliver, next to the design, a short spec the coding agent will read:
+
+```markdown
+## AppDimens handoff — <Screen>
+- Base frame: 300 (design-at-300)  ·  formFactors: phone, tablet  ·  policy: auto (asdp/assp)
+- Breakpoints: sw600 (tablet frame "Home — Tablet")
+- Intent sheet: <table from appdimens-layout-intent>
+- Open questions: <anything still ambiguous>
+```
+
+Also propose the matching `appdimens.config.json` (schema in `schemas/appdimens.config.schema.json`).
+
+## In Claude Design / HTML mockups
+
+When the "design" is HTML/React produced by Claude Design or another mockup tool, the same rules apply in CSS terms: flex/grid instead of absolute positioning, CSS variables named like the collections above (`--space-16`, `--text-body`), `data-intent="grid"` attributes instead of layer tags, and a 300 px wide base viewport. Use `webdimens` tokens (`p:16sdp`, `fs:16ssp`) directly when the mockup itself should already behave responsively (see `appdimens-web`).

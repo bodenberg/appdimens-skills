@@ -1,0 +1,1 @@
+{ "name": "web-demo", "dependencies": { "webdimens": "3.2.1", "vite": "5.0.0" } }
