@@ -89,6 +89,9 @@ node tools/appdimens-kit/cli.mjs lint src/                                      
 
 ## Develop
 
+Keeping the skills in sync with the libraries: clone every AppDimens repository into one folder and run `node scripts/verify-upstream.mjs <folder>` — it checks 117 concrete claims (install lines, versions, packages, imports, setup calls, token and API names) of the platform skills against the library sources.
+
+
 ```bash
 npm test                    # lint rules, math and hook contract
 npm run build:adapters      # regenerate adapters/ after editing any SKILL.md
