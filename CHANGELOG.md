@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- **Schema validation of the project contract.** `appdimens.config.json` is validated against `schemas/appdimens.config.schema.json`. It used to be only parsed with `JSON.parse`. The validator ships with the kit, has no dependencies, and fails on any schema keyword it does not implement. It also checks that each target's platform and library belong together (a `web` target cannot declare `appdimens-ios`).
+- **An invalid contract stops processing.** `lint`, `detect`, `normalize` (unless `--syntax` is passed) and the Claude Code hook exit 2 and list each failing field. An invalid config is never used. Before, invalid JSON in a parent folder's config was silently ignored, and the hook dropped config errors unless line 1 had been edited.
+- **New command `validate`.** It checks `appdimens.config.json`, or layout-intent sheets with `--intent` against `schemas/layout-intent.schema.json`. The hook also validates the config whenever an edit changes it. The installer validates the config it generates.
+
 ## 0.1.0
 
 First public release.

@@ -4,7 +4,11 @@
 // - errors on changed lines → exit 2, message on stderr (Claude must fix them)
 // - warnings on changed lines → exit 0 with additionalContext (Claude sees them, not blocked)
 // - at most 10 findings are printed; files outside an AppDimens project → silent
+// - an invalid appdimens.config.json (the edited one, or the project's) → exit 2: nothing is
+//   linted against a contract that fails the schema
 import { readFileSync } from 'node:fs';
+import { basename } from 'node:path';
+import { ConfigError, loadConfig } from './lib/config.mjs';
 import { lintFiles } from './lib/lint.mjs';
 
 const MAX = 10;
@@ -30,12 +34,23 @@ process.stdin.on('end', () => {
   const file = payload?.tool_input?.file_path;
   if (!file) process.exit(0);
 
+  const configFailed = (e) => {
+    process.stderr.write(`appdimens-kit: ${e.message}\nFix appdimens.config.json first (schemas/appdimens.config.schema.json); AppDimens checks are paused until it is valid.\n`);
+    process.exit(2);
+  };
+  if (basename(file) === 'appdimens.config.json') {
+    const { errors } = loadConfig(file);
+    if (errors.length) configFailed(new ConfigError(file, errors));
+    process.exit(0);
+  }
+
   let results;
   let lines;
   try {
     results = lintFiles([file]);
     lines = readFileSync(file, 'utf8').split(/\r?\n/);
-  } catch {
+  } catch (e) {
+    if (e instanceof ConfigError) configFailed(e);
     process.exit(0); // never break the session because of the linter
   }
 

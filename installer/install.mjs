@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { AGENTS, HOME, findAgent } from './agents.mjs';
 import { parseSkill, rewriteFlat, rewriteSkillCopy } from './rewrite.mjs';
 import { detectTargets } from '../tools/appdimens-kit/lib/project.mjs';
+import { validateConfig } from '../tools/appdimens-kit/lib/config.mjs';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const VERSION = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
@@ -154,16 +155,15 @@ export function plan(opts) {
     const targets = detectTargets(projectDir).filter((t) => LIBRARY_OF_TARGET[t.platform]);
     const seen = new Set();
     const list = targets.filter((t) => !seen.has(t.platform) && seen.add(t.platform)).map((t) => ({ platform: t.platform, library: LIBRARY_OF_TARGET[t.platform] }));
-    ops.push({
-      type: 'config',
-      dest: join(projectDir, 'appdimens.config.json'),
-      content: {
-        $schema: './.appdimens/schemas/appdimens.config.schema.json',
-        targets: list.length ? list : [{ platform: 'android-compose', library: 'appdimens-dynamic' }],
-        formFactors: ['phone'],
-        design: { normalization: 'match-base' },
-      },
-    });
+    const content = {
+      $schema: './.appdimens/schemas/appdimens.config.schema.json',
+      targets: list.length ? list : [{ platform: 'android-compose', library: 'appdimens-dynamic' }],
+      formFactors: ['phone'],
+      design: { normalization: 'match-base' },
+    };
+    const invalid = validateConfig(content);
+    if (invalid.length) throw new Error(`internal: generated appdimens.config.json fails the schema: ${invalid.map((e) => `${e.path} ${e.message}`).join('; ')}`);
+    ops.push({ type: 'config', dest: join(projectDir, 'appdimens.config.json'), content });
     if (!list.length) notes.push('No platform detected: appdimens.config.json was created with an android-compose placeholder target — edit it.');
   }
   return { projectDir, scope, kitAbs, ops, notes, skills: skills.map((s) => s.dir) };

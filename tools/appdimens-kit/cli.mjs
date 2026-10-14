@@ -3,6 +3,9 @@
 import { formatText, lintFiles } from './lib/lint.mjs';
 import { AXIS_STRATEGIES, PREFIX, compareOverride, normalize, percentOf, resolveStrategy, themeTokens } from './lib/factors.mjs';
 import { detectTargets, findProject } from './lib/project.mjs';
+import { ConfigError, loadConfig, validateIntents } from './lib/config.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { devices, findDevice, looksLikePhysicalPx, parseSize } from './lib/devices.mjs';
 import { scanBaseHints, summarizeHints } from './lib/basehints.mjs';
 
@@ -47,6 +50,15 @@ const USAGE = `appdimens-kit
       Flags fixed literals that should be tokens, strategy tokens without their import/module,
       obsolete APIs, invalid XML resources, JS-only web tokens in CSS and mixed .NET families.
       Files outside an AppDimens project are skipped unless --force. Exit 1 on errors.
+
+  validate [appdimens.config.json] [--intent <file.json>…] [--json]
+      Checks the project contract against schemas/appdimens.config.schema.json (plus
+      platform ↔ library pairs), or layout-intent sheets (an object or an array) against
+      schemas/layout-intent.schema.json. Default: the config found from the current folder.
+      Exit 0 valid · 1 invalid.
+
+  Every command that reads appdimens.config.json (lint, normalize without --syntax, detect)
+  stops with exit 2 when it fails validation: an invalid contract is never used.
 `;
 
 const BOOLEAN = ['json', 'force', 'help', 'aspect', 'text', 'xml', 'theme', 'logical'];
@@ -82,6 +94,13 @@ function screenFrom(flags, key = 'device') {
   return { width: Number(flags.frame), height: flags.height ? Number(flags.height) : undefined, name: null };
 }
 
+/** The project's validated config (or null when there is none); exits 2 when it is invalid. */
+function projectConfig(dir) {
+  const p = findProject(dir);
+  if (p.configErrors?.length) fail(new ConfigError(p.configPath, p.configErrors).message + '\nFix it (or run: validate) before continuing.');
+  return p.config;
+}
+
 const [command, ...args] = process.argv.slice(2);
 const { flags, rest } = parseFlags(args);
 
@@ -92,7 +111,13 @@ if (!command || command === 'help' || flags.help) {
 
 if (command === 'lint') {
   if (!rest.length) fail('lint: pass at least one file or directory.');
-  const results = lintFiles(rest, { force: !!flags.force, configPath: flags.config });
+  let results;
+  try {
+    results = lintFiles(rest, { force: !!flags.force, configPath: flags.config });
+  } catch (e) {
+    if (e instanceof ConfigError) fail(`${e.message}\nLint stopped: fix the config first (validate shows the same errors).`);
+    throw e;
+  }
   const hasErrors = results.some((r) => r.findings.some((f) => f.severity === 'error'));
   if (flags.json) out(JSON.stringify(results, null, 2));
   else out(formatText(results).text);
@@ -163,7 +188,7 @@ if (command === 'normalize') {
   const kind = (flags.text ? { s: 'ssp', h: 'hsp', w: 'wsp' } : { s: 'sdp', h: 'hdp', w: 'wdp' })[kindAxis];
   const token = `${PREFIX[strategy]}${kind}${flags.aspect ? 'a' : ''}`;
   const xmlName = (b) => `@dimen/_${b < 0 ? `minus${fmt(-b)}` : fmt(b)}${kind}`;
-  const platform = flags.syntax || findProject(process.cwd()).config?.targets?.[0]?.platform;
+  const platform = flags.syntax || projectConfig(process.cwd())?.targets?.[0]?.platform;
   const syntax = /^(web|css)$/.test(platform) ? 'web' : /^(rn|react-native)$/.test(platform) ? 'rn' : 'dot';
   const tok = (b) => (syntax === 'web' ? `${fmt(b)}${token}` : syntax === 'rn' ? `${token}(${fmt(b)})` : `${fmt(b)}.${token}`);
 
@@ -229,11 +254,11 @@ if (command === 'detect') {
   const targets = detectTargets(dir);
   const hints = scanBaseHints([dir]);
   const summary = summarizeHints(hints);
+  const declared = projectConfig(dir)?.targets || [];
   if (flags.json) {
-    out(JSON.stringify({ targets, baseScreenHints: summary, hints }, null, 2));
+    out(JSON.stringify({ declared, targets, baseScreenHints: summary, hints }, null, 2));
     process.exit(0);
   }
-  const declared = findProject(dir).config?.targets || [];
   out('Targets');
   for (const t of declared) out(`  ${String(t.platform).padEnd(16)} ${String(t.library).padEnd(40)} declared in appdimens.config.json`);
   if (!targets.length && !declared.length) out('  none detected: ask the user which platform this is for.');
@@ -248,6 +273,31 @@ if (command === 'detect') {
   if (hints.some((h) => h.kind === 'html-device-frame')) out('  note: a prototype device frame was found — subtract its fake status bar / home indicator from the height before height-based conversions.');
   for (const h of hints.filter((x) => x.unknown)) out(`  ? ${h.label} at ${h.file}:${h.line} (not in catalog: check its size)`);
   process.exit(0);
+}
+
+if (command === 'validate') {
+  const reports = [];
+  if (flags.intent) {
+    for (const file of [flags.intent, ...rest]) {
+      let data;
+      try {
+        data = JSON.parse(readFileSync(file, 'utf8'));
+      } catch (e) {
+        reports.push({ file, kind: 'layout-intent', errors: [{ path: '/', message: e.code === 'ENOENT' ? 'file not found' : `not valid JSON: ${e.message}` }] });
+        continue;
+      }
+      reports.push({ file, kind: 'layout-intent', errors: validateIntents(data) });
+    }
+  } else {
+    const file = rest[0] || findProject(process.cwd()).configPath || (existsSync(join(process.cwd(), 'appdimens.config.json')) ? join(process.cwd(), 'appdimens.config.json') : null);
+    if (!file) fail('validate: no appdimens.config.json found from the current folder; pass its path.');
+    reports.push({ file, kind: 'config', errors: loadConfig(file).errors });
+  }
+  if (flags.json) out(JSON.stringify(reports, null, 2));
+  else
+    for (const r of reports)
+      out(r.errors.length ? `✖ ${r.file} (${r.kind}): ${r.errors.length} error(s)\n${r.errors.map((e) => `  ${e.path}: ${e.message}`).join('\n')}` : `✔ ${r.file} (${r.kind}) is valid`);
+  process.exit(reports.some((r) => r.errors.length) ? 1 : 0);
 }
 
 fail(`Unknown command "${command}".\n\n${USAGE}`);

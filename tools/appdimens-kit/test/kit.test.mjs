@@ -226,3 +226,73 @@ test('round-3 fixes: exact text, compare with zero, line-height ratio, design-so
   const kinds = hints.flatMap((g) => g.kinds);
   for (const k of ['figma-frame', 'html-device-frame', 'design-comment']) assert.ok(kinds.includes(k), k);
 });
+
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { checkKeywords, loadSchema, validate } from '../lib/schema.mjs';
+import { ConfigError, validateConfig, validateIntents } from '../lib/config.mjs';
+import { clearProjectCache } from '../lib/project.mjs';
+
+test('schema validator implements every keyword the shipped schemas use', () => {
+  for (const name of ['appdimens.config.schema.json', 'layout-intent.schema.json']) assert.doesNotThrow(() => checkKeywords(loadSchema(name)), name);
+  assert.throws(() => validate({ type: 'object', propertyNames: { pattern: 'x' } }, {}), /propertyNames/);
+});
+
+test('config validation: schema, typos and platform ↔ library', () => {
+  const ok = { targets: [{ platform: 'android-compose', library: 'appdimens-dynamic' }], design: { baseScreen: { width: 411, height: 914 } } };
+  assert.deepEqual(validateConfig(ok), []);
+  const bad = validateConfig({
+    targets: [{ platform: 'web', library: 'appdimens-ios' }],
+    design: { normalization: 'match_base', baseScreen: { widht: 411, height: '914' } },
+  });
+  const by = (p) => bad.filter((e) => e.path === p).map((e) => e.message).join(' | ');
+  assert.match(by('/design/normalization'), /one of/);
+  assert.match(by('/design/baseScreen'), /missing required property "width"/);
+  assert.match(by('/design/baseScreen/widht'), /did you mean "width"/);
+  assert.match(by('/design/baseScreen/height'), /must be number/);
+  assert.match(by('/targets/0/library'), /not an AppDimens library for platform "web"/);
+  assert.match(validateConfig({})[0].message, /missing required property "targets"/);
+  assert.match(validateConfig({ targets: [] })[0].message, /at least 1/);
+  // every config shipped in evals is a valid contract
+  const { cases } = JSON.parse(readFileSync(join(here, '..', '..', '..', 'evals', 'intent-cases.json'), 'utf8'));
+  for (const c of cases.filter((x) => x.config)) assert.deepEqual(validateConfig(c.config), [], c.id);
+});
+
+test('layout-intent validation, including oneOf sizing', () => {
+  const intent = { node: 'Home', role: 'screen', sizing: { width: 'fill', height: { clamp: { min: 40 } } }, scale: { text: 'scaled' }, confidence: 0.9 };
+  assert.deepEqual(validateIntents(intent), []);
+  const errs = validateIntents([intent, { ...intent, role: 'lists', sizing: { width: 'stretch', height: 'hug' }, confidence: 2 }]);
+  assert.deepEqual(errs.map((e) => e.path).sort(), ['/1/confidence', '/1/role', '/1/sizing/width']);
+});
+
+test('an invalid config stops lint, normalize, detect and the hook', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ad-cfg-'));
+  mkdirSync(join(dir, '.git'));
+  const cfg = join(dir, 'appdimens.config.json');
+  writeFileSync(cfg, JSON.stringify({ targets: [{ platform: 'android-compose', library: 'appdimens-dynamic' }], design: { baseScreen: { width: '411', height: 914 } } }));
+  const kt = join(dir, 'A.kt');
+  writeFileSync(kt, 'Modifier.padding(16.dp)\n');
+  clearProjectCache();
+  assert.throws(() => lintFiles([kt]), (e) => e instanceof ConfigError && e.errors[0].path === '/design/baseScreen/width');
+
+  const cli = (...a) => spawnSync(process.execPath, [join(kit, 'cli.mjs'), ...a], { cwd: dir, encoding: 'utf8' });
+  assert.equal(cli('lint', kt).status, 2);
+  assert.equal(cli('normalize', '--device', 'medium-phone', '16').status, 2);
+  assert.equal(cli('detect', '.').status, 2);
+  const v = cli('validate');
+  assert.equal(v.status, 1);
+  assert.match(v.stdout, /\/design\/baseScreen\/width: must be number/);
+
+  const hook = (file) => spawnSync(process.execPath, [join(kit, 'hook.mjs')], { input: JSON.stringify({ tool_name: 'Edit', tool_input: { file_path: file, new_string: 'x' } }), encoding: 'utf8' });
+  const h = hook(kt);
+  assert.equal(h.status, 2);
+  assert.match(h.stderr, /checks are paused/);
+  assert.equal(hook(cfg).status, 2);
+
+  writeFileSync(cfg, JSON.stringify({ targets: [{ platform: 'android-compose', library: 'appdimens-dynamic' }] }));
+  assert.equal(cli('validate').status, 0);
+  assert.equal(hook(cfg).status, 0);
+  const relinted = cli('lint', kt); // valid again: the file is linted (the 16.dp literal is a warning)
+  assert.equal(relinted.status, 0);
+  assert.match(relinted.stdout, /1 warning/);
+});

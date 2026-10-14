@@ -1,6 +1,7 @@
 // Finds the AppDimens project a file belongs to and what it targets.
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+import { loadConfig } from './config.mjs';
 
 const cache = new Map();
 
@@ -54,22 +55,19 @@ export function findProject(start) {
   }
   if (cache.has(dir)) return cache.get(dir);
 
-  let result = { enabled: false, root: null, config: null, configPath: null };
+  // config is the validated contract, or null; configErrors lists why a found config was rejected.
+  let result = { enabled: false, root: null, config: null, configPath: null, configErrors: [] };
   let current = dir;
   while (true) {
     const configPath = join(current, 'appdimens.config.json');
     if (existsSync(configPath)) {
-      let config = null;
-      try {
-        config = JSON.parse(read(configPath));
-      } catch (e) {
-        config = { __error: `appdimens.config.json is not valid JSON: ${e.message}` };
-      }
-      result = { enabled: true, root: current, config, configPath };
+      result = { enabled: true, root: current, configPath, ...loadConfig(configPath) };
+      result.configErrors = result.errors;
+      delete result.errors;
       break;
     }
     if (dirUsesAppDimens(current)) {
-      result = { enabled: true, root: current, config: null, configPath: null };
+      result = { enabled: true, root: current, config: null, configPath: null, configErrors: [] };
       // keep walking for a config at the repo root, but remember we're enabled
       const above = findConfigUpwards(dirname(current));
       if (above) result = above;
@@ -103,11 +101,8 @@ function findConfigUpwards(dir) {
   while (true) {
     const configPath = join(current, 'appdimens.config.json');
     if (existsSync(configPath)) {
-      try {
-        return { enabled: true, root: current, config: JSON.parse(read(configPath)), configPath };
-      } catch {
-        return null;
-      }
+      const { config, errors } = loadConfig(configPath);
+      return { enabled: true, root: current, config, configPath, configErrors: errors };
     }
     if (existsSync(join(current, '.git'))) return null;
     const parent = dirname(current);
