@@ -1,0 +1,761 @@
+{
+  "$comment": "Golden cases. `expect` explains the decision in prose; `assert` is machine-checkable: every must_match regex must appear in the agent's output, no must_not_match may appear, and must_ask says whether the agent should stop with a question first. Score with: node evals/score.mjs <case-id> <agent-output-file>.",
+  "cases": [
+    {
+      "id": "grid-from-repeated-cards",
+      "mode": "read",
+      "config": {
+        "targets": [
+          {
+            "platform": "android-compose",
+            "library": "appdimens-dynamic"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ],
+        "design": {
+          "source": "figma",
+          "baseScreen": {
+            "width": 360,
+            "height": 800,
+            "unit": "dp",
+            "orientation": "portrait",
+            "fontScale": 1,
+            "id": "android-360x800",
+            "confirmed": true
+          },
+          "normalization": "match-base"
+        }
+      },
+      "input": "Figma frame 'Home' 360x1400, vertical Auto Layout, padding 16, gap 16. Child 'Products': Auto Layout horizontal, wrap on, gap 12, Fill container width; contains 6 instances of component 'Card/Product' (Hug height, Fill width in a 2-up wrap). Each card: padding 12, corner radius 8, image with locked 4:3 ratio, title text 16/24 (2 lines max), price text 14, 1px divider.",
+      "expect": {
+        "Home": {
+          "role": "screen",
+          "overflow": "scroll-v"
+        },
+        "Home/Products": {
+          "role": "grid",
+          "sizing.width": "fill",
+          "scale.spacing": "adaptive"
+        },
+        "Card/Product": {
+          "role": "card",
+          "tokens": "padding 10.asdp (12 ÷ 1.2), radius 6.5.asdp"
+        },
+        "Card/Product/Image": {
+          "role": "media",
+          "sizing.height": "ratio",
+          "code": "aspectRatio(4f / 3f)"
+        },
+        "Card/Product/Title": {
+          "role": "text",
+          "overflow": "truncate",
+          "tokens": "13.5.assp"
+        },
+        "Card/Product/Divider": {
+          "role": "divider",
+          "scale": "fixed",
+          "code": "1.dp + ad:fixed"
+        },
+        "imports": [
+          "com.appdimens.dynamic.compose.auto",
+          "appdimens-dynamic-auto module"
+        ],
+        "must_not": [
+          "absolute offsets",
+          "LazyColumn of rows built by hand",
+          "1.asdp divider",
+          "invented sw600 breakpoint"
+        ]
+      },
+      "assert": {
+        "must_match": [
+          "10(\\.0)?\\.asdp",
+          "6\\.5\\.asdp|6\\.67\\.asdp",
+          "aspectRatio\\(4f? ?/ ?3f?\\)",
+          "1\\.dp",
+          "compose\\.auto"
+        ],
+        "must_not_match": [
+          "1\\.asdp",
+          "\\boffset\\(",
+          "absolute"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "carousel-ambiguous",
+      "mode": "read",
+      "config": {
+        "targets": [
+          {
+            "platform": "flutter",
+            "library": "appdimens-flutter"
+          }
+        ],
+        "formFactors": [
+          "phone"
+        ],
+        "design": {
+          "source": "screenshot",
+          "baseScreen": {
+            "width": 390,
+            "height": 844,
+            "unit": "pt",
+            "orientation": "portrait",
+            "fontScale": 1,
+            "id": "iphone-14"
+          },
+          "normalization": "as-is"
+        }
+      },
+      "input": "Screenshot (1170 px wide) of a row of 5 promo cards; the 4th card is cut at the right edge. No structure data.",
+      "expect": {
+        "export-scale": "3x (1170 ÷ 390): divide pixels by 3 before anything else",
+        "Promos": {
+          "role": "carousel",
+          "overflow": "scroll-h",
+          "confidence": "< 0.8 (screenshot only) → listed under needs review or asked"
+        },
+        "code": "ListView.builder(scrollDirection: Axis.horizontal) or PageView, spacing in .sdp",
+        "must_not": [
+          "Row with fixed widths overflowing",
+          "pixel values used as logical units"
+        ]
+      },
+      "assert": {
+        "must_match": [
+          "scrollDirection:\\s*Axis\\.horizontal|PageView",
+          "needs review|\\?"
+        ],
+        "must_not_match": [
+          "\\b1170\\b.*sdp"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "hairline-and-touch-target",
+      "mode": "edit",
+      "config": {
+        "targets": [
+          {
+            "platform": "apple",
+            "library": "appdimens-ios"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ],
+        "design": {
+          "baseScreen": {
+            "id": "iphone-15",
+            "width": 393,
+            "height": 852,
+            "unit": "pt",
+            "confirmed": true
+          },
+          "normalization": "match-base"
+        }
+      },
+      "input": "SwiftUI: HStack(spacing: 8) { Image(systemName: \"star\").frame(width: 24, height: 24); Text(title).font(.system(size: 15)) }.padding(.horizontal, 16).frame(minHeight: 44); Divider()",
+      "expect": {
+        "spacing 8": "6.asdp (8 ÷ 1.31)",
+        "icon 24": "18.5.asdp",
+        "font 15": ".font(.system(size: 11.5.assp))",
+        "padding 16": "12.asdp",
+        "minHeight 44": "hit area kept as a fixed platform minimum (contentShape + frame(minWidth/minHeight: 44)); visual not clamped",
+        "Divider()": "unchanged — system hairline",
+        "imports": [
+          "AppDimensDynamic (or AppDimensAuto)"
+        ]
+      },
+      "assert": {
+        "must_match": [
+          "\\b6\\.asdp",
+          "18\\.5\\.asdp",
+          "11\\.5\\.assp",
+          "\\b12\\.asdp",
+          "contentShape",
+          "Divider\\(\\)"
+        ],
+        "must_not_match": [
+          "\\b8\\.asdp",
+          "\\b24\\.asdp",
+          "\\b15\\.assp",
+          "44\\.asdp"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "xml-integer-normalization",
+      "mode": "read",
+      "config": {
+        "targets": [
+          {
+            "platform": "android-xml",
+            "library": "appdimens-sdps"
+          }
+        ],
+        "formFactors": [
+          "phone"
+        ],
+        "design": {
+          "source": "figma",
+          "baseScreen": {
+            "width": 360,
+            "height": 800,
+            "unit": "dp",
+            "orientation": "portrait",
+            "fontScale": 1,
+            "confirmed": true
+          },
+          "normalization": "match-base",
+          "rounding": 1
+        }
+      },
+      "input": "List item: padding 16, avatar 40, title 16sp, subtitle 14sp, row min height 72.",
+      "expect": {
+        "padding": "@dimen/_13sdp (16 ÷ 1.2 = 13.3 → 13)",
+        "avatar": "@dimen/_33sdp",
+        "title": "@dimen/_13ssp",
+        "subtitle": "@dimen/_12ssp",
+        "row": "RecyclerView item; minHeight from @dimen/_60sdp",
+        "must_not": [
+          "@dimen/_13.5sdp (decimals do not exist)",
+          "asdp in XML"
+        ]
+      },
+      "assert": {
+        "must_match": [
+          "@dimen/_13sdp",
+          "@dimen/_33sdp",
+          "@dimen/_13ssp",
+          "@dimen/_12ssp"
+        ],
+        "must_not_match": [
+          "@dimen/_\\d+\\.\\d+",
+          "asdp"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "web-desktop-frame",
+      "mode": "read",
+      "config": {
+        "targets": [
+          {
+            "platform": "web",
+            "library": "webdimens"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "desktop",
+          "web"
+        ]
+      },
+      "input": "Two frames: 'Landing — Mobile' 390x2400 and 'Landing — Desktop' 1440x900. Hero title 32 on mobile, 56 on desktop. Content max width 1200 on desktop.",
+      "expect": {
+        "base": "mobile frame is the base; desktop differences become adapt overrides (@w840/@w1200)",
+        "title": "fs:32assp (or fssp) + fs@w1200:<value> — not 56 normalized against 900",
+        "max-width": "max-width: 1200px with /* ad:fixed max-content-width */",
+        "must_not": [
+          "sdp tokens normalized from the 1440x900 frame",
+          "Px tokens in classes"
+        ]
+      },
+      "assert": {
+        "must_match": [
+          "@w(840|1200)",
+          "max-width:\\s*1200px"
+        ],
+        "must_not_match": [
+          "\\d+(\\.\\d+)?sdpPx",
+          "class=\\\"[^\\\"]*Px"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "rn-reactivity",
+      "mode": "edit",
+      "config": {
+        "targets": [
+          {
+            "platform": "react-native",
+            "library": "appdimens-react-native"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ]
+      },
+      "input": "const styles = StyleSheet.create({ card: { padding: 16, borderRadius: 12 }, title: { fontSize: 18 } }); used in <Card/>.",
+      "expect": {
+        "pattern": "createDimenStyles(() => ({ … })) + const styles = useStyles() in the component",
+        "tokens": "asdp(16), asdp(12), assp(18) imported from 'appdimens-react-native/auto'",
+        "must_not": [
+          "StyleSheet.create with sdp() at module scope (never updates)",
+          "sdpPx in fontSize"
+        ]
+      },
+      "assert": {
+        "must_match": [
+          "createDimenStyles",
+          "appdimens-react-native/auto",
+          "useStyles\\(\\)"
+        ],
+        "must_not_match": [
+          "fontSize:\\s*\\w*Px\\(",
+          "asdp\\(16\\)",
+          "assp\\(18\\)"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "dotnet-family",
+      "mode": "read",
+      "config": {
+        "targets": [
+          {
+            "platform": "dotnet-desktop",
+            "library": "appdimens-net"
+          }
+        ],
+        "formFactors": [
+          "desktop"
+        ]
+      },
+      "input": "WPF settings window: padding 24, section gap 16, labels 14, max content width 720.",
+      "expect": {
+        "family": "AppDimens.Net (strategies needed for desktop) — not SDPS",
+        "setup": "AppDimensWpf.Initialize(this) before InitializeComponent()",
+        "tokens": "{ad:ASdp …} is not a markup name → C# 24.ASdp() or bounded {ad:FSdp 24}; text {ad:Ssp 14}",
+        "must_not": [
+          "mixing AppDimens.Sdps.Wpf and AppDimens.Net.Wpf"
+        ]
+      },
+      "assert": {
+        "must_match": [
+          "AppDimens\\.Net",
+          "AppDimensWpf\\.Initialize"
+        ],
+        "must_not_match": [
+          "AppDimens\\.Sdps\\.Wpf"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "game-hud-vs-world",
+      "mode": "read",
+      "config": {
+        "targets": [
+          {
+            "platform": "games",
+            "library": "appdimens-games"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ]
+      },
+      "input": "Puzzle game: 8x8 board must always be fully visible; pause button 48 in the corner; score text 20; background art must cover the screen.",
+      "expect": {
+        "board": "fit — WorldScale.fitPx / ftsdp with ViewportMode.FIT_ALL",
+        "pause": "hud — 48.sdp(ctx), min physical size considered",
+        "score": "fluid text — 20f.fsdp(ctx) or fssp",
+        "background": "fill — flsdp / WorldScale.fillPx",
+        "wiring": "GameScreen.updateFromContext(context) on resize"
+      },
+      "assert": {
+        "must_match": [
+          "fitPx|ftsdp",
+          "fillPx|flsdp",
+          "updateFromContext"
+        ],
+        "must_not_match": [],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "obsolete-migration",
+      "mode": "edit",
+      "config": {
+        "targets": [
+          {
+            "platform": "android-compose",
+            "library": "appdimens-dynamic"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ]
+      },
+      "input": "Modifier.padding(16.balanced().dp).height(48.fxdp)",
+      "expect": {
+        "padding": "16.asdp (BALANCED → auto) + appdimens-dynamic-auto",
+        "height": "48.sdp (FIXED → scaled)",
+        "lint": "0 errors after the change"
+      },
+      "assert": {
+        "must_match": [
+          "asdp",
+          "\\.sdp"
+        ],
+        "must_not_match": [
+          "balanced",
+          "fxdp"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "edit-base-from-previews",
+      "mode": "edit",
+      "config": {
+        "targets": [
+          {
+            "platform": "android-compose",
+            "library": "appdimens-dynamic"
+          }
+        ],
+        "formFactors": [
+          "phone"
+        ]
+      },
+      "input": "Existing Compose app, 16 screens; 14 have @Preview(device = \"id:medium_phone\"), 2 have @Preview(widthDp = 360). Migrate HomeScreen: Column(Modifier.padding(16.dp)) { Text(fontSize = 14.sp); HorizontalDivider(thickness = 1.dp); Button(Modifier.height(48.dp)) }.",
+      "expect": {
+        "base-screen": "Medium Phone 411×914 dp proposed from cli detect (14/16) and confirmed BEFORE converting",
+        "padding": "11.5.sdp (16 ÷ 1.37), shown with 'on base screen ≈ 15.8 dp'",
+        "text": "10.ssp (14 ÷ 1.37)",
+        "divider": "1.dp unchanged (ad:fixed hairline)",
+        "button": "height 35.sdp (48 ÷ 1.37) for the visual size, plus a fixed 48.dp touch minimum kept",
+        "must_not": [
+          "16.sdp (as-is) without stating +37 %",
+          "converting the 1.dp divider"
+        ]
+      },
+      "assert": {
+        "must_match": [
+          "Medium Phone|411",
+          "11\\.5\\.sdp",
+          "\\b10\\.ssp",
+          "1\\.dp",
+          "minimumInteractiveComponentSize|48\\.dp"
+        ],
+        "must_not_match": [
+          "\\b16\\.sdp",
+          "\\b14\\.ssp",
+          "1\\.sdp"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "figma-physical-px-frame",
+      "mode": "read",
+      "config": {
+        "targets": [
+          {
+            "platform": "android-compose",
+            "library": "appdimens-dynamic"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ]
+      },
+      "input": "Figma frame 'Login' 1080×2400 with padding 48, title font 64, button height 144.",
+      "expect": {
+        "detect": "1080×2400 portrait ≥ 640 wide → physical px; ask density (420 dpi → 2.625) → 411×914 dp",
+        "values": "48 px → 18.3 dp → 13.5.asdp; title 64 px → 24.4 sp → 18.assp; button 144 px → 54.9 dp → 40.asdp",
+        "must_not": [
+          "48.asdp",
+          "treating 1080 as the dp width"
+        ]
+      },
+      "assert": {
+        "must_match": [
+          "2\\.625|420 ?dpi|density"
+        ],
+        "must_not_match": [
+          "\\b48\\.asdp",
+          "\\b64\\.assp"
+        ],
+        "must_ask": true
+      }
+    },
+    {
+      "id": "claude-design-to-flutter",
+      "mode": "claude-design",
+      "config": {
+        "targets": [
+          {
+            "platform": "flutter",
+            "library": "appdimens-flutter"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ]
+      },
+      "input": "Claude Design export: <div class=\"phone-frame\" style=\"width:390px;height:844px\"><div class=\"status-bar\" style=\"height:47px\"/> <main class=\"p-4 flex flex-col gap-3\"> {products.map(p => <Card/>)} </main> <nav class=\"fixed bottom-0 h-16\"/></div>; Card: rounded-xl p-4, img aspect-[4/3], h3 text-lg line-clamp-2.",
+      "expect": {
+        "base-screen": "390×844 from the phone frame; status bar (47) excluded from height-based values",
+        "intent": "products.map in a flex column → list (ListView.separated); nav fixed bottom → NavigationBar (platform)",
+        "values": "p-4 = 16px → 12.5.asdp (÷ 1.3); gap-3 = 12px → 9; rounded-xl 12 → 9; text-lg 18 → 14.assp; aspect 4:3 → AspectRatio; line-clamp-2 → maxLines 2 + ellipsis",
+        "imports": [
+          "package:appdimens_auto/appdimens_auto.dart"
+        ],
+        "must_not": [
+          "Positioned for the nav",
+          "counting the fake status bar",
+          "h-16 nav height converted with hdp"
+        ]
+      },
+      "assert": {
+        "must_match": [
+          "12\\.5\\.asdp",
+          "\\b9\\.asdp",
+          "14\\.assp",
+          "AspectRatio",
+          "maxLines:\\s*2",
+          "appdimens_auto",
+          "ListView|SliverList"
+        ],
+        "must_not_match": [
+          "Positioned",
+          "16\\.asdp",
+          "hdp"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "new-screen-declared-base",
+      "mode": "create",
+      "config": {
+        "targets": [
+          {
+            "platform": "apple",
+            "library": "appdimens-ios"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ]
+      },
+      "input": "Create a settings screen with a profile header and a list of toggles.",
+      "expect": {
+        "base-screen": "declares iPhone 15/16 393×852 pt (platform default) and asks/records it",
+        "theme": "token scale converted once with normalize --device iphone-15 --strategy auto (16 → 12.asdp, 17 text → 13assp)",
+        "structure": "List / LazyVStack of one toggle row component; header as section",
+        "fixed": "Divider() system hairline; .frame(minHeight: 44) touch minimum",
+        "breakpoints": "none invented; iPad behaviour via size class only if asked"
+      },
+      "assert": {
+        "must_match": [
+          "393|iPhone 1[56]",
+          "assumed|unconfirmed",
+          "\\b12\\.asdp|11\\.99?\\.asdp|12\\.02\\.asdp",
+          "Divider\\(\\)"
+        ],
+        "must_not_match": [
+          "\\b16\\.asdp"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "user-chosen-strategy-and-resize",
+      "mode": "read",
+      "config": {
+        "targets": [
+          {
+            "platform": "react-native",
+            "library": "appdimens-react-native"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet",
+          "tv"
+        ],
+        "strategy": {
+          "layout": "power",
+          "text": "fluid"
+        }
+      },
+      "input": "Promo banner: padding 20, title must fit in 2 lines between 16 and 32, coupon card preview exactly 85.6 × 54 mm. Base screen: Figma Android Compact 412×917.",
+      "expect": {
+        "padding": "power: 20 ÷ (412/300)^0.75 → pwsdp(16) from 'appdimens-react-native/power'",
+        "title": "resize: AutoResizeText min 16 max 32 maxLines 2 (bounds not normalized)",
+        "coupon": "units: mm from 'appdimens-react-native/units' (not normalized)",
+        "must_not": [
+          "normalizing resize bounds or mm",
+          "sdp for padding when the config says power"
+        ]
+      },
+      "assert": {
+        "must_match": [
+          "appdimens-react-native/power",
+          "pwsdp\\(16\\)|pwsdp\\(16\\.\\d+\\)",
+          "AutoResizeText",
+          "appdimens-react-native/units"
+        ],
+        "must_not_match": [
+          "\\bsdp\\(20\\)",
+          "pwsdp\\(20\\)"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "one-line-edit-no-ask",
+      "mode": "edit",
+      "config": {
+        "targets": [
+          {
+            "platform": "android-compose",
+            "library": "appdimens-dynamic"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ],
+        "design": {
+          "baseScreen": {
+            "id": "medium-phone",
+            "width": 411,
+            "height": 914,
+            "confirmed": true
+          },
+          "normalization": "match-base"
+        }
+      },
+      "input": "In ProfileCard.kt change the avatar padding from Spacing.space12 to Spacing.space16 (both already defined in the theme).",
+      "expect": {
+        "behaviour": "reuses the existing theme token, no base-screen question, no normalize run needed"
+      },
+      "assert": {
+        "must_match": [
+          "space16"
+        ],
+        "must_not_match": [
+          "which (device|base)",
+          "16\\.dp",
+          "16\\.asdp"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "non-appdimens-repo",
+      "mode": "edit",
+      "config": null,
+      "input": "(repo without any AppDimens dependency) Make this Compose screen look better on tablets.",
+      "expect": {
+        "behaviour": "uses normal Compose adaptive techniques (window size classes, max width); does not force AppDimens; may mention it once as an option"
+      },
+      "assert": {
+        "must_match": [
+          "WindowSizeClass|windowSizeClass|widthIn|BoxWithConstraints"
+        ],
+        "must_not_match": [
+          "implementation\\(\\\"io\\.github\\.bodenberg"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "shared-ui-two-frames",
+      "mode": "read",
+      "config": {
+        "targets": [
+          {
+            "platform": "flutter",
+            "library": "appdimens-flutter"
+          }
+        ],
+        "formFactors": [
+          "phone"
+        ]
+      },
+      "input": "Figma has 'Home — Android' (412×917) and 'Home — iOS' (393×852) for the same Flutter screen; padding 16 on both, title 22 on Android and 20 on iOS.",
+      "expect": {
+        "base": "exactly one canonical base (asks which frame is canonical, or picks the Android/primary one and states it)",
+        "check": "16 → 11.5.sdp from 412 (iOS frame checks within ±5 %)",
+        "difference": "title 22 vs 20 is a real difference (> 5 %): reported, kept as one value or an adapt rule by platform — not two bases"
+      },
+      "assert": {
+        "must_match": [
+          "canonical|one base|single base",
+          "11\\.5\\.sdp|11\\.65\\.sdp"
+        ],
+        "must_not_match": [
+          "targets\\[\\]\\.baseScreen"
+        ],
+        "must_ask": true
+      }
+    },
+    {
+      "id": "tablet-override-double-scaling",
+      "mode": "edit",
+      "config": {
+        "targets": [
+          {
+            "platform": "android-xml",
+            "library": "appdimens-sdps"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ],
+        "design": {
+          "baseScreen": {
+            "id": "small-phone",
+            "width": 360,
+            "height": 640,
+            "confirmed": true
+          },
+          "normalization": "match-base",
+          "rounding": 1
+        }
+      },
+      "input": "values/dimens.xml: space_md = 16dp; values-sw600dp/dimens.xml: space_md = 32dp. Migrate to appdimens-sdps.",
+      "expect": {
+        "compare": "cli compare --device small-phone --tablet 600x960 --phone-value 16 --tablet-value 32 --xml → keep-as-adapt (strategy gives 26.7, override 32)",
+        "result": "values/: @dimen/_13sdp; values-sw600dp/: @dimen/_16sdp (32 ÷ 2.0)"
+      },
+      "assert": {
+        "must_match": [
+          "@dimen/_13sdp",
+          "values-sw600dp",
+          "@dimen/_16sdp"
+        ],
+        "must_not_match": [
+          "@dimen/_32sdp",
+          "@dimen/_16sdp</dimen>\\s*<!-- values/"
+        ],
+        "must_ask": false
+      }
+    }
+  ]
+}

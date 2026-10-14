@@ -1,0 +1,5 @@
+<VerticalStackLayout Padding="16" Spacing="{sdp:8}">
+  <Label FontSize="14" />
+  <BoxView HeightRequest="1" />
+  <Label Margin="{sdp:16}" />
+</VerticalStackLayout>

@@ -1,0 +1,5 @@
+{
+  "targets": [{ "platform": "web", "library": "webdimens", "version": "3.2.1" }],
+  "formFactors": ["phone", "tablet"],
+  "design": { "normalization": "match-base" }
+}

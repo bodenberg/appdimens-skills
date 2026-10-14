@@ -1,0 +1,17 @@
+{
+  "name": "appdimens",
+  "owner": {
+    "name": "Jean Bodenberg",
+    "url": "https://github.com/bodenberg"
+  },
+  "metadata": {
+    "description": "AppDimens skills for AI coding agents: layout intent, every AppDimens library, validation hook."
+  },
+  "plugins": [
+    {
+      "name": "appdimens-skills",
+      "source": "./",
+      "description": "Layout-intent skills, platform skills for every AppDimens library, and a validation hook."
+    }
+  ]
+}

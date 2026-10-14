@@ -1,0 +1,66 @@
+{
+  "name": "appdimens-skills",
+  "version": "0.1.0",
+  "description": "Skills for AI coding agents (Claude Code, Codex, Gemini CLI, OpenClaw, Hermes, Cursor, Copilot, Windsurf) that implement layouts with AppDimens: base screen, layout intent, every AppDimens library, and a validation CLI.",
+  "keywords": [
+    "appdimens",
+    "agent-skills",
+    "skills",
+    "claude-code",
+    "codex",
+    "gemini-cli",
+    "openclaw",
+    "hermes",
+    "cursor",
+    "copilot",
+    "windsurf",
+    "responsive",
+    "sdp",
+    "ssp",
+    "figma",
+    "design-to-code"
+  ],
+  "homepage": "https://github.com/bodenberg/appdimens-skills#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bodenberg/appdimens-skills.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bodenberg/appdimens-skills/issues"
+  },
+  "author": "Jean Bodenberg (https://github.com/bodenberg)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "appdimens-skills": "bin/appdimens-skills.mjs",
+    "appdimens-kit": "tools/appdimens-kit/cli.mjs"
+  },
+  "files": [
+    "bin/",
+    "installer/*.mjs",
+    "skills/",
+    "schemas/",
+    "hooks/",
+    ".claude-plugin/",
+    "adapters/",
+    "tools/appdimens-kit/*.mjs",
+    "tools/appdimens-kit/lib/",
+    "scripts/install.mjs",
+    "docs/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "node --test tools/appdimens-kit/test/*.test.mjs installer/test/*.test.mjs",
+    "build:adapters": "node scripts/build-adapters.mjs",
+    "check": "node scripts/build-adapters.mjs --check && node --test tools/appdimens-kit/test/*.test.mjs installer/test/*.test.mjs",
+    "prepublishOnly": "npm run check"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

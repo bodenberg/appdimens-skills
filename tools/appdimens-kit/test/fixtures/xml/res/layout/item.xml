@@ -1,0 +1,11 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+    <TextView android:textSize="14sp" android:layout_marginTop="@dimen/_8sdp" />
+    <View android:layout_height="1dp" />
+    <!-- ad:fixed touch-min -->
+    <Button android:minHeight="48dp" />
+    <View android:layout_width="@dimen/_700sdp" />
+    <TextView android:textSize="@dimen/_14ssp" android:padding="@dimen/_minus8sdp" />
+</LinearLayout>

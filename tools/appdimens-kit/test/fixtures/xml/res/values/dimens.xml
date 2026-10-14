@@ -1,0 +1,4 @@
+<resources>
+    <dimen name="space_md">16dp</dimen>
+    <dimen name="space_ok">@dimen/_16sdp</dimen>
+</resources>

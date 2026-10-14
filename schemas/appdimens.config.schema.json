@@ -1,0 +1,355 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bodenberg/appdimens-skills/schemas/appdimens.config.schema.json",
+  "title": "AppDimens project contract",
+  "description": "Decisions made once per project so AI agents never re-ask or guess them. Lives at the repository root as appdimens.config.json.",
+  "type": "object",
+  "required": [
+    "targets"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "platform",
+          "library"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "platform": {
+            "enum": [
+              "android-compose",
+              "android-views",
+              "android-xml",
+              "kmp",
+              "apple",
+              "flutter",
+              "react-native",
+              "web",
+              "dotnet-maui",
+              "dotnet-desktop",
+              "dotnet-android",
+              "games"
+            ]
+          },
+          "library": {
+            "enum": [
+              "appdimens-dynamic",
+              "appdimens-sdps",
+              "appdimens-ssps",
+              "appdimens-kmp",
+              "appdimens-ios",
+              "appdimens-flutter",
+              "appdimens-react-native",
+              "webdimens",
+              "appdimens-net-sdps",
+              "appdimens-net",
+              "appdimens-net-android",
+              "appdimens-games"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "examples": [
+              "3.2.0",
+              "3.2.1",
+              "3.6.1"
+            ]
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Globs of source paths this target owns."
+          },
+          "strategies": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "scaled",
+                "auto",
+                "percent",
+                "power",
+                "fluid",
+                "interpolated",
+                "logarithmic",
+                "diagonal",
+                "perimeter",
+                "fit",
+                "fill",
+                "density",
+                "resize",
+                "units"
+              ]
+            },
+            "description": "Strategy modules/packages installed for this target."
+          },
+          "baseScreen": {
+            "$ref": "#/$defs/baseScreen",
+            "description": "Overrides design.baseScreen for this target (e.g. iOS designs on 393×852, Android on 412×917)."
+          }
+        }
+      }
+    },
+    "formFactors": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "phone",
+          "foldable",
+          "tablet",
+          "desktop",
+          "web",
+          "tv",
+          "car",
+          "watch"
+        ]
+      },
+      "default": [
+        "phone"
+      ]
+    },
+    "strategy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "layout": {
+          "enum": [
+            "scaled",
+            "auto",
+            "percent",
+            "power",
+            "fluid",
+            "interpolated",
+            "logarithmic",
+            "diagonal",
+            "perimeter",
+            "fit",
+            "fill",
+            "density",
+            "adaptive",
+            "bounded"
+          ],
+          "description": "Default policy for spacing, radii, icons, control sizes."
+        },
+        "text": {
+          "enum": [
+            "scaled",
+            "auto",
+            "percent",
+            "power",
+            "fluid",
+            "interpolated",
+            "logarithmic",
+            "diagonal",
+            "perimeter",
+            "fit",
+            "fill",
+            "density",
+            "adaptive",
+            "bounded"
+          ],
+          "description": "Default policy for typography (sp kind)."
+        }
+      }
+    },
+    "design": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "enum": [
+            "figma",
+            "claude-design",
+            "sketch",
+            "penpot",
+            "screenshot",
+            "spec",
+            "other"
+          ]
+        },
+        "normalization": {
+          "enum": [
+            "match-base",
+            "design-at-300",
+            "as-is"
+          ],
+          "default": "match-base",
+          "description": "match-base: base = (value ÷ density) ÷ factor(strategy, base screen) so values keep their look on the base screen; design-at-300: values are already relative to the 300 reference; as-is: same number (grows 20–47 % on phones)."
+        },
+        "rounding": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 0.5,
+          "description": "Rounding step for match-base. Use 1 for Android XML (integer resources)."
+        },
+        "baseScreen": {
+          "$ref": "#/$defs/baseScreen"
+        }
+      }
+    },
+    "breakpoints": {
+      "type": "array",
+      "description": "The only breakpoints agents may use. Expressed as AppDimens qualifiers.",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "when"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "examples": [
+              "tablet",
+              "expanded"
+            ]
+          },
+          "when": {
+            "type": "string",
+            "pattern": "^(sw|w|h)[0-9]+$|^(landscape|portrait|tv|car|watch|desk|fold-open|fold-half|flip-open|flip-half)$",
+            "examples": [
+              "sw600",
+              "w840"
+            ]
+          }
+        }
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "description": "Where design tokens live in code, so agents edit the theme instead of call sites.",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "examples": [
+        {
+          "spacing": "app/src/main/java/com/acme/ui/theme/Spacing.kt",
+          "typography": "app/src/main/java/com/acme/ui/theme/Type.kt"
+        }
+      ]
+    },
+    "lint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fixedThreshold": {
+          "type": "number",
+          "default": 2,
+          "description": "Literals at or below this value are treated as hairlines and not flagged."
+        },
+        "ignore": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Path substrings to skip."
+        },
+        "warningsAsErrors": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "features": {
+      "type": "array",
+      "description": "Optional features in use besides scale strategies.",
+      "items": {
+        "enum": [
+          "resize",
+          "units",
+          "facilitators",
+          "builders",
+          "aspect-ratio"
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "baseScreen": {
+      "type": "object",
+      "description": "The screen the values were chosen on (design frame, Claude Design viewport, @Preview device…). See skills/appdimens-layout-intent/references/base-screen.md.",
+      "required": [
+        "width",
+        "height"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Catalog id from `appdimens-kit devices` (e.g. medium-phone, iphone-15, figma-android-compact).",
+          "examples": [
+            "medium-phone"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "examples": [
+            "Medium Phone (Android Studio)"
+          ]
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Logical width (dp / pt / CSS px) in the design orientation."
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Logical height of the frame/device in the design orientation."
+        },
+        "unit": {
+          "enum": [
+            "dp",
+            "pt",
+            "css-px"
+          ],
+          "default": "dp"
+        },
+        "density": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Physical px per logical unit (2.625 = 420 dpi, 3 = @3x). Needed when sources are in physical px, for the density strategy, Px tokens and units."
+        },
+        "dpi": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "orientation": {
+          "enum": [
+            "portrait",
+            "landscape"
+          ],
+          "default": "portrait"
+        },
+        "fontScale": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 1
+        },
+        "source": {
+          "type": "string",
+          "description": "Where it came from, e.g. 'Figma frame Home (Android Compact)', '@Preview(device=id:medium_phone) in 14/16 screens'."
+        },
+        "confirmed": {
+          "type": "boolean",
+          "description": "true once the user confirmed it."
+        },
+        "runtimeHeight": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Height the library actually reads at runtime when it differs from the frame (e.g. Android targetSdk ≤ 34 excludes system bars). Used for hdp/hsp, the a suffix and fit/fill/diagonal/perimeter."
+        }
+      }
+    }
+  }
+}

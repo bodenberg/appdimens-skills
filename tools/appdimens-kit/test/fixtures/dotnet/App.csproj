@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><UseMaui>true</UseMaui></PropertyGroup>
+  <ItemGroup><PackageReference Include="Bodenberg.AppDimens.Maui.Sdps" Version="3.6.1" /></ItemGroup>
+</Project>
