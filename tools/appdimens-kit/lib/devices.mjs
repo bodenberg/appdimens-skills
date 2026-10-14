@@ -1,4 +1,4 @@
-// Base-device catalog: logical size (portrait, dp / pt / CSS px) of the screens designs and
+// Base-device catalog: logical size as listed (orientation per entry; dp / pt / CSS px) of the screens designs and
 // previews are usually made for. The base device is the denominator of every conversion:
 // a value that looks right on the base device must still look right there after migration.
 //
@@ -11,12 +11,13 @@ export const devices = [
   { id: 'medium-phone', name: 'Medium Phone (Android Studio)', platform: 'android', width: 411, height: 914, density: 2.625, aliases: ['pixel-7', 'pixel-8', 'medium phone'] },
   { id: 'compose-phone', name: 'Compose Devices.PHONE', platform: 'android', width: 411, height: 891, density: 2.625, aliases: ['devices.phone'] },
   { id: 'compose-foldable', name: 'Compose Devices.FOLDABLE (unfolded)', platform: 'android', width: 673, height: 841, density: 2.625, aliases: ['devices.foldable'] },
-  { id: 'medium-tablet', name: 'Medium Tablet / Compose Devices.TABLET (landscape)', platform: 'android', width: 1280, height: 800, density: 2, aliases: ['devices.tablet', 'pixel-tablet', 'medium tablet'] },
-  { id: 'compose-desktop', name: 'Compose Devices.DESKTOP', platform: 'android', width: 1920, height: 1080, density: 1, aliases: ['devices.desktop'] },
+  { id: 'medium-tablet', name: 'Medium Tablet (Android Studio, landscape)', platform: 'android', width: 1280, height: 800, density: 2, aliases: ['pixel-tablet', 'medium tablet'] },
+  { id: 'compose-tablet', name: 'Compose Devices.TABLET (landscape, 240 dpi)', platform: 'android', width: 1280, height: 800, density: 1.5, aliases: ['devices.tablet'] },
+  { id: 'compose-desktop', name: 'Compose Devices.DESKTOP (landscape)', platform: 'android', width: 1920, height: 1080, density: 1, aliases: ['devices.desktop'] },
   // Figma presets
   { id: 'figma-android-compact', name: 'Figma "Android Compact"', platform: 'android', width: 412, height: 917, aliases: ['android compact'] },
   { id: 'figma-android-medium', name: 'Figma "Android Medium"', platform: 'android', width: 700, height: 840, aliases: ['android medium'] },
-  { id: 'figma-android-expanded', name: 'Figma "Android Expanded"', platform: 'android', width: 1280, height: 800, aliases: ['android expanded'] },
+  { id: 'figma-android-expanded', name: 'Figma "Android Expanded" (landscape)', platform: 'android', width: 1280, height: 800, aliases: ['android expanded'] },
   { id: 'android-360x800', name: 'Android 360×800 (legacy Figma "Android Large", most common Android web viewport)', platform: 'android', width: 360, height: 800, aliases: ['android large'] },
   // Apple (points)
   { id: 'iphone-se', name: 'iPhone SE (2nd/3rd gen)', platform: 'apple', width: 375, height: 667, density: 2 },

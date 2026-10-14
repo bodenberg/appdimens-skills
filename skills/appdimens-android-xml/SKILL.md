@@ -11,7 +11,7 @@ Decide intent first with `appdimens-layout-intent`. Pre-generated `@dimen` resou
 
 ```kotlin
 dependencies {
-    implementation("io.github.bodenberg:appdimens-sdps:3.2.0")   // _Nsdp, _Nhdp, _Nwdp  (N = -300…600, negatives: _minus8sdp)
+    implementation("io.github.bodenberg:appdimens-sdps:3.2.0")   // _Nsdp, _Nhdp, _Nwdp  (N = -300…600 without 0 — use 0dp; negatives: _minus8sdp)
     implementation("io.github.bodenberg:appdimens-ssps:3.2.0")   // _Nssp, _Nhsp, _Nwsp  (N = 1…600)
 }
 ```
@@ -27,7 +27,14 @@ Ship as AAB so Play strips unused resources. Both libraries also expose Compose 
 | fixed | plain `1dp` + `<!-- ad:fixed hairline -->` |
 | adaptive / bounded / fraction / others | **not available in XML.** Use `appdimens-android` code APIs (`16.asdp(ctx)`, px) from the View/Fragment, or resource qualifiers (`values-sw600dp/dimens.xml`) pointing at different `_Nsdp` values for an `adapt` rule |
 
-**Integers only.** `match-base` normalization must round to whole numbers (`normalize --rounding 1`), and XML offers only the scaled strategy: `normalize --device <base> --rounding 1 16` → `@dimen/_12sdp` on a Medium Phone base.
+**Integers only, bucketed.** XML offers only the scaled strategy, resource names are integers, and Android resolves them through discrete folders (`values-swN` / `-hN` / `-wN`, mostly 15 dp steps plus common device widths): the factor is the **floor bucket ÷ 300** (a 914-tall base reads `values-h900dp`, ×3.00). Always convert with `--xml`, which rounds to integers and uses the bucket:
+
+```bash
+node <package>/tools/appdimens-kit/cli.mjs normalize --device medium-phone --xml 16 24      # → @dimen/_12sdp, _18sdp
+node <package>/tools/appdimens-kit/cli.mjs normalize --device medium-phone --xml --axis h 220  # → @dimen/_73hdp (bucket h900)
+```
+
+Mixed Compose + XML apps: keep `dimens.xml` as the single source and read it from Compose with `dimensionResource(R.dimen.space_md)`, so both render identical values.
 
 ## Theme the values once
 
@@ -59,7 +66,7 @@ Ship as AAB so Play strips unused resources. Both libraries also expose Compose 
 | `truncate` | `android:maxLines="2" android:ellipsize="end"` |
 | `fit-text` | `app:autoSizeTextType="uniform"` with `autoSizeMinTextSize="@dimen/_12ssp"` / `autoSizeMaxTextSize="@dimen/_28ssp"` |
 | `divider` | `android:layout_height="1dp"` `<!-- ad:fixed hairline -->` |
-| touch minimum | `android:minHeight="48dp"` `<!-- ad:fixed touch-min -->` |
+| touch target | visual size from a token (`@dimen/_35sdp`) + hit area via `android:minHeight="48dp"` on the clickable parent or `TouchDelegate`; Material buttons already enforce 48dp |
 
 ## Lint (what `appdimens-kit lint` flags here)
 

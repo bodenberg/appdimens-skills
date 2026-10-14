@@ -21,7 +21,7 @@ Follow `appdimens-layout-intent` (steps 1–7). This skill is the procedure for 
 | Component mapping | design-system names ↔ code components | match by name; flag unknowns |
 | Extra frames (tablet/desktop) | sibling frames of the same screen | `adapt` evidence |
 
-With the Figma MCP server, pull structured data (layout mode, sizing, constraints, variables, component names) instead of screenshots. A screenshot alone lowers every confidence by 0.2.
+With the Figma MCP server, pull structured data (layout mode, sizing, constraints, variables, component names) instead of screenshots. A screenshot alone has no structure: intents start at 0.6 instead of 0.9.
 
 ## 2. Identify and confirm the base screen
 
@@ -31,7 +31,8 @@ From `.appdimens/skills/appdimens-layout-intent/references/base-screen.md`:
 2. **Units.** Figma at 1× is in logical units (dp/pt/CSS px). A portrait frame ≥ 640 wide (1080×2400, 1170×2532) is **physical px**: ask the density (Android 420 dpi = 2.625, iOS @3x = 3) and divide.
 3. **Orientation, aspect ratio, status bar.** Landscape frames: the smallest side is the height. If the frame includes the status/navigation bar, `hdp` values should be measured against the content height the app gets.
 4. **Font scale.** Normally 1.0; if the designer previewed large text, divide text values by it.
-5. **Confirm** in one line (frame name, logical size, density, factor for the chosen strategy, one example conversion) and record it in `design.baseScreen`.
+5. **Decide per the core Step 3 rule**: config → use it; a single unambiguous frame/preset → state it as "assumed, unconfirmed" and proceed; conflicting frames or px without density → ask. Offer to record it in `design.baseScreen`.
+6. **Several frames** (Android 412 + iOS 393, phone + tablet): shared UI code gets **one** canonical base frame; normalize the other frames only to check them (≈ ±5 % is expected between phone frames) and turn real differences into `adapt` rules. Separate native UIs may record `targets[].baseScreen` each.
 
 Exported image only: image px ÷ export scale = logical size. Unknown scale → ask.
 
@@ -41,7 +42,7 @@ Walk the tree top-down and record per node: Auto Layout direction, wrap, gap, pa
 
 ## 4. Infer intent
 
-Axes and heuristics in `.appdimens/skills/appdimens-layout-intent/references/intent-model.md`. Layer-name annotations (`[grid]`, `[fill]`, `[fixed-scale]`, `[fit-text]`, `[sw600:cols=3]`) win. All nodes below 0.5 go to the user in one message, each with your best guess.
+Axes and heuristics in `.appdimens/skills/appdimens-layout-intent/references/intent-model.md`. Layer-name annotations (`[grid]`, `[fill]`, `[fixed-scale]`, `[fit-text]`, `[sw600:cols=3]`) win; Auto Layout structure starts at 0.9. Nodes below 0.5: at most 5 questions in one message, highest impact first, each with your best guess; the rest under "needs review".
 
 ## 5. Choose strategy, then convert every value
 
@@ -55,7 +56,7 @@ node .appdimens/tools/appdimens-kit/cli.mjs normalize --device figma-android-com
 node .appdimens/tools/appdimens-kit/cli.mjs normalize --device figma-android-compact --axis h 220
 ```
 
-Tokens bound to variables are converted once, in the theme. Fixed values are never converted.
+Tokens bound to variables are converted once, in the theme, with `--theme` (exact values named by the design number: `space16 = 11.68.asdp`). Fixed values are never converted. Touch targets: convert the visual size, keep the hit area with the platform API.
 
 ## 6. Intent sheet, then code
 

@@ -64,7 +64,7 @@ Every element gets an intent before it gets a unit. The JSON form is validated b
 | `width` / `height` | `wdp` / `hdp` (`wsp`/`hsp` for text) | with one explicit axis |
 | `fraction` | percent `spaceW` / `spaceH` / `spaceSw`, `psdp` | as a literal % of the window |
 | `fit` / `fill` | `ftsdp` / `flsdp` | contain / cover (canvas, games, hero art) |
-| `damped` | `logsdp`, `pwsdp`, `isdp` | slower than linear (TV, dashboards) — needs a visual reason |
+| `logarithmic` / `power` / `interpolated` | `logsdp` / `pwsdp` / `isdp` | slower than linear (TV, dashboards) — needs a visual reason |
 | `physical` | units: `mm`, `cm`, `inch` | not at all — real-world size |
 | `fixed` | plain `dp` / `pt` / CSS px | not at all (hairlines, elevation, platform minimums) |
 | `platform` | leave to the system component | as the OS decides |
@@ -74,9 +74,17 @@ Every element gets an intent before it gets a unit. The JSON form is validated b
 
 Discrete changes at breakpoints: column count, layout swap (list → two-pane), visibility, alternate value. Express `when` as an AppDimens qualifier so every platform can implement it: `sw600`, `w840`, `h480`, `landscape`, `portrait`, `tv`, `car`, `watch`, `fold-open`, `fold-half`, `desk`. Values come from `appdimens.config.json → breakpoints`, or from the design (a separate tablet frame), or from the user. Never invent them. Platform skills map these to `.screen()` builders / `sdpQualifier` / `@sw600` conditions / window size classes.
 
-## Inference heuristics (use when nothing is annotated)
+## Confidence
 
-Score each candidate; keep the evidence strings for the intent sheet.
+- **Explicit structure starts at 0.9**: Figma Auto Layout properties (direction, wrap, fill/hug), DOM `display:flex/grid`, `.map()` repetitions, lazy/list/grid primitives in code, design-system component names. Most nodes are settled here.
+- **Annotations are 1.0** (layer tags, `data-intent`, `ad:fixed` comments, a spec table).
+- **Heuristics only score what structure leaves ambiguous**: list vs static stack, carousel vs wrapping row, overlay vs sibling, scroll ownership. They start from 0.5 and add/subtract the weights below.
+- A screenshot without structure: start at 0.6 instead of 0.9.
+- Ask only below 0.5, at most 5 questions in one message ordered by impact (how many values the answer changes); everything else keeps its best guess under "needs review".
+
+## Inference heuristics (ambiguous roles only)
+
+Start at 0.5, add the weights, clamp to 0–1; keep the evidence strings for the intent sheet.
 
 | Signal | Suggests | Weight |
 |---|---|---|
@@ -93,7 +101,7 @@ Score each candidate; keep the evidence strings for the intent sheet.
 | Name matches design-system component (`Button/Primary`) | that component's role | +0.5 |
 | Separate frames per device width (Mobile/Tablet) | `adapt` rules from the differences | +0.4 |
 
-Clamp to 0–1. Same-confidence ties → prefer the simpler role (`stack-v` over `list` for ≤ 3 static items).
+Same-confidence ties → prefer the simpler role (`stack-v` over `list` for ≤ 3 static items).
 
 ## Annotations designers can add (no plugin required)
 

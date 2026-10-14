@@ -80,8 +80,22 @@ export function findProject(start) {
     if (parent === current) break;
     current = parent;
   }
+  if (result.enabled) result.isReactNative = isReactNativeRoot(dir, result.root);
   cache.set(dir, result);
   return result;
+}
+
+/** Nearest package.json (up to the project root) declares react-native or expo. */
+function isReactNativeRoot(dir, root) {
+  let current = dir;
+  while (true) {
+    const p = join(current, 'package.json');
+    if (existsSync(p)) return /"(react-native|expo)"\s*:/.test(read(p));
+    if (current === root || existsSync(join(current, '.git'))) return false;
+    const parent = dirname(current);
+    if (parent === current) return false;
+    current = parent;
+  }
 }
 
 function findConfigUpwards(dir) {

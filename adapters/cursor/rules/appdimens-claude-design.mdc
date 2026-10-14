@@ -28,7 +28,11 @@ Look, in this order, for:
 3. The root container's `max-width` / `width`, or `<meta name="viewport" content="width=…">`.
 4. The smallest media-query breakpoint the layout was written for (mobile-first).
 
-CSS px at 1× are logical units (dp/pt). Then **exclude prototype chrome** before measuring: fake status bars, home indicators, device bezels and notches drawn in HTML are not part of the app, and their height must not enter `hdp` conversions. Confirm the profile (size, orientation, font scale 1.0 unless the mockup sets a root `font-size`) and record it in `design.baseScreen`. See `.appdimens/skills/appdimens-layout-intent/references/base-screen.md`.
+CSS px at 1× are logical units (dp/pt). Then:
+- **Exclude prototype chrome** before measuring: fake status bars, home indicators, device bezels and notches drawn in HTML are not part of the app; their height must not enter `hdp` conversions (the app's height = wrapper height − fake bars).
+- **Ignore canvas zoom**: a `transform: scale(…)` on the canvas/frame does not change CSS px values.
+- **rem**: 1rem = the root `font-size` (16px unless the mockup changes it).
+- Decide the base per the core Step 3 rule (a single phone frame = "assumed, unconfirmed", proceed) and record it in `design.baseScreen`. See `.appdimens/skills/appdimens-layout-intent/references/base-screen.md`.
 
 ## 2. Intent from DOM and CSS
 
@@ -58,8 +62,8 @@ CSS px at 1× are logical units (dp/pt). Then **exclude prototype chrome** befor
 |---|---|---|
 | `16px` (spacing, radius, size) | value on the base viewport | `normalize --frame <w> --height <h> --strategy <s> 16` |
 | `font-size: 1rem` / `16px` | text (1rem = 16px unless the root font-size changes) | `--text` → `…ssp` |
-| `50vw`, `40vh`, `100dvh` | literal share of the window | percent: `50.spaceW`, `40.spaceH` (or fill) |
-| `clamp(14px, 4vw, 20px)` | bounded growth | `fluid` (`fssp`) or `adapt` values at breakpoints |
+| `50vw`, `40vh`, `100dvh` | literal share of the window | percent: `50.spaceW`, `40.spaceH` (or fill). **Inside a phone-frame wrapper** vw/vh refer to the browser window, not the frame: recompute them against the wrapper's content size (minus fake bars) before converting. |
+| `clamp(14px, 4vw, 20px)` | a value that grows with the viewport between bounds | resolve it at the base viewport (4vw × 390 = 15.6px) and normalize that value with the project strategy (`fluid`/`fssp` is a different, fixed curve: 0.8–1.2× over 320–768); express the min/max bounds as `adapt` values at the breakpoints where they bite |
 | `%` of the parent | fill / weight / fraction of the container | layout primitive, not a token |
 | `1px` borders, shadows | fixed | `1.dp` + `ad:fixed hairline` |
 

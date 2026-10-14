@@ -1,5 +1,5 @@
 {
-  "$comment": "Golden cases for the layout-intent skills. Each case gives a design/code input and the decisions a correct agent must make. Run them with any agent (see evals/README.md) and score the intent sheet against `expect`.",
+  "$comment": "Golden cases. `expect` explains the decision in prose; `assert` is machine-checkable: every must_match regex must appear in the agent's output, no must_not_match may appear, and must_ask says whether the agent should stop with a question first. Score with: node evals/score.mjs <case-id> <agent-output-file>.",
   "cases": [
     {
       "id": "grid-from-repeated-cards",
@@ -69,6 +69,21 @@
           "1.asdp divider",
           "invented sw600 breakpoint"
         ]
+      },
+      "assert": {
+        "must_match": [
+          "10(\\.0)?\\.asdp",
+          "6\\.5\\.asdp|6\\.67\\.asdp",
+          "aspectRatio\\(4f? ?/ ?3f?\\)",
+          "1\\.dp",
+          "compose\\.auto"
+        ],
+        "must_not_match": [
+          "1\\.asdp",
+          "\\boffset\\(",
+          "absolute"
+        ],
+        "must_ask": false
       }
     },
     {
@@ -110,6 +125,16 @@
           "Row with fixed widths overflowing",
           "pixel values used as logical units"
         ]
+      },
+      "assert": {
+        "must_match": [
+          "scrollDirection:\\s*Axis\\.horizontal|PageView",
+          "needs review|\\?"
+        ],
+        "must_not_match": [
+          "\\b1170\\b.*sdp"
+        ],
+        "must_ask": false
       }
     },
     {
@@ -125,19 +150,46 @@
         "formFactors": [
           "phone",
           "tablet"
-        ]
+        ],
+        "design": {
+          "baseScreen": {
+            "id": "iphone-15",
+            "width": 393,
+            "height": 852,
+            "unit": "pt",
+            "confirmed": true
+          },
+          "normalization": "match-base"
+        }
       },
       "input": "SwiftUI: HStack(spacing: 8) { Image(systemName: \"star\").frame(width: 24, height: 24); Text(title).font(.system(size: 15)) }.padding(.horizontal, 16).frame(minHeight: 44); Divider()",
       "expect": {
-        "spacing 8": "8.asdp",
-        "icon 24": "24.asdp",
-        "font 15": ".font(.system(size: 15.assp))",
-        "padding 16": "16.asdp",
-        "minHeight 44": "unchanged — fixed touch minimum (ad:fixed touch-min)",
+        "spacing 8": "6.asdp (8 ÷ 1.31)",
+        "icon 24": "18.5.asdp",
+        "font 15": ".font(.system(size: 11.5.assp))",
+        "padding 16": "12.asdp",
+        "minHeight 44": "hit area kept as a fixed platform minimum (contentShape + frame(minWidth/minHeight: 44)); visual not clamped",
         "Divider()": "unchanged — system hairline",
         "imports": [
           "AppDimensDynamic (or AppDimensAuto)"
         ]
+      },
+      "assert": {
+        "must_match": [
+          "\\b6\\.asdp",
+          "18\\.5\\.asdp",
+          "11\\.5\\.assp",
+          "\\b12\\.asdp",
+          "contentShape",
+          "Divider\\(\\)"
+        ],
+        "must_not_match": [
+          "\\b8\\.asdp",
+          "\\b24\\.asdp",
+          "\\b15\\.assp",
+          "44\\.asdp"
+        ],
+        "must_ask": false
       }
     },
     {
@@ -178,6 +230,19 @@
           "@dimen/_13.5sdp (decimals do not exist)",
           "asdp in XML"
         ]
+      },
+      "assert": {
+        "must_match": [
+          "@dimen/_13sdp",
+          "@dimen/_33sdp",
+          "@dimen/_13ssp",
+          "@dimen/_12ssp"
+        ],
+        "must_not_match": [
+          "@dimen/_\\d+\\.\\d+",
+          "asdp"
+        ],
+        "must_ask": false
       }
     },
     {
@@ -205,6 +270,17 @@
           "sdp tokens normalized from the 1440x900 frame",
           "Px tokens in classes"
         ]
+      },
+      "assert": {
+        "must_match": [
+          "@w(840|1200)",
+          "max-width:\\s*1200px"
+        ],
+        "must_not_match": [
+          "\\d+(\\.\\d+)?sdpPx",
+          "class=\\\"[^\\\"]*Px"
+        ],
+        "must_ask": false
       }
     },
     {
@@ -230,6 +306,19 @@
           "StyleSheet.create with sdp() at module scope (never updates)",
           "sdpPx in fontSize"
         ]
+      },
+      "assert": {
+        "must_match": [
+          "createDimenStyles",
+          "appdimens-react-native/auto",
+          "useStyles\\(\\)"
+        ],
+        "must_not_match": [
+          "fontSize:\\s*\\w*Px\\(",
+          "asdp\\(16\\)",
+          "assp\\(18\\)"
+        ],
+        "must_ask": false
       }
     },
     {
@@ -254,6 +343,16 @@
         "must_not": [
           "mixing AppDimens.Sdps.Wpf and AppDimens.Net.Wpf"
         ]
+      },
+      "assert": {
+        "must_match": [
+          "AppDimens\\.Net",
+          "AppDimensWpf\\.Initialize"
+        ],
+        "must_not_match": [
+          "AppDimens\\.Sdps\\.Wpf"
+        ],
+        "must_ask": false
       }
     },
     {
@@ -278,6 +377,15 @@
         "score": "fluid text — 20f.fsdp(ctx) or fssp",
         "background": "fill — flsdp / WorldScale.fillPx",
         "wiring": "GameScreen.updateFromContext(context) on resize"
+      },
+      "assert": {
+        "must_match": [
+          "fitPx|ftsdp",
+          "fillPx|flsdp",
+          "updateFromContext"
+        ],
+        "must_not_match": [],
+        "must_ask": false
       }
     },
     {
@@ -300,6 +408,17 @@
         "padding": "16.asdp (BALANCED → auto) + appdimens-dynamic-auto",
         "height": "48.sdp (FIXED → scaled)",
         "lint": "0 errors after the change"
+      },
+      "assert": {
+        "must_match": [
+          "asdp",
+          "\\.sdp"
+        ],
+        "must_not_match": [
+          "balanced",
+          "fxdp"
+        ],
+        "must_ask": false
       }
     },
     {
@@ -327,6 +446,21 @@
           "16.sdp (as-is) without stating +37 %",
           "converting the 1.dp divider"
         ]
+      },
+      "assert": {
+        "must_match": [
+          "Medium Phone|411",
+          "11\\.5\\.sdp",
+          "\\b10\\.ssp",
+          "1\\.dp",
+          "minimumInteractiveComponentSize|48\\.dp"
+        ],
+        "must_not_match": [
+          "\\b16\\.sdp",
+          "\\b14\\.ssp",
+          "1\\.sdp"
+        ],
+        "must_ask": false
       }
     },
     {
@@ -352,6 +486,16 @@
           "48.asdp",
           "treating 1080 as the dp width"
         ]
+      },
+      "assert": {
+        "must_match": [
+          "2\\.625|420 ?dpi|density"
+        ],
+        "must_not_match": [
+          "\\b48\\.asdp",
+          "\\b64\\.assp"
+        ],
+        "must_ask": true
       }
     },
     {
@@ -382,6 +526,23 @@
           "counting the fake status bar",
           "h-16 nav height converted with hdp"
         ]
+      },
+      "assert": {
+        "must_match": [
+          "12\\.5\\.asdp",
+          "\\b9\\.asdp",
+          "14\\.assp",
+          "AspectRatio",
+          "maxLines:\\s*2",
+          "appdimens_auto",
+          "ListView|SliverList"
+        ],
+        "must_not_match": [
+          "Positioned",
+          "16\\.asdp",
+          "hdp"
+        ],
+        "must_ask": false
       }
     },
     {
@@ -406,6 +567,18 @@
         "structure": "List / LazyVStack of one toggle row component; header as section",
         "fixed": "Divider() system hairline; .frame(minHeight: 44) touch minimum",
         "breakpoints": "none invented; iPad behaviour via size class only if asked"
+      },
+      "assert": {
+        "must_match": [
+          "393|iPhone 1[56]",
+          "assumed|unconfirmed",
+          "\\b12\\.asdp|11\\.99?\\.asdp|12\\.02\\.asdp",
+          "Divider\\(\\)"
+        ],
+        "must_not_match": [
+          "\\b16\\.asdp"
+        ],
+        "must_ask": false
       }
     },
     {
@@ -437,6 +610,151 @@
           "normalizing resize bounds or mm",
           "sdp for padding when the config says power"
         ]
+      },
+      "assert": {
+        "must_match": [
+          "appdimens-react-native/power",
+          "pwsdp\\(16\\)|pwsdp\\(16\\.\\d+\\)",
+          "AutoResizeText",
+          "appdimens-react-native/units"
+        ],
+        "must_not_match": [
+          "\\bsdp\\(20\\)",
+          "pwsdp\\(20\\)"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "one-line-edit-no-ask",
+      "mode": "edit",
+      "config": {
+        "targets": [
+          {
+            "platform": "android-compose",
+            "library": "appdimens-dynamic"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ],
+        "design": {
+          "baseScreen": {
+            "id": "medium-phone",
+            "width": 411,
+            "height": 914,
+            "confirmed": true
+          },
+          "normalization": "match-base"
+        }
+      },
+      "input": "In ProfileCard.kt change the avatar padding from Spacing.space12 to Spacing.space16 (both already defined in the theme).",
+      "expect": {
+        "behaviour": "reuses the existing theme token, no base-screen question, no normalize run needed"
+      },
+      "assert": {
+        "must_match": [
+          "space16"
+        ],
+        "must_not_match": [
+          "which (device|base)",
+          "16\\.dp",
+          "16\\.asdp"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "non-appdimens-repo",
+      "mode": "edit",
+      "config": null,
+      "input": "(repo without any AppDimens dependency) Make this Compose screen look better on tablets.",
+      "expect": {
+        "behaviour": "uses normal Compose adaptive techniques (window size classes, max width); does not force AppDimens; may mention it once as an option"
+      },
+      "assert": {
+        "must_match": [
+          "WindowSizeClass|windowSizeClass|widthIn|BoxWithConstraints"
+        ],
+        "must_not_match": [
+          "implementation\\(\\\"io\\.github\\.bodenberg"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "shared-ui-two-frames",
+      "mode": "read",
+      "config": {
+        "targets": [
+          {
+            "platform": "flutter",
+            "library": "appdimens-flutter"
+          }
+        ],
+        "formFactors": [
+          "phone"
+        ]
+      },
+      "input": "Figma has 'Home — Android' (412×917) and 'Home — iOS' (393×852) for the same Flutter screen; padding 16 on both, title 22 on Android and 20 on iOS.",
+      "expect": {
+        "base": "exactly one canonical base (asks which frame is canonical, or picks the Android/primary one and states it)",
+        "check": "16 → 11.5.sdp from 412 (iOS frame checks within ±5 %)",
+        "difference": "title 22 vs 20 is a real difference (> 5 %): reported, kept as one value or an adapt rule by platform — not two bases"
+      },
+      "assert": {
+        "must_match": [
+          "canonical|one base|single base",
+          "11\\.5\\.sdp|11\\.65\\.sdp"
+        ],
+        "must_not_match": [
+          "targets\\[\\]\\.baseScreen"
+        ],
+        "must_ask": true
+      }
+    },
+    {
+      "id": "tablet-override-double-scaling",
+      "mode": "edit",
+      "config": {
+        "targets": [
+          {
+            "platform": "android-xml",
+            "library": "appdimens-sdps"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ],
+        "design": {
+          "baseScreen": {
+            "id": "small-phone",
+            "width": 360,
+            "height": 640,
+            "confirmed": true
+          },
+          "normalization": "match-base",
+          "rounding": 1
+        }
+      },
+      "input": "values/dimens.xml: space_md = 16dp; values-sw600dp/dimens.xml: space_md = 32dp. Migrate to appdimens-sdps.",
+      "expect": {
+        "compare": "cli compare --device small-phone --tablet 600x960 --phone-value 16 --tablet-value 32 --xml → keep-as-adapt (strategy gives 26.7, override 32)",
+        "result": "values/: @dimen/_13sdp; values-sw600dp/: @dimen/_16sdp (32 ÷ 2.0)"
+      },
+      "assert": {
+        "must_match": [
+          "@dimen/_13sdp",
+          "values-sw600dp",
+          "@dimen/_16sdp"
+        ],
+        "must_not_match": [
+          "@dimen/_32sdp",
+          "@dimen/_16sdp</dimen>\\s*<!-- values/"
+        ],
+        "must_ask": false
       }
     }
   ]

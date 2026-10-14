@@ -62,7 +62,7 @@ RN styles are in dp. `*Px` functions (`sdpPx`) are only for Skia/native modules/
 | `sizing: clamp` | `minWidth: 280, maxWidth: 600` `// ad:fixed clamp` |
 | `truncate` | `<Text numberOfLines={2} ellipsizeMode="tail">` |
 | `divider` | `height: StyleSheet.hairlineWidth` |
-| touch minimum | `minHeight: 48` (Android) / `44` (iOS) `// ad:fixed touch-min`, or `hitSlop` |
+| touch target | visual size as a token + hit area with `hitSlop` (or a `Pressable` wrapper with `minHeight: 48` Android / `44` iOS `// ad:fixed touch-min`) — never clamp the visual |
 | `adapt` | `useWindowDimensions()` for structure; `sdpQualifier`, `sdpScreen`, `scaledDp(16).screen(…)` for values |
 
 Fold/flip, car, watch and desk modes come from the app via `<AppDimensProvider uiModeType={…}>`; TV is detected automatically.

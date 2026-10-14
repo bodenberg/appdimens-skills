@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { findProject } from './project.mjs';
 import { lintText } from './rules.mjs';
 
@@ -18,7 +18,7 @@ export function collectFiles(paths) {
       for (const name of readdirSync(p)) if (!SKIP_DIRS.has(name)) walk(join(p, name));
     } else files.push(p);
   };
-  paths.forEach(walk);
+  paths.map((p) => resolve(p)).forEach(walk);
   return files;
 }
 

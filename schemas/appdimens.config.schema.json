@@ -136,8 +136,7 @@
             "fill",
             "density",
             "adaptive",
-            "bounded",
-            "damped"
+            "bounded"
           ],
           "description": "Default policy for spacing, radii, icons, control sizes."
         },
@@ -156,8 +155,7 @@
             "fill",
             "density",
             "adaptive",
-            "bounded",
-            "damped"
+            "bounded"
           ],
           "description": "Default policy for typography (sp kind)."
         }
@@ -307,7 +305,7 @@
         "height": {
           "type": "number",
           "exclusiveMinimum": 0,
-          "description": "Logical height. Use the height the app content gets when the frame includes system bars and hdp is used."
+          "description": "Logical height of the frame/device in the design orientation."
         },
         "unit": {
           "enum": [
@@ -345,6 +343,11 @@
         "confirmed": {
           "type": "boolean",
           "description": "true once the user confirmed it."
+        },
+        "runtimeHeight": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Height the library actually reads at runtime when it differs from the frame (e.g. Android targetSdk ≤ 34 excludes system bars). Used for hdp/hsp, the a suffix and fit/fill/diagonal/perimeter."
         }
       }
     }

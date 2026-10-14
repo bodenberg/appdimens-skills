@@ -16,10 +16,13 @@ Decide intent first with `appdimens-layout-intent`. Units are **points**: a Figm
 // Package.swift
 .package(url: "https://github.com/bodenberg/appdimens-ios", from: "3.2.0"),
 // target:
-.product(name: "AppDimensDynamic", package: "appdimens-ios")   // core + every strategy, resize, units, Metal
+.product(name: "AppDimensDynamic", package: "appdimens-ios")   // core + Strategies + Auto + Resize + Units + Metal
+// other strategies are separate products: AppDimensFluid, AppDimensPercent, AppDimensPower,
+// AppDimensLogarithmic, AppDimensInterpolated, AppDimensDiagonal, AppDimensPerimeter,
+// AppDimensFit, AppDimensFill, AppDimensDensity — add the product and `import` it where its tokens are used
 ```
 
-Pick individual products (`AppDimens`, `AppDimensAuto`, `AppDimensFluid`, `AppDimensPercent`, `AppDimensResize`, `AppDimensUnits`…) only when binary size matters. Inspect `Sources/` for real declarations; never invent a suffix.
+`AppDimensDynamic` covers `sdp`/`ssp`/`asdp`/resize/units. `fsdp`, `psdp`/`spaceW`, `pwsdp`, `logsdp`, `isdp`, `dgsdp`, `prsdp`, `ftsdp`, `flsdp`, `dsdp` need their own product + import. Inspect `Sources/` for real declarations; never invent a suffix.
 
 ## Setup
 
@@ -55,7 +58,7 @@ Pick individual products (`AppDimens`, `AppDimensAuto`, `AppDimensFluid`, `AppDi
 | `sizing: clamp` | `.frame(minWidth: 280, maxWidth: 600)` `// ad:fixed clamp` |
 | `truncate` | `.lineLimit(2).truncationMode(.tail)` |
 | `divider` | `Divider()` (system hairline) |
-| touch minimum | `.frame(minWidth: 44, minHeight: 44)` `// ad:fixed touch-min` + `.contentShape(Rectangle())` |
+| touch target | visual size as a token (`.frame(width: 33.5.asdp, height: 33.5.asdp)` for 44 on a 393 base) + hit area: `.contentShape(Rectangle())` with an outer `.frame(minWidth: 44, minHeight: 44)` — never clamp the visual |
 | `adapt` | `@Environment(\.horizontalSizeClass)` for structure; `16.scaledDp()` builder / facilitators for values at qualifiers (see upstream docs) |
 
 ## Intent → UIKit
@@ -70,4 +73,4 @@ Pick individual products (`AppDimens`, `AppDimensAuto`, `AppDimensFluid`, `AppDi
 
 ## Verify
 
-`swift build` / Xcode build; previews pinned with `.appDimensConfiguration(DimensConfiguration(screenWidth: 300, screenHeight: 533, displayScale: 3))`, the design width (390) and iPad (820) when tablets are in scope; large Dynamic Type sizes.
+`swift build` / Xcode build; previews pinned on the **base screen first** with `.appDimensConfiguration(DimensConfiguration(screenWidth: 393, screenHeight: 852, displayScale: 3), updatesAmbient: true)` (without `updatesAmbient: true` the zero-argument `16.sdp` keeps reading the ambient store; or resolve with `16.sdp(dimens)`), then 300×533, the design width (390) and iPad (820) when tablets are in scope; large Dynamic Type sizes.

@@ -9,22 +9,23 @@ Follow `appdimens-layout-intent` (steps 1–7). Without a design, **you** are th
 
 ## 1. Decide the base screen and the strategy (once per project)
 
-- Base screen: `appdimens.config.json → design.baseScreen`; else the platform default (`../appdimens-layout-intent/references/base-screen.md` §5: Android Medium Phone 411×914 dp, Apple iPhone 15/16 393×852 pt, web 390×844…). Say which one you use.
+- Base screen: `appdimens.config.json → design.baseScreen`; else the platform default (`../appdimens-layout-intent/references/base-screen.md` §5: Android Medium Phone 411×914 dp, Apple iPhone 15/16 393×852 pt, web 390×844…) stated as "assumed, unconfirmed" — no question needed; offer to record it.
 - Strategy: from `formFactors` (phone only → `scaled`; tablets/TV/desktop → `auto`) or the user's choice (`power`, `fluid`, `logarithmic`…). Text uses the same strategy's `sp` kind unless the config says otherwise.
-- Normalization: if the project already has a theme in AppDimens base values, **reuse it**. Otherwise choose with the user:
+- Normalization: if the project already has a theme in AppDimens base values, **reuse it**. Otherwise:
   - `match-base` (default): think in sizes on the base screen (padding 16 dp on a Medium Phone) and convert with `normalize` → `11.5.sdp`;
-  - `design-at-300`: define a clean scale directly at the 300 reference (`4, 8, 12, 16…` as `sdp`), knowing it renders ×1.37 on a 411 phone.
+  - `design-at-300`: define a clean scale directly at the 300 reference (`4, 8, 12, 16…` as `sdp`), knowing it renders ×1.37 on a 411 phone. Defensible for new products whose tokens are shared with web or other apps.
+  - Ask only if the project has no theme and the user cares about matching a specific device; otherwise default to `match-base`.
 
 ## 2. Define the token scale in the theme first
 
 Never scatter raw numbers across screens. Create (or extend) one theme file per platform with spacing, radius, icon/control sizes and typography as AppDimens base values:
 
 ```bash
-node <package>/tools/appdimens-kit/cli.mjs normalize --device medium-phone --strategy auto 4 8 12 16 20 24 32 48     # space
-node <package>/tools/appdimens-kit/cli.mjs normalize --device medium-phone --strategy auto --text 12 14 16 20 24 32  # type
+node <package>/tools/appdimens-kit/cli.mjs normalize --device medium-phone --strategy auto --theme 4 8 12 16 20 24 32 48     # space
+node <package>/tools/appdimens-kit/cli.mjs normalize --device medium-phone --strategy auto --theme --text 12 14 16 20 24 32  # type
 ```
 
-Keep fixed tokens separate and named for their reason: `hairline = 1.dp`, `touchMin = 48.dp` (44 pt Apple), `maxContentWidth = 600.dp`.
+`--theme` prints exact values named by the design number (`space16 = 11.68.asdp // 16 on base screen`), so sums and ratios hold and the base can change in one place. Line height = ratio of the font size. Keep fixed tokens separate and named for their reason: `hairline = 1.dp`, `maxContentWidth = 600.dp`; touch hit areas come from the platform API, not a token.
 
 ## 3. Build from intent
 

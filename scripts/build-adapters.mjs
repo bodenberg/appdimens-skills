@@ -19,9 +19,9 @@ const GLOBS = {
   'appdimens-kmp': '**/commonMain/**/*.kt',
   'appdimens-apple': '**/*.swift',
   'appdimens-flutter': '**/*.dart',
-  'appdimens-react-native': '**/*.tsx,**/*.jsx',
+  'appdimens-react-native': '', // .tsx/.jsx also match web apps: rely on the description
   'appdimens-web': '**/*.css,**/*.scss,**/*.html,**/*.vue,**/*.svelte,**/*.astro',
-  'appdimens-dotnet': '**/*.xaml,**/*.cs',
+  'appdimens-dotnet': '**/*.xaml', // .cs also matches Unity games
 };
 
 const ORDER = ['appdimens-layout-intent', 'appdimens-design-to-code', 'appdimens-claude-design', 'appdimens-code-edit', 'appdimens-new-screen'];
@@ -42,9 +42,11 @@ function parseSkill(dir) {
 }
 
 /** Rewrites package-relative paths so they resolve from a consumer repo root. */
-function rewrite(body, skillDir) {
+export function rewrite(body, skillDir) {
   return body
+    .replace(/^Paths: `<package>` is the root of this kit[^\n]*\n\n/m, '')
     .replace(/<(this-)?package>/g, INSTALL_DIR)
+    .replace(/(^|[\s(`])references\/([\w.-]+\.md)/gm, (m, pre, f) => (skillDir === 'appdimens-layout-intent' ? `${pre}${INSTALL_DIR}/skills/appdimens-layout-intent/references/${f}` : m))
     .replace(/\]\((?!https?:|#)(\.\.\/)?([^)]+)\)/g, (_, up, path) =>
       up ? `](${INSTALL_DIR}/skills/${path})` : `](${INSTALL_DIR}/skills/${skillDir}/${path})`,
     )
@@ -87,6 +89,25 @@ function build() {
     '',
   ].join('\n');
   files.set(join(outDir, 'codex', 'AGENTS.md'), agents);
+
+  // Cursor: a small always-on stub so the base-screen/intent gate applies even when a
+  // platform rule auto-attaches by glob; the full core rule is agent-requested.
+  const stub = [
+    '---',
+    'description: AppDimens gate — base screen and layout intent before any responsive size',
+    'globs: ',
+    'alwaysApply: true',
+    '---',
+    header('Always-on stub. Full rules: appdimens-layout-intent.mdc and the workflow/platform rules.'),
+    'In a project that depends on AppDimens (appdimens-*, webdimens, Bodenberg.AppDimens.*, AppDimens.Net), before writing or converting UI sizes:',
+    '',
+    `1. Base screen: use \`appdimens.config.json → design.baseScreen\`; else one unambiguous source (single design frame, ≥ 80 % of previews from \`node ${INSTALL_DIR}/tools/appdimens-kit/cli.mjs detect .\`, platform default for new screens) stated as "assumed, unconfirmed"; else ask (one message, ≤ 5 questions).`,
+    `2. Never re-label a number (\`16.dp\` → \`16.sdp\` grows 20–47 % on phones). Convert with \`node ${INSTALL_DIR}/tools/appdimens-kit/cli.mjs normalize --device <base> --strategy <s> <values…>\` (\`--theme\` for theme tokens, \`--xml\` for Android XML, \`--axis h\` for hdp, \`--density\` for px frames).`,
+    '3. Decide each element\'s intent (role, fill/hug, scroll, fixed) before choosing tokens. Hairlines, elevation, shadows and platform chrome stay fixed; touch targets: visual size is a token, the hit area uses the platform API.',
+    `4. Follow the full rule \`appdimens-layout-intent\` and the platform rule; validate with \`node ${INSTALL_DIR}/tools/appdimens-kit/cli.mjs lint <files>\`.`,
+    '',
+  ].join('\n');
+  files.set(join(outDir, 'cursor', 'rules', 'appdimens-00-gate.mdc'), stub);
 
   // Cursor: one rule per skill.
   for (const s of skills) {

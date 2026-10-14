@@ -25,7 +25,7 @@ Keep one layout policy per screen. A different policy for one element needs a re
 | 6 | Literal share of the window (`fraction` sizing) | `fraction` | `50.spaceW`, `40.spaceH` (percent module) | Not `wdp`: `wdp` is proportional growth, not a share. |
 | 7 | Media (image/video/map) | `ratio` | width fill + `aspectRatio(4f/3f)` | Height never `hdp`. |
 | 8 | Full-bleed hero/banner height | `height` or `fraction` | `72.hdp` (220 on a 914-tall base) or `24.spaceH` | Only when the design says it tracks screen height. Always `normalize --axis h`. |
-| 9 | Touch target (button, icon-button, chip, list row tap area) | `L`, clamped | `Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)` + `height(48.asdp)` | Min: 48 dp Android · 44 pt Apple · 24 CSS px web (44 recommended) · 40 epx Windows. The minimum is a fixed value by design. |
+| 9 | Touch target (button, icon-button, chip, list row tap area) | visual: `L`; hit area: fixed platform minimum | visual `size(35.asdp)` (48 on a 411 base) + hit area `Modifier.minimumInteractiveComponentSize()` | Never clamp the visual. Hit-area APIs: Compose `minimumInteractiveComponentSize()` (48 dp) · SwiftUI `.contentShape(Rectangle())` + outer `.frame(minWidth: 44, minHeight: 44)` · RN `hitSlop` · web padding / `::before` (24 CSS px WCAG minimum, 44 recommended) · Windows 40 epx. |
 | 10 | Control height (button, input, chip) | `L` | `48.sdp` / `48.asdp` | Prefer hug + vertical padding when the design system does. |
 | 11 | Spacing: padding, margin, gap, spacer | `L` | `16.sdp` / `16.asdp` | Prefer the parent's gap over spacer elements. |
 | 12 | Corner radius | `L` | `12.sdp` / `12.asdp` | Pill shapes: use the shape (`CircleShape`, `Capsule`), not a number. |
@@ -40,7 +40,7 @@ Keep one layout policy per screen. A different policy for one element needs a re
 | 21 | Real-world size (ruler, card preview at 85.6 mm) | `physical` | `85.6.mm` (units module) | |
 | 22 | Canvas / game world / board that must stay fully visible | `fit` | `ftsdp` | |
 | 23 | Background art that must cover | `fill` | `flsdp` | |
-| 24 | TV-first or dashboard UI where linear growth is too strong | `damped` | `logsdp` / `pwsdp` | Needs a visual reason; ask before using. |
+| 24 | TV-first or dashboard UI where linear growth is too strong | `logarithmic` (or `power` for softer) | `logsdp` / `pwsdp` | Needs a visual reason; ask before using. |
 | 25 | Anything else with a designed numeric size | `L` | `N.sdp` / `N.asdp` | |
 
 ## User-chosen strategies and special features
@@ -62,7 +62,7 @@ The defaults above are a starting point. When the user or the config picks anoth
 | **resize** | text/box must fit a container | not normalized: `min`/`max` are final sizes from the design intent |
 | **units** | real-world size (mm/cm/in) | not normalized: physical; accuracy depends on reported dpi |
 
-Rules: one strategy per screen; every non-scaled strategy needs its module/package/import (except web, where tokens self-register); `hdp`/`wdp` variants of any strategy read that axis of the base screen (`--axis h|w`).
+Rules: one strategy per screen; every non-scaled strategy needs its module/package/import (except web, where tokens self-register); the `hdp`/`wdp` variants of the single-axis strategies (scaled, auto, percent, power, fluid, interpolated, logarithmic) read that axis of the base screen (`--axis h|w`); diagonal, perimeter, fit, fill and density read the whole screen, so their `hdp`/`wdp` variants equal `sdp`.
 
 ## From design value to base value
 
@@ -81,4 +81,4 @@ Token columns in the tables above show syntax. Real base values come from `norma
 Additional rules:
 - Fixed-policy values (rules 1–3 and touch minimums) are never normalized.
 - Several frames for the same screen (Mobile 360, Tablet 768): normalize from the base (mobile) frame; the others become `adapt` overrides or confirm the strategy (if the designer kept 16 → 16, the intent is `bounded`/`fixed`, not `scaled`).
-- Web desktop frames (1440×900): the smallest side is 900, so every strategy grows a lot. Use the mobile frame as the base and express desktop as `adapt` overrides (`@w840`, `@w1200`), or use `bounded`/`fixed` for desktop-only products.
+- Web desktop frames (1440×900): the smallest side is 900, so scaled (×3.0), auto (×1.95) and power (×2.28) grow a lot (fluid caps at ×1.2, logarithmic ≈ ×1.44). Use the mobile frame as the base and express desktop as `adapt` overrides (`@w840`, `@w1200`), or use `bounded`/`fixed` for desktop-only products.

@@ -19,7 +19,8 @@ Claude Code, Codex, Cursor and similar tools learn to identify **the base screen
 | `tools/appdimens-kit` | Zero-dependency Node CLI: `lint`, `normalize` (design value → base value), `detect` (platform targets). |
 | `hooks/hooks.json` | Claude Code hook: lints each edited file (silent outside AppDimens projects). |
 | `adapters/` | Generated Codex `AGENTS.md` section and Cursor `.mdc` rules (same content as the skills). |
-| `evals/` | Golden intent cases to measure agents and catch regressions in the skills. |
+| `evals/` | 18 golden cases with machine-checkable asserts + `score.mjs` to measure agents and catch regressions. |
+| `docs/` | `CONCEPT.md` (PT-BR concept) and `REVIEW.md` (three-reviewer audit, debate and decisions). |
 
 ### Library coverage
 
@@ -77,11 +78,14 @@ Then add `appdimens.config.json` at your project root (or let the agent propose 
 node tools/appdimens-kit/cli.mjs detect .                                              # platforms, libraries, base-screen evidence in code
 node tools/appdimens-kit/cli.mjs devices                                               # base-screen catalog (dp / pt / CSS px)
 node tools/appdimens-kit/cli.mjs normalize --device medium-phone --strategy auto 16 24  # value on base screen → AppDimens base
+node tools/appdimens-kit/cli.mjs normalize --device medium-phone --theme 4 8 16 24      # exact theme tokens (space16 = 11.68.sdp)
+node tools/appdimens-kit/cli.mjs normalize --device medium-phone --xml 16                # Android XML: integer + resource bucket
 node tools/appdimens-kit/cli.mjs normalize --frame 1080 --height 2400 --density 2.625 48  # design drawn in physical px
+node tools/appdimens-kit/cli.mjs compare --device medium-phone --tablet medium-tablet --phone-value 16 --tablet-value 24  # existing tablet override
 node tools/appdimens-kit/cli.mjs lint src/                                              # validate
 ```
 
-`lint` flags: fixed literals that should be tokens (`16.dp`, `padding: 16`, `16px`, `android:padding="16dp"`, `Padding="16"`), strategy tokens without their import/module, obsolete APIs (`balanced`, `fxdp`…), XML resources that don't exist (`_700sdp`, `_13.5sdp`), JS-only web tokens in CSS/classes, `*Px` in React Native `fontSize`, and mixed .NET families. Deliberately fixed values carry a reason: `// ad:fixed hairline`.
+`lint` (and the hook, on the lines each edit wrote) flags: fixed literals that should be tokens — with a suggestion converted from the configured base screen, never the same number re-labelled — (`16.dp`, `padding: 16`, `16px`, `android:padding="16dp"`, `Padding="16"`), strategy tokens without their import/module, obsolete APIs (`balanced`, `fxdp`…), XML resources that don't exist (`_700sdp`, `_13.5sdp`), JS-only web tokens in CSS/classes, `*Px` in React Native `fontSize`, and mixed .NET families. Deliberately fixed values carry a reason: `// ad:fixed hairline`.
 
 ## Develop
 

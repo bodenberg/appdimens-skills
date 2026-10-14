@@ -59,6 +59,19 @@ function installClaude() {
   const to = join(project, '.claude', 'skills');
   mkdirSync(to, { recursive: true });
   for (const d of readdirSync(join(root, 'skills'))) cpSync(join(root, 'skills', d), join(to, d), { recursive: true });
+  // In a project copy the kit lives in .appdimens/, not two folders above the skill.
+  const fix = (dir) => {
+    for (const f of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, f.name);
+      if (f.isDirectory()) fix(p);
+      else if (f.name.endsWith('.md'))
+        writeFileSync(p, readFileSync(p, 'utf8')
+          .replace(/^Paths: `<package>` is the root of this kit[^\n]*\n\n/m, '')
+          .replace(/<(this-)?package>/g, '.appdimens')
+          .replace(/`schemas\//g, '`.appdimens/schemas/'));
+    }
+  };
+  fix(to);
   console.log(`copied skills → ${to}`);
   console.log(
     '\nAdd the validation hook to .claude/settings.json (or install the plugin instead: /plugin marketplace add bodenberg/appdimens-skills):\n' +

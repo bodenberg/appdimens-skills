@@ -35,7 +35,7 @@ The library declares Compose as `compileOnly`: the app's own Compose BOM is the 
 | bounded | `com.appdimens.dynamic.compose.fluid.*` | `16.fsdp` `16.fssp` | `16.fssp(ctx)` |
 | fraction | `com.appdimens.dynamic.compose.percent.*` | `50.spaceW` `40.spaceH` `psdp` | `50.spaceW(ctx)` |
 | fit / fill / damped | `compose.fit` / `compose.fill` / `compose.logarithmic` / `compose.power` | `ftsdp` `flsdp` `logsdp` `pwsdp` | same names with `(ctx)` |
-| physical | `compose.units` | `10.mm` `2.cm` `1.inch` | `DimenPhysicalUnits` |
+| physical | `com.appdimens.dynamic.compose.mm` / `.cm` / `.inch` (module `-units`) | `10f.mm.dp` (`.mm` returns a dp-equivalent `Float`; add `.dp`) | `DimenPhysicalUnits` |
 | fit-text | `com.appdimens.dynamic.compose.resize.autoResizeTextSp` | inside `BoxWithConstraints` | `code.resize.DimenResize` |
 
 Strategies do not cross-import. Never mix `compose.auto` and `compose.fluid` tokens in one component without a reason.
@@ -57,7 +57,7 @@ Strategies do not cross-import. Never mix `compose.auto` and `compose.fluid` tok
 | `sizing: clamp` | `Modifier.widthIn(min = 280.dp, max = 600.dp)` `// ad:fixed clamp` |
 | `overflow: truncate` | `Text(maxLines = 2, overflow = TextOverflow.Ellipsis)` |
 | `divider` | `HorizontalDivider(thickness = 1.dp)` `// ad:fixed hairline` |
-| touch minimum | `Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)` or `minimumInteractiveComponentSize()` |
+| touch target | visual size as a token (`Modifier.size(35.asdp)` for 48 on a 411 base) + hit area `Modifier.minimumInteractiveComponentSize()` (Material components already do it) — never clamp the visual |
 | `adapt` (value at breakpoint) | `16.sdpQualifier(24, DpQualifier.SMALL_WIDTH, 600)` or `16.scaledDp().screen(DpQualifier.SMALL_WIDTH, 600, 24).sdp` |
 | `adapt` (structure at breakpoint) | `currentWindowAdaptiveInfo().windowSizeClass` or `LocalConfiguration.current.smallestScreenWidthDp >= 600` → different composable |
 

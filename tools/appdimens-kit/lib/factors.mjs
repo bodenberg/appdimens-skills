@@ -3,6 +3,8 @@
 //
 // A "screen" is { width, height, dpi?, fontScale? } in logical units (dp / pt / CSS px).
 
+import { readFileSync } from 'node:fs';
+
 export const W0 = 300; // reference shorter side
 export const H0 = 533; // reference longer side
 export const D0 = 611.6305; // family-canonical diagonal (do not "fix" to the true sqrt)
@@ -12,7 +14,7 @@ const EPS = 0.1 / 30; // default adjustment scale (= 1/300)
 const KAPPA = 0.08 / 30; // default aspect-ratio sensitivity
 
 export const STRATEGIES = ['scaled', 'auto', 'percent', 'power', 'fluid', 'interpolated', 'logarithmic', 'diagonal', 'perimeter', 'fit', 'fill', 'density'];
-const ALIASES = { adaptive: 'auto', bounded: 'fluid', damped: 'logarithmic' };
+const ALIASES = { adaptive: 'auto', bounded: 'fluid' };
 export const resolveStrategy = (s) => ALIASES[s] || s;
 
 /** Token prefix per strategy (`16.<prefix>sdp`). */
@@ -84,6 +86,18 @@ export function factorFor(strategy, screen, { axis = 's', aspect = false, text =
   return f;
 }
 
+// Android XML (appdimens-sdps / appdimens-ssps) ships pre-computed resources in discrete
+// values-sw<N>dp / -h<N>dp / -w<N>dp folders; at runtime Android picks the largest bucket
+// <= the screen's axis, so the XML factor is floorBucket / 300 (default `values` = 300 base).
+let buckets;
+export function xmlBucket(length, axis = 's') {
+  buckets ??= JSON.parse(readFileSync(new URL('./xml-buckets.json', import.meta.url), 'utf8'));
+  const list = buckets[axis === 'h' ? 'h' : axis === 'w' ? 'w' : 'sw'];
+  let best = W0;
+  for (const b of list) if (b <= length) best = b;
+  return length < list[0] ? W0 : best;
+}
+
 /** Backwards-compatible single-axis helper: factor(policy, smallestSide). */
 export function factor(policy, smallestSide) {
   return factorFor(policy, { width: smallestSide, height: smallestSide * (H0 / W0) });
@@ -98,16 +112,22 @@ export function roundTo(value, step) {
  * AppDimens base values that resolve to the same size on that screen:
  *   base = (value ÷ density) ÷ factor(strategy, base screen)
  */
-export function normalize(values, { frame, height, policy = 'scaled', strategy, rounding = 0.5, axis = 's', density = 1, aspect = false, dpi, fontScale } = {}) {
+export function normalize(values, { frame, height, runtimeHeight, policy = 'scaled', strategy, rounding = 0.5, axis = 's', density = 1, aspect = false, dpi, fontScale, xml = false } = {}) {
   const s = resolveStrategy(strategy || policy);
-  const screen = { width: frame / density, height: height ? height / density : undefined, dpi, fontScale };
-  const f = factorFor(s, screen, { axis, aspect });
+  // runtimeHeight = the height the platform reports to the library (may exclude system bars);
+  // it replaces the frame height for every kernel that reads the height.
+  const h = runtimeHeight ? runtimeHeight / density : height ? height / density : undefined;
+  const screen = { width: frame / density, height: h, dpi, fontScale };
+  if (xml && s !== 'scaled') throw new Error('Android XML resources only exist for the scaled strategy.');
+  const bucket = xml ? xmlBucket(axisLength(screen, axis), axis) : undefined;
+  const f = xml ? bucket / W0 : factorFor(s, screen, { axis, aspect });
   return {
-    baseDevice: { width: screen.width, height: screen.height },
+    baseDevice: { width: screen.width, height: screen.height, frameHeight: height ? height / density : undefined },
     strategy: s,
     policy: s,
     axis: AXIS_STRATEGIES.has(s) ? axis : 'screen',
     axisLength: AXIS_STRATEGIES.has(s) ? axisLength(screen, axis) : smin(screen),
+    xmlBucket: bucket,
     smallestSide: smin(screen),
     aspect,
     aspectRatio: screen.height ? smax(screen) / smin(screen) : undefined,
@@ -131,4 +151,28 @@ export function percentOf(values, { frame, height, of = 'w', density = 1, roundi
     const percent = roundTo((design / axisValue) * 100, rounding);
     return { input: raw, design, percent, resultOnFrame: (percent / 100) * axisValue };
   });
+}
+
+/**
+ * Theme tokens keep full precision and the design number in their name, so sums and
+ * ratios survive (space8 + space8 == space16) and the base can be changed in one place.
+ */
+export function themeTokens(values, opts) {
+  const exact = normalize(values, { ...opts, rounding: opts.xml ? 1 : 0.01 });
+  return exact.rows.map((r) => ({ name: r.design, base: r.base, resultOnFrame: r.resultOnFrame }));
+}
+
+/**
+ * Existing tablet overrides (values-sw600dp, `if (isTablet)`) were written because plain
+ * dp did not grow. After migrating, the strategy already grows: compare what the override
+ * did with what the strategy will do on the same tablet.
+ */
+export function compareOverride({ phoneValue, tabletValue, phone, tablet, strategy = 'scaled', axis = 's', xml = false, tolerance = 0.1 }) {
+  const fPhone = xml ? xmlBucket(axisLength(phone, axis), axis) / W0 : factorFor(strategy, phone, { axis });
+  const fTablet = xml ? xmlBucket(axisLength(tablet, axis), axis) / W0 : factorFor(strategy, tablet, { axis });
+  const base = phoneValue / fPhone;
+  const strategyOnTablet = base * fTablet;
+  const ratio = tabletValue / strategyOnTablet;
+  const verdict = Math.abs(ratio - 1) <= tolerance ? 'delete-override' : 'keep-as-adapt';
+  return { base, strategyOnTablet, override: tabletValue, ratio, verdict, adaptBase: tabletValue / fTablet };
 }

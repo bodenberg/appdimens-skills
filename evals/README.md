@@ -6,16 +6,20 @@ Two layers of checks keep the skills honest.
 
 `tools/appdimens-kit/test/` runs the lint rules against one fixture project per platform, plus the scale-factor math (checked against the numbers published in the AppDimens docs) and the Claude Code hook contract. CI and contributors run it on every change.
 
-## 2. Agent behaviour: `intent-cases.json`
+## 2. Agent behaviour: `intent-cases.json` + `score.mjs`
 
-Each case has a mode (`read` design → code, `create` brief → design, `edit` code → code), a project config, an input, and the decisions a correct agent must make (`expect`), including what it must **not** do.
+Each case has a mode (`read`, `claude-design`, `edit`, `create`), a project config, an input, the decisions a correct agent must make (`expect`, prose) and a machine-checkable `assert` block:
 
-How to run a case with any agent (Claude Code, Codex, Cursor…):
+- `must_match`: regexes that must appear in the agent's output (tokens such as `11\.5\.asdp`, APIs such as `minimumInteractiveComponentSize`);
+- `must_not_match`: regexes that reveal a wrong decision (the as-is value `16\.asdp`, `Positioned`, a Px token in markup);
+- `must_ask`: whether the agent should stop with a question before converting (the base-screen rule).
 
-1. Install the kit in an empty project (`node scripts/install.mjs --target <agent> <dir>`) and write the case's `config` to `<dir>/appdimens.config.json`.
-2. Give the agent the case `input` as the prompt ("Implement this…", "Migrate this…", "Design…").
-3. Score the intent sheet and code against `expect`: 1 point per expected decision, −1 per `must_not` hit. Run `appdimens-kit lint` on the output (0 errors expected).
+Run a case with any agent in a scratch project, then score it:
 
-Keep a small table of results per agent and skill version. A drop on a case after editing a skill means the edit made the model worse at that decision.
+```bash
+node scripts/install.mjs --target codex /tmp/case && echo '<case config>' > /tmp/case/appdimens.config.json
+claude -p "<case input>" --output-format text > out.txt        # or: codex exec "<case input>" > out.txt
+node evals/score.mjs <case-id> out.txt [--asked yes|no]       # exit 0 only on a perfect score
+```
 
-Add a case whenever an agent gets something wrong in real use: the input that fooled it, and the decision it should have made.
+Keep a results table per agent and skill version; a drop on a case after editing a skill means the edit made the model worse at that decision. Add a case whenever an agent gets something wrong in real use.

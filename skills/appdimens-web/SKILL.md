@@ -62,7 +62,7 @@ The smallest side of a desktop browser is often 800–1000, so `sdp` grows 2.7�
 | `truncate` | `display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden` |
 | `fit-text` | `autoResizeText(el, { min: 12, max: 34, maxLines: 2 })` from `webdimens/resize` (box must be constrained: `min-width:0`) |
 | `divider` | `border-top: 1px solid …` `/* ad:fixed hairline */` |
-| touch minimum | `min-height: 44px; min-width: 44px` `/* ad:fixed touch-min */` (WCAG 2.2 AA minimum is 24px) |
+| touch target | visual size as a token + hit area via padding or a `::before` overlay reaching `44px` (`/* ad:fixed touch-min */`; WCAG 2.2 AA minimum 24px) — never clamp the visual |
 | `adapt` | conditions `@sw600` `@w840` `@landscape` `@tv` in classes/`data-dimen`/`@dimen`; structural changes with regular media/container queries |
 
 ## Lint (what `appdimens-kit lint` flags here)

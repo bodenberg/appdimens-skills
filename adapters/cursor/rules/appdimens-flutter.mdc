@@ -50,7 +50,7 @@ Wrap once: `runApp(AppDimensApp(child: MaterialApp(...)))`, or `AppDimensScopeBi
 | `sizing: clamp` | `ConstrainedBox(constraints: BoxConstraints(minWidth: 280, maxWidth: 600))` `// ad:fixed clamp` |
 | `truncate` | `Text(maxLines: 2, overflow: TextOverflow.ellipsis)` |
 | `divider` | `Divider(thickness: 1, height: 1)` `// ad:fixed hairline` |
-| touch minimum | Material's `minimumSize: Size(48, 48)` / `kMinInteractiveDimension` `// ad:fixed touch-min` |
+| touch target | visual size as a token + hit area via Material `minimumSize: Size(48, 48)` / `kMinInteractiveDimension` on the button style or a `SizedBox` hit box `// ad:fixed touch-min` — never clamp the visual |
 | `adapt` | `LayoutBuilder` / `MediaQuery.sizeOf(context).shortestSide >= 600` for structure; facilitators `.sdpQualifier`, `.sdpScreen` for values |
 
 Typography: put sizes in `ThemeData.textTheme` built inside the provider (`TextStyle(fontSize: 16.ssp)`), so the theme is rebuilt when the snapshot changes.

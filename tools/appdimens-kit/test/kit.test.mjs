@@ -89,9 +89,38 @@ test('files outside an AppDimens project are skipped (unless forced)', () => {
   assert.equal(forced.findings.length, 1);
 });
 
-test('config policy changes the suggestion', () => {
-  const { findings } = lintText('Modifier.padding(16.dp)', { file: 'a.kt', config: { formFactors: ['phone', 'tablet'] } });
-  assert.match(findings[0].message, /16\.asdp/);
+test('suggestions are base-screen aware, never the raw number re-labelled', () => {
+  const base = { design: { baseScreen: { width: 411, height: 914 } }, formFactors: ['phone', 'tablet'] };
+  const withBase = lintText('Modifier.padding(16.dp)', { file: 'a.kt', config: base });
+  assert.match(withBase.findings[0].message, /11\.5\.asdp/);
+  assert.doesNotMatch(withBase.findings[0].message, /\b16\.asdp/);
+  const xml = lintText('<View android:padding="16dp" />', { file: 'res/layout/a.xml', config: base });
+  assert.match(xml.findings[0].message, /@dimen\/_12sdp/);
+  const noBase = lintText('Modifier.padding(16.dp)', { file: 'a.kt', config: { formFactors: ['phone'] } });
+  assert.match(noBase.findings[0].message, /normalize --device <base screen> --strategy scaled 16/);
+  assert.doesNotMatch(noBase.findings[0].message, /\b16\.sdp/);
+});
+
+test('fixed-intent contexts and touch minimums are not flagged', () => {
+  const kt = lintText(['Card(elevation = CardDefaults.cardElevation(4.dp), modifier = Modifier.padding(16.dp))',
+    'Modifier.shadow(8.dp)', 'Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)', 'Modifier.border(2.dp, Color.Red)'].join('\n'), { file: 'a.kt' });
+  assert.deepEqual(kt.findings.map((f) => f.line), [1], 'only the padding on line 1');
+  const rn = lintText("import {View} from 'react-native';\nconst s = { shadowOffset: { width: 0, height: 4 }, padding: 16 };\nconst h = { hitSlop: { top: 10 } };", { file: 'a.tsx' });
+  assert.deepEqual(rn.findings.map((f) => f.message.startsWith('padding')), [true]);
+  const css = lintText('.card { padding: 16px; border: 1px solid #ddd; box-shadow: 0 4px 8px #0003; }\n@media (min-width: 600px) { .x { padding: 24px } }', { file: 'a.css' });
+  assert.deepEqual(css.findings.map((f) => f.line), [1, 2]);
+});
+
+test('react native files without a react-native import, and relative XML paths', () => {
+  const rn = lintFiles([fx('rn', 'styles.ts')]);
+  assert.equal(rn[0].lang, 'react-native');
+  const cwd = process.cwd();
+  process.chdir(fx('xml'));
+  try {
+    assert.equal(lintFiles(['res/layout/item.xml'])[0].lang, 'android-xml');
+  } finally {
+    process.chdir(cwd);
+  }
 });
 
 test('cli normalize prints a table', () => {
@@ -102,7 +131,7 @@ test('cli normalize prints a table', () => {
 
 test('hook: errors exit 2, warnings add context, unrelated files are silent', () => {
   const hook = join(kit, 'hook.mjs');
-  const call = (file) => spawnSync(process.execPath, [hook], { input: JSON.stringify({ tool_name: 'Edit', tool_input: { file_path: file } }), encoding: 'utf8' });
+  const call = (file, extra = {}) => spawnSync(process.execPath, [hook], { input: JSON.stringify({ tool_name: 'Edit', tool_input: { file_path: file, ...extra } }), encoding: 'utf8' });
 
   const err = call(fx('rn', 'Card.tsx'));
   assert.equal(err.status, 2);
@@ -111,6 +140,13 @@ test('hook: errors exit 2, warnings add context, unrelated files are silent', ()
   const warn = call(fx('dotnet', 'MainPage.xaml'));
   assert.equal(warn.status, 0);
   assert.equal(JSON.parse(warn.stdout).hookSpecificOutput.hookEventName, 'PostToolUse');
+
+  // only the lines this edit wrote count: an unrelated change in a legacy file never blocks
+  const unrelatedEdit = call(fx('rn', 'Card.tsx'), { new_string: "  title: { fontSize: ssp(18) }," });
+  assert.equal(unrelatedEdit.status, 0);
+  assert.equal(unrelatedEdit.stdout, '');
+  const badEdit = call(fx('rn', 'Card.tsx'), { new_string: '  bad: { fontSize: sdpPx(14) },' });
+  assert.equal(badEdit.status, 2);
 
   const quiet = call(fx('unrelated', 'Plain.kt'));
   assert.equal(quiet.status, 0);
