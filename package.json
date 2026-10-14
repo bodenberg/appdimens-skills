@@ -1,6 +1,6 @@
 {
   "name": "appdimens-skills",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Skills for AI coding agents (Claude Code, Codex, Gemini CLI, OpenClaw, Hermes, Cursor, Copilot, Windsurf) that implement layouts with AppDimens: base screen, layout intent, every AppDimens library, and a validation CLI.",
   "keywords": [
     "appdimens",
