@@ -17,7 +17,8 @@ Each case has a mode (`read`, `claude-design`, `edit`, `create`), a project conf
 Run a case with any agent in a scratch project, then score it:
 
 ```bash
-node scripts/install.mjs --target codex /tmp/case && echo '<case config>' > /tmp/case/appdimens.config.json
+mkdir -p /tmp/case && echo '<case config>' > /tmp/case/appdimens.config.json
+npx appdimens-skills install --dir /tmp/case --agents codex,claude-code --skills all --yes
 claude -p "<case input>" --output-format text > out.txt        # or: codex exec "<case input>" > out.txt
 node evals/score.mjs <case-id> out.txt [--asked yes|no]       # exit 0 only on a perfect score
 ```

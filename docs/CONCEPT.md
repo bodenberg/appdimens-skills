@@ -58,8 +58,23 @@ Todas as estratégias são suportadas quando o usuário escolhe ou o layout pede
   - `devices`: catálogo de telas;
   - `normalize`: todas as estratégias, eixo, densidade, sufixo `a`, `spaceW`;
   - `lint`: validação do código.
-- **Hook** do Claude Code, gerado a partir das mesmas skills, e adaptadores para **Codex** (`AGENTS.md`) e **Cursor** (`.mdc`).
-- **Evals**: casos-ouro para medir as IAs.
+- **Instalador npm** (`npx appdimens-skills`) para Claude Code, Codex, Gemini CLI, OpenClaw, Hermes, Cursor, Copilot e Windsurf, mais o **hook** do Claude Code e o plugin.
+- **Evals**: casos-ouro para medir as IAs e um teste visual com agentes cegos (`evals/visual/`).
+
+## Uma fonte, vários agentes
+
+`skills/` é a fonte única. O instalador (`npx appdimens-skills`) detecta os clientes e IDEs agênticos instalados na máquina e as plataformas AppDimens do projeto. Depois pergunta, como os pacotes de skills convencionais, quais agentes, quais skills opcionais (a central é sempre instalada), o escopo (projeto ou usuário), se adiciona o hook do Claude Code e se cria o `appdimens.config.json`. Cada agente recebe o formato que entende:
+
+| Agente | Formato |
+|---|---|
+| Claude Code | skills em `.claude/skills` + hook de validação (ou o plugin via marketplace) |
+| OpenAI Codex, Gemini CLI, OpenClaw e outros | skills no padrão `.agents/skills` (Codex também recebe a seção no `AGENTS.md`) |
+| Hermes Agent | skills em `~/.hermes/skills` (Hermes só lê skills do usuário) |
+| Cursor | regras `.mdc`, com uma regra-portão sempre ativa |
+| GitHub Copilot | `.github/instructions/*.instructions.md` |
+| Windsurf | `.windsurf/rules/*.md` |
+
+A CLI, os schemas e as skills completas ficam em `.appdimens/` (projeto) ou `~/.appdimens/` (usuário). Um manifesto registra cada arquivo instalado, e o `uninstall` remove exatamente o que foi posto, preservando o `AGENTS.md` e o `settings.json` originais.
 
 ## Fora do escopo
 
