@@ -20,7 +20,7 @@
         }
       ]
     },
-    "policy": { "enum": ["scaled", "adaptive", "bounded", "width", "height", "fraction", "fit", "fill", "damped", "physical", "fixed", "platform", "fit-text"] }
+    "policy": { "enum": ["scaled", "adaptive", "bounded", "width", "height", "fraction", "fit", "fill", "logarithmic", "power", "interpolated", "diagonal", "perimeter", "density", "physical", "fixed", "platform", "fit-text"] }
   },
   "properties": {
     "node": { "type": "string", "description": "Path or id of the source node (design layer path, file:line, component name)." },

@@ -33,7 +33,7 @@ implementation("io.github.bodenberg:appdimens-games-native")    // C/C++/JNI, op
 | Background, parallax (must cover) | fill | `flsdp` · world: `WorldScale.fillPx(metrics, designW, designH)` |
 | Board/map that must stay fully visible | fit | `ftsdp` · world: `WorldScale.fitPx(...)` with `ViewportMode.FIT_ALL` |
 | Score/dialog text | bounded | `16f.fsdp(ctx)` / `fssp` |
-| TV / very large screens | damped | `logsdp` |
+| TV / very large screens | logarithmic | `logsdp` |
 | Physical touch-target size | physical | `2f.cmPx(ctx)` (units) |
 | Pixel-perfect sprites | fixed | raw value `// ad:fixed pixel-art` |
 
