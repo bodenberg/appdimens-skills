@@ -2,7 +2,7 @@
 // appdimens-kit — helpers for AI agents (and humans) implementing AppDimens layouts.
 import { formatText, lintFiles } from './lib/lint.mjs';
 import { AXIS_STRATEGIES, PREFIX, compareOverride, normalize, percentOf, resolveStrategy, themeTokens } from './lib/factors.mjs';
-import { detectTargets } from './lib/project.mjs';
+import { detectTargets, findProject } from './lib/project.mjs';
 import { devices, findDevice, looksLikePhysicalPx, parseSize } from './lib/devices.mjs';
 import { scanBaseHints, summarizeHints } from './lib/basehints.mjs';
 
@@ -35,6 +35,8 @@ const USAGE = `appdimens-kit
       --xml       Android XML resources: integer names, factor = resource bucket ÷ 300
       --theme     theme tokens: exact (0.01) base values named by the design number
       --space     literal percentage tokens instead (spaceW / spaceH / spaceSw)
+      --syntax    token syntax: kotlin|swift|dart (16.sdp, default) · web (16sdp) · rn (sdp(16));
+                  defaults to the platform of appdimens.config.json found from the current folder
 
   compare --device <phone> --tablet <id|WxH> --phone-value <v> --tablet-value <v>
           [--strategy <name>] [--axis s|h|w] [--xml]
@@ -161,6 +163,9 @@ if (command === 'normalize') {
   const kind = (flags.text ? { s: 'ssp', h: 'hsp', w: 'wsp' } : { s: 'sdp', h: 'hdp', w: 'wdp' })[kindAxis];
   const token = `${PREFIX[strategy]}${kind}${flags.aspect ? 'a' : ''}`;
   const xmlName = (b) => `@dimen/_${b < 0 ? `minus${fmt(-b)}` : fmt(b)}${kind}`;
+  const platform = flags.syntax || findProject(process.cwd()).config?.targets?.[0]?.platform;
+  const syntax = /^(web|css)$/.test(platform) ? 'web' : /^(rn|react-native)$/.test(platform) ? 'rn' : 'dot';
+  const tok = (b) => (syntax === 'web' ? `${fmt(b)}${token}` : syntax === 'rn' ? `${token}(${fmt(b)})` : `${fmt(b)}.${token}`);
 
   if (flags.theme) {
     const rows = themeTokens(input, opts);
@@ -173,7 +178,9 @@ if (command === 'normalize') {
     const prefix = flags.text ? 'text' : 'space';
     for (const r of rows)
       out(xml ? `<dimen name="${prefix}_${fmt(r.name).replace('.', '_')}">${xmlName(r.base)}</dimen>  <!-- ${fmt(r.name)} on base → ${fmt(r.resultOnFrame)} -->`
-        : `${prefix}${fmt(r.name).replace('.', '_')} = ${fmt(r.base)}.${token}   // ${fmt(r.name)} on base screen → ${fmt(r.resultOnFrame)}`);
+        : syntax === 'web'
+          ? `--${prefix}-${fmt(r.name).replace('.', '_')}: ${tok(r.base)};   /* ${fmt(r.name)} on base screen → ${fmt(r.resultOnFrame)} */`
+          : `${prefix}${fmt(r.name).replace('.', '_')} = ${tok(r.base)}   // ${fmt(r.name)} on base screen → ${fmt(r.resultOnFrame)}`);
     for (const w of warnings) out(`\n⚠ ${w}`);
     process.exit(0);
   }
@@ -189,7 +196,7 @@ if (command === 'normalize') {
   out('');
   out('| on base screen | AppDimens base | token | resolves to on base screen |');
   out('|---:|---:|---|---:|');
-  for (const r of result.rows) out(`| ${fmt(r.design)} | ${fmt(r.base)} | ${xml ? xmlName(r.base) : `${fmt(r.base)}.${token}`} | ${fmt(r.resultOnFrame)} |`);
+  for (const r of result.rows) out(`| ${fmt(r.design)} | ${fmt(r.base)} | ${xml ? xmlName(r.base) : tok(r.base)} | ${fmt(r.resultOnFrame)} |`);
   for (const w of warnings) out(`\n⚠ ${w}`);
   process.exit(0);
 }
@@ -226,8 +233,10 @@ if (command === 'detect') {
     out(JSON.stringify({ targets, baseScreenHints: summary, hints }, null, 2));
     process.exit(0);
   }
+  const declared = findProject(dir).config?.targets || [];
   out('Targets');
-  if (!targets.length) out('  none detected: ask the user which platform this is for.');
+  for (const t of declared) out(`  ${String(t.platform).padEnd(16)} ${String(t.library).padEnd(40)} declared in appdimens.config.json`);
+  if (!targets.length && !declared.length) out('  none detected: ask the user which platform this is for.');
   for (const t of targets) out(`  ${t.platform.padEnd(16)} ${t.library.padEnd(40)} ${t.evidence}`);
   out('\nBase screen evidence (screens were built/previewed at)');
   if (!summary.length) out('  none found: use the config, a single unambiguous design frame, or ask.');

@@ -17,7 +17,7 @@ Keep one layout policy per screen. A different policy for one element needs a re
 
 | # | Property / role | Policy | Token (Compose syntax; platform skills translate) | Notes |
 |---|---|---|---|---|
-| 1 | Hairline, border ≤ 2, divider thickness, focus ring, outline | `fixed` | `1.dp` + `// ad:fixed hairline` | Scaling makes them blurry or heavy. |
+| 1 | Hairline, border ≤ 2, divider thickness, focus ring, outline | `fixed` | `1.dp` + `// ad:fixed hairline` | Scaling makes them blurry or heavy. Figma strokes are **inside** by default and don't add size: on the web use `box-shadow: inset 0 0 0 1px` (or account for `border` in the box size). |
 | 2 | Elevation, shadow blur/offset | `fixed` | `4.dp` | Platform elevation systems expect fixed values. |
 | 3 | Platform chrome (status/nav bar, default TopAppBar/NavigationBar/TabBar heights, system sheet grabbers) | `platform` | no token | Scale the *content* inside if needed, not the chrome. |
 | 4 | Container width/height that follows its parent | layout primitive | `fillMaxWidth()` / `weight(1f)` / `wrapContentHeight()` | Never a number. |
@@ -38,7 +38,7 @@ Keep one layout policy per screen. A different policy for one element needs a re
 | 19 | Width-driven columns/panels explicitly tied to screen width | `width` | `120.wdp` | Prefer `fill` + `weight` when it just shares space. |
 | 20 | Grid column count / pane count | `adapt` | breakpoints (`sw600` → 3 cols), or an auto-fill grid whose **min item width = the item width on the base frame, normalized** (`(412 − 32 − 12) ÷ 2 = 184` → `134asdp`), so the base screen shows exactly the designed columns | Counts never scale; they switch. Don't invent a different min width. |
 | 20b | Pinned bars (bottom nav, FAB, sticky footer) | layout primitive | the bar uses its token height; the scrolling content gets bottom padding = bar height token + safe-area inset (`env(safe-area-inset-bottom)`, `WindowInsets`, `SafeAreaView`) | Otherwise the last items hide behind the bar. |
-| 20c | Fixed-width container on large screens (tablet card `max-width: 440px`, centered sheet, dialog) | the container's own intent decides | either scale the container **with the same strategy** as its content (proportions preserved), or keep it fixed and use `bounded` (fluid, ≤ 1.2×) / fixed values inside | Never a fixed container with fully scaling content: at 768 the content grows ~1.5× inside the same 440 px and stops fitting. |
+| 20c | Fixed-width container on large screens (tablet card `max-width: 440px`, centered sheet, dialog) | the container's own intent decides | either scale the container **with the same strategy** as its content (proportions preserved), or keep it fixed and use `bounded` (fluid, ≤ 1.2×) / fixed values inside | Never a fixed container with fully scaling content: at 768 the content grows ~1.5× inside the same 440 px and stops fitting. If `formFactors` excludes desktop but the page can still be opened wide (web), cap the content column at the size it reaches on the largest supported form factor (`max-width`, `ad:fixed max-content-width`). |
 | 21 | Real-world size (ruler, card preview at 85.6 mm) | `physical` | `85.6.mm` (units module) | |
 | 22 | Canvas / game world / board that must stay fully visible | `fit` | `ftsdp` | |
 | 23 | Background art that must cover | `fill` | `flsdp` | |

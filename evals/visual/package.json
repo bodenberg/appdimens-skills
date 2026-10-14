@@ -1,0 +1,8 @@
+{
+  "name": "appdimens-skills-visual-eval",
+  "private": true,
+  "type": "module",
+  "description": "Screenshot comparison of agent-built screens against their design references.",
+  "scripts": { "compare": "node compare.mjs", "summary": "node summary.mjs" },
+  "dependencies": { "pixelmatch": "5.3.0", "playwright": "1.64.0", "pngjs": "7.0.0", "webdimens": "3.2.1" }
+}

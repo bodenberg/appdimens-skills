@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shop — Discover</title>
+<!--
+  Base screen: Figma "Home — Android Compact" 412×917 CSS px · portrait · font 1.0 (assumed, unconfirmed)
+  Strategy: auto (formFactors phone + tablet) · normalization match-base · asdp ×1.3733 on the base screen
+  All base values come from: appdimens-kit normalize --device figma-android-compact --strategy auto [--text]
+-->
+<script src="../node_modules/webdimens/dist/webdimens.global.js"></script>
+<style>
+  /* Plain (non-token) rules: reset, colours, typography ratios */
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: #FFFFFF;
+    color: #111827;
+    font-family: Inter, Arial, sans-serif;
+  }
+  h1, h2, h3, p, ul { margin: 0; padding: 0; }
+  ul { list-style: none; }
+  a { color: inherit; text-decoration: none; }
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+</style>
+<style data-webdimens>
+  /* Screen — stack-v, scroll-v. Frame padding 24 / 16 / 0, itemSpacing 16 */
+  .screen {
+    display: flex;
+    flex-direction: column;
+    gap: 11.5asdp;
+    padding: 17.5asdp 11.5asdp 0;
+    /* rule 20b: pinned bottom nav → content bottom padding = bar height + safe-area inset */
+    padding-bottom: calc(46.5asdp + env(safe-area-inset-bottom, 0px));
+    min-height: 100dvh;
+  }
+
+  /* Header — stack-h, space-between, centered */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 11.5asdp;
+  }
+  .title {
+    font-size: 17.48assp;      /* 24 */
+    line-height: 1.3333;       /* 32 / 24 */
+    font-weight: 700;
+    color: #111827;
+    min-width: 0;
+  }
+  .avatar {
+    flex: none;
+    width: 29asdp;             /* 40 */
+    height: 29asdp;
+    border-radius: 50%;        /* ellipse: shape, not a number */
+    background: #C7D2FE;
+  }
+
+  /* Search — input, fill width, height 48, padding-x 16, radius 12 */
+  .search-form { display: flex; }
+  .search {
+    flex: 1;
+    min-width: 0;
+    height: 35asdp;            /* 48 */
+    padding: 0 11.5asdp;       /* 16 */
+    border: 0;
+    border-radius: 8.5asdp;    /* 12 */
+    background: #F3F4F6;
+    color: #111827;
+    font: inherit;
+    font-size: 11.65assp;      /* 16 */
+    line-height: 1.5;          /* 24 / 16 */
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .search::placeholder { color: #6B7280; opacity: 1; }
+  .search:focus-visible { outline: 2px solid #111827; outline-offset: 2px; } /* ad:fixed focus-ring */
+
+  /* Chips — wrap, gap 8 / 8 */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6asdp;                /* 8 */
+  }
+  .chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 6asdp 11.5asdp;   /* 8 / 16 */
+    border: 0;
+    box-shadow: inset 0 0 0 1px #E5E7EB; /* ad:fixed hairline (Figma inside stroke: adds no size) */
+    border-radius: 999px;      /* ad:fixed pill shape */
+    background: transparent;
+    color: #111827;
+    font: inherit;
+    font-size: 10.19assp;      /* 14 */
+    line-height: 1.4286;       /* 20 / 14 */
+    font-weight: 400;
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"] {
+    background: #111827;
+    color: #FFFFFF;
+    font-weight: 600;
+  }
+  /* touch target: visual size stays the token, hit area reaches 44 px */
+  .chip::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    min-height: 44px;          /* ad:fixed touch-min */
+    height: 100%;
+    transform: translateY(-50%);
+  }
+
+  /* section keeps the frame itemSpacing 16 between its heading and grid */
+  .popular { display: flex; flex-direction: column; gap: 11.5asdp; }
+
+  .section-title {
+    font-size: 13.11assp;      /* 18 */
+    line-height: 1.3333;       /* 24 / 18 */
+    font-weight: 600;
+    color: #111827;
+  }
+
+  /* Products — grid; min item width = card width on the base frame: (412 − 32 − 12) ÷ 2 = 184 → 134asdp */
+  .products {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(134asdp, 100%), 1fr));
+    gap: 8.5asdp;              /* 12 */
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 6asdp;                /* 8 */
+    min-width: 0;
+    height: 100%;
+    padding: 8.5asdp;          /* 12 */
+    border: 0;
+    box-shadow: inset 0 0 0 1px #E5E7EB; /* ad:fixed hairline (Figma inside stroke: adds no size) */
+    border-radius: 8.5asdp;    /* 12 */
+    background: #FFFFFF;
+  }
+  .card-img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 6asdp;      /* 8 */
+    background: linear-gradient(to bottom, var(--from), var(--to));
+  }
+  .card-title {
+    font-size: 11.65assp;      /* 16 */
+    line-height: 1.375;        /* 22 / 16 */
+    font-weight: 500;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .price {
+    font-size: 10.19assp;      /* 14 */
+    line-height: 1.4286;       /* 20 / 14 */
+    font-weight: 700;
+  }
+
+  /* Bottom navigation — pinned (overlay), height 64, top hairline */
+  .nav {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 10;
+    background: #FFFFFF;
+    box-shadow: inset 0 1px 0 #E5E7EB; /* ad:fixed hairline (top inside stroke) */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .nav ul {
+    display: flex;
+    height: 46.5asdp;          /* 64 */
+  }
+  .nav li { flex: 1; display: flex; }
+  .nav a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3asdp;                /* 4 */
+    font-size: 8.74assp;       /* 12 */
+    line-height: 1.3333;       /* 16 / 12 */
+  }
+  .navicon {
+    width: 17.5asdp;           /* 24 */
+    height: 17.5asdp;
+    flex: none;
+  }
+</style>
+</head>
+<body>
+  <main class="screen">
+    <header class="header">
+      <h1 class="title" data-k="title">Discover</h1>
+      <span class="avatar" data-k="avatar" role="img" aria-label="Your profile"></span>
+    </header>
+
+    <form class="search-form" role="search" onsubmit="return false">
+      <label for="q" class="visually-hidden">Search products</label>
+      <input id="q" class="search" data-k="search" type="search" placeholder="Search products">
+    </form>
+
+    <div class="chips" role="group" aria-label="Categories">
+      <button type="button" class="chip" data-k="chip" aria-pressed="true">All</button>
+      <button type="button" class="chip" aria-pressed="false">Shoes</button>
+      <button type="button" class="chip" aria-pressed="false">Bags</button>
+      <button type="button" class="chip" aria-pressed="false">Watches</button>
+    </div>
+
+    <section class="popular" aria-labelledby="popular">
+      <h2 id="popular" class="section-title" data-k="section">Popular now</h2>
+      <ul class="products">
+        <li>
+          <article class="card" data-k="card">
+            <div class="card-img" data-k="cardimg" role="img" aria-label="Running Sneaker Pro" style="--from:#FDE68A;--to:#F59E0B"></div>
+            <h3 class="card-title" data-k="cardtitle">Running Sneaker Pro</h3>
+            <p class="price" data-k="price">$129</p>
+          </article>
+        </li>
+        <li>
+          <article class="card">
+            <div class="card-img" role="img" aria-label="Leather Tote Bag" style="--from:#A7F3D0;--to:#10B981"></div>
+            <h3 class="card-title">Leather Tote Bag</h3>
+            <p class="price">$89</p>
+          </article>
+        </li>
+        <li>
+          <article class="card">
+            <div class="card-img" role="img" aria-label="Classic Watch" style="--from:#BFDBFE;--to:#3B82F6"></div>
+            <h3 class="card-title">Classic Watch</h3>
+            <p class="price">$249</p>
+          </article>
+        </li>
+        <li>
+          <article class="card">
+            <div class="card-img" role="img" aria-label="Trail Backpack" style="--from:#FBCFE8;--to:#EC4899"></div>
+            <h3 class="card-title">Trail Backpack</h3>
+            <p class="price">$110</p>
+          </article>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <nav class="nav" data-k="nav" aria-label="Main">
+    <ul>
+      <li><a href="#" aria-current="page">
+        <svg class="navicon" data-k="navicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>
+        <span>Home</span></a></li>
+      <li><a href="#">
+        <svg class="navicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <span>Search</span></a></li>
+      <li><a href="#">
+        <svg class="navicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 4h2l2.5 11h11L21 7H6.5"/><circle cx="9" cy="19.5" r="1.5"/><circle cx="17" cy="19.5" r="1.5"/></svg>
+        <span>Cart</span></a></li>
+      <li><a href="#">
+        <svg class="navicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+        <span>Profile</span></a></li>
+    </ul>
+  </nav>
+</body>
+</html>

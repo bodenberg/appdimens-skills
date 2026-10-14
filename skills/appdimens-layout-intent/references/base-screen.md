@@ -64,7 +64,7 @@ The CLI implements all of these: `normalize --strategy <name> [--axis s|h|w] [--
 | **Px tokens** (`sdpPx`, `16sdpPx`) | Device pixels = dp × density at runtime. Only for canvas/native interop. |
 | **Fixed values** (hairlines, elevation, platform chrome, minimum touch targets) | Never normalized, never scaled. |
 | **Inverters / facilitators / builders** (`sdpLw`, `sdpQualifier`, `scaledDp().screen(…)`) | Each branch value is a normal token: normalize it against the base screen of the frame it came from (phone value against the phone frame, tablet value against the tablet frame). |
-| **Existing tablet overrides** (`values-sw600dp`, `if (isTablet)`) | They were written because plain dp did not grow; after migrating, the strategy grows too. Run `cli.mjs compare` per value: `delete-override` (the strategy already produces it, avoid double scaling) or `keep-as-adapt` with the printed base. |
+| **Existing tablet overrides** (`values-sw600dp`, `if (isTablet)`) | They were written because plain dp did not grow; after migrating, the strategy grows too. Run `cli.mjs compare` per value: `delete-override` (the strategy already produces it, avoid double scaling) or `keep-as-adapt` with the printed base. Exception: sizes of **containers that wrap scaling content** (a `max-width: 440px` tablet card, a sheet, a dialog) follow decision-table rule 20c — normalize them against the **phone** base like their content (or keep them fixed and make the content bounded); never a tablet-normalized container around content that keeps growing. |
 
 ## 5. Identify the profile (per source)
 

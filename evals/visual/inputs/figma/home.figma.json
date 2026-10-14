@@ -1,0 +1,38 @@
+{
+  "name": "Shop App — Mobile",
+  "document": { "type": "DOCUMENT", "children": [ { "type": "CANVAS", "name": "Screens", "children": [
+    { "id": "1:2", "type": "FRAME", "name": "Home — Android Compact",
+      "absoluteBoundingBox": { "x": 0, "y": 0, "width": 412, "height": 917 },
+      "layoutMode": "VERTICAL", "primaryAxisSizingMode": "FIXED", "counterAxisSizingMode": "FIXED",
+      "paddingLeft": 16, "paddingRight": 16, "paddingTop": 24, "paddingBottom": 0, "itemSpacing": 16,
+      "overflowDirection": "VERTICAL_SCROLLING", "fills": [{ "type": "SOLID", "color": "#FFFFFF" }],
+      "children": [
+        { "id": "1:3", "type": "FRAME", "name": "Header", "layoutMode": "HORIZONTAL", "layoutAlign": "STRETCH", "primaryAxisAlignItems": "SPACE_BETWEEN", "counterAxisAlignItems": "CENTER",
+          "children": [
+            { "id": "1:4", "type": "TEXT", "name": "Title", "characters": "Discover", "style": { "fontFamily": "Inter", "fontSize": 24, "fontWeight": 700, "lineHeightPx": 32 }, "fills": [{ "color": "#111827" }] },
+            { "id": "1:5", "type": "ELLIPSE", "name": "Avatar", "absoluteBoundingBox": { "width": 40, "height": 40 }, "fills": [{ "color": "#C7D2FE" }] } ] },
+        { "id": "1:6", "type": "INSTANCE", "name": "Input/Search", "layoutAlign": "STRETCH", "layoutMode": "HORIZONTAL", "counterAxisAlignItems": "CENTER",
+          "absoluteBoundingBox": { "height": 48 }, "paddingLeft": 16, "paddingRight": 16, "cornerRadius": 12, "fills": [{ "color": "#F3F4F6" }],
+          "children": [ { "id": "1:7", "type": "TEXT", "characters": "Search products", "style": { "fontSize": 16, "lineHeightPx": 24 }, "fills": [{ "color": "#6B7280" }] } ] },
+        { "id": "1:8", "type": "FRAME", "name": "Chips", "layoutMode": "HORIZONTAL", "layoutWrap": "WRAP", "itemSpacing": 8, "counterAxisSpacing": 8, "layoutAlign": "STRETCH",
+          "children": [
+            { "type": "INSTANCE", "name": "Chip/Selected", "paddingLeft": 16, "paddingRight": 16, "paddingTop": 8, "paddingBottom": 8, "cornerRadius": 999, "fills": [{ "color": "#111827" }], "children": [ { "type": "TEXT", "characters": "All", "style": { "fontSize": 14, "lineHeightPx": 20, "fontWeight": 600 }, "fills": [{ "color": "#FFFFFF" }] } ] },
+            { "type": "INSTANCE", "name": "Chip", "paddingLeft": 16, "paddingRight": 16, "paddingTop": 8, "paddingBottom": 8, "cornerRadius": 999, "strokes": [{ "color": "#E5E7EB" }], "strokeWeight": 1, "children": [ { "type": "TEXT", "characters": "Shoes", "style": { "fontSize": 14, "lineHeightPx": 20 } } ] },
+            { "type": "INSTANCE", "name": "Chip", "paddingLeft": 16, "paddingRight": 16, "paddingTop": 8, "paddingBottom": 8, "cornerRadius": 999, "strokes": [{ "color": "#E5E7EB" }], "strokeWeight": 1, "children": [ { "type": "TEXT", "characters": "Bags", "style": { "fontSize": 14, "lineHeightPx": 20 } } ] },
+            { "type": "INSTANCE", "name": "Chip", "paddingLeft": 16, "paddingRight": 16, "paddingTop": 8, "paddingBottom": 8, "cornerRadius": 999, "strokes": [{ "color": "#E5E7EB" }], "strokeWeight": 1, "children": [ { "type": "TEXT", "characters": "Watches", "style": { "fontSize": 14, "lineHeightPx": 20 } } ] } ] },
+        { "id": "1:9", "type": "TEXT", "name": "Section title", "characters": "Popular now", "style": { "fontSize": 18, "fontWeight": 600, "lineHeightPx": 24 }, "fills": [{ "color": "#111827" }] },
+        { "id": "1:10", "type": "FRAME", "name": "Products", "layoutMode": "HORIZONTAL", "layoutWrap": "WRAP", "itemSpacing": 12, "counterAxisSpacing": 12, "layoutAlign": "STRETCH",
+          "children": [
+            { "type": "INSTANCE", "name": "Card/Product", "layoutGrow": 1, "layoutSizingHorizontal": "FILL", "layoutMode": "VERTICAL", "itemSpacing": 8, "paddingLeft": 12, "paddingRight": 12, "paddingTop": 12, "paddingBottom": 12, "cornerRadius": 12, "strokes": [{ "color": "#E5E7EB" }], "strokeWeight": 1,
+              "children": [
+                { "type": "RECTANGLE", "name": "Image", "layoutAlign": "STRETCH", "constraints": { "lockAspectRatio": true }, "aspectRatio": "4:3", "cornerRadius": 8, "fills": [{ "type": "GRADIENT_LINEAR", "colors": ["#FDE68A", "#F59E0B"] }] },
+                { "type": "TEXT", "name": "Title", "characters": "Running Sneaker Pro", "style": { "fontSize": 16, "lineHeightPx": 22, "fontWeight": 500, "textTruncation": "ENDING", "maxLines": 2 } },
+                { "type": "TEXT", "name": "Price", "characters": "$129", "style": { "fontSize": 14, "lineHeightPx": 20, "fontWeight": 700 } } ] },
+            { "type": "INSTANCE", "name": "Card/Product", "note": "same as first, title 'Leather Tote Bag', price '$89', image #A7F3D0→#10B981" },
+            { "type": "INSTANCE", "name": "Card/Product", "note": "same as first, title 'Classic Watch', price '$249', image #BFDBFE→#3B82F6" },
+            { "type": "INSTANCE", "name": "Card/Product", "note": "same as first, title 'Trail Backpack', price '$110', image #FBCFE8→#EC4899" } ] },
+        { "id": "1:11", "type": "INSTANCE", "name": "Navigation/Bottom", "layoutAlign": "STRETCH", "layoutPositioning": "ABSOLUTE", "constraints": { "vertical": "BOTTOM", "horizontal": "LEFT_RIGHT" },
+          "absoluteBoundingBox": { "height": 64 }, "strokes": [{ "color": "#E5E7EB", "side": "TOP" }], "strokeWeight": 1, "fills": [{ "color": "#FFFFFF" }],
+          "children": [ { "type": "FRAME", "name": "Tab", "count": 4, "layoutMode": "VERTICAL", "itemSpacing": 4, "children": [ { "type": "VECTOR", "name": "Icon", "absoluteBoundingBox": { "width": 24, "height": 24 } }, { "type": "TEXT", "characters": "Home | Search | Cart | Profile", "style": { "fontSize": 12, "lineHeightPx": 16 } } ] } ] }
+      ] } ] } ] }
+}

@@ -62,7 +62,6 @@ The smallest side of a desktop browser is often 800–1000, so `sdp` grows 2.7�
 | `sizing: clamp` | `width: clamp(280px, 100%, 600px)` `/* ad:fixed clamp */` |
 | `sizing: fraction` | CSS `50vw` / `40vh` (`50dvh` on mobile), or `spaceW(50)` from `webdimens/percent` in JS |
 | line height | unitless ratio of the font size (`line-height: 1.375` for 22/16), never a px or separate `ssp` value | |
-| line height | unitless ratio of the font size (`line-height: 1.375` for 22/16), never px or a separate `ssp` value |
 | `truncate` | `display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden` |
 | `fit-text` | `autoResizeText(el, { min: 12, max: 34, maxLines: 2 })` from `webdimens/resize` (box must be constrained: `min-width:0`) |
 | `divider` | `border-top: 1px solid …` `/* ad:fixed hairline */` |

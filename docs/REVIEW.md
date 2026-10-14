@@ -43,7 +43,24 @@ O pacote foi revisado por três agentes com perfis diferentes, em duas rodadas: 
 - **Onde cada regra mora (R3).** O que o modelo poderia calcular errado foi para a CLI: buckets, altura de runtime, `compare`, `--theme` e o bloqueio de pixels físicos. O texto das skills só diz qual comando rodar.
 - **Tablet de referência para `compare` (R1 × R2).** R2 propôs sw800 fixo; R1 apontou que isso é escolha, não fato da biblioteca. Decisão: o tablet é informado no comando, conforme os `formFactors` do projeto.
 
+## Teste visual com agentes cegos
+
+Três templates (frame Figma 412×917, protótipo Claude Design 390×844, página responsiva existente 375×667) foram implementados por agentes que receberam só as skills, o input e o config. Comparamos por screenshot na tela base de cada design (detalhes e imagens em `evals/visual/`).
+
+- **Rodada 1:** os agentes escolheram a tela base correta e a estratégia certa nos três casos. O erro de tamanho ficou ≤ 2,7%, contra +25–37% da conversão ingênua. Achados:
+  - fonte arredondada a 0,5 mudava a quebra de linha;
+  - `detect` não via evidências de design;
+  - a skill web não citava `<style data-webdimens>`;
+  - faltavam regras para grids, barras fixas e cartões de tablet.
+- **Rodada 2** (depois das correções): maior erro de tamanho de 1,3% (Figma), 0,2% (Claude Design) e 0,6% (responsivo); fontes exatas; o `detect` encontrou a tela base sozinho nos três casos. Ajustes finais:
+  - sintaxe de token por plataforma na CLI (`--syntax`);
+  - alvos do config no `detect`;
+  - contorno interno do Figma;
+  - regra única para overrides de containers de tablet;
+  - quando valores repetidos viram tokens de tema.
+
 ## O que ainda não foi feito
 
 - Rodar os 18 casos de `evals/` com Claude Code, Codex e Cursor e registrar a pontuação. O script `evals/score.mjs` está pronto.
+- Teste visual em Compose/SwiftUI/Flutter reais (só a web pôde ser renderizada no container).
 - Confirmar em aparelho real a altura que o Android reporta conforme o targetSdk. Por isso o kit pede `--runtime-height` em vez de assumir um valor.

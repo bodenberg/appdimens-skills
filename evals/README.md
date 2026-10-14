@@ -23,3 +23,7 @@ node evals/score.mjs <case-id> out.txt [--asked yes|no]       # exit 0 only on a
 ```
 
 Keep a results table per agent and skill version; a drop on a case after editing a skill means the edit made the model worse at that decision. Add a case whenever an agent gets something wrong in real use.
+
+## 3. Visual: `visual/`
+
+Screens built by blind agents from a Figma frame, a Claude Design prototype and an existing responsive page, compared by screenshot against their references on the base screen. See [visual/README.md](visual/README.md).

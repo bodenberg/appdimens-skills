@@ -1,0 +1,34 @@
+<!doctype html>
+<!-- Responsive login page. Designed and QA'd at 375×667 (iPhone SE). Mobile-first; tablet centers a card. -->
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:Inter,Arial,sans-serif;background:#fff;color:#111827}
+.wrap{padding:32px 20px;display:flex;flex-direction:column;gap:20px;min-height:100vh}
+.logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#34D399,#059669)}
+h1{font-size:28px;line-height:34px;font-weight:700}
+.sub{font-size:15px;line-height:22px;color:#6B7280;margin-top:-12px}
+form{display:flex;flex-direction:column;gap:12px}
+label{font-size:13px;line-height:18px;font-weight:600}
+input{height:48px;border:1px solid #D1D5DB;border-radius:10px;padding:0 14px;font-size:16px;width:100%}
+.btn{height:52px;border:0;border-radius:12px;background:#059669;color:#fff;font-size:16px;font-weight:600;margin-top:8px}
+.link{font-size:14px;line-height:20px;color:#059669;text-align:center}
+.social{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.social button{height:44px;border:1px solid #D1D5DB;border-radius:10px;background:#fff;font-size:14px}
+footer{font-size:13px;line-height:18px;color:#6B7280;text-align:center;margin-top:auto}
+@media (min-width:768px){ body{background:#F3F4F6} .wrap{max-width:440px;margin:40px auto;min-height:auto;background:#fff;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:40px 32px} }
+</style></head><body>
+<div class="wrap">
+  <div class="logo" data-k="logo"></div>
+  <h1 data-k="title">Welcome back</h1>
+  <p class="sub" data-k="sub">Sign in to continue to your account</p>
+  <form>
+    <label data-k="label">Email</label><input data-k="input" placeholder="you@email.com">
+    <label>Password</label><input type="password" placeholder="••••••••">
+    <button class="btn" type="button" data-k="button">Sign in</button>
+  </form>
+  <a class="link" data-k="link">Forgot your password?</a>
+  <div class="social"><button data-k="social">Google</button><button>Apple</button></div>
+  <footer data-k="footer">By continuing you agree to our Terms</footer>
+</div>
+</body></html>
