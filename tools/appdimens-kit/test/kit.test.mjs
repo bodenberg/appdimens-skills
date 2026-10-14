@@ -213,3 +213,16 @@ test('base-screen evidence is found in code', () => {
   assert.ok(sizes.includes('673x841'));
   assert.ok(sizes.includes('375x812'), 'flutter_screenutil designSize');
 });
+
+test('round-3 fixes: exact text, compare with zero, line-height ratio, design-source evidence', () => {
+  const text = spawnSync(process.execPath, [join(kit, 'cli.mjs'), 'normalize', '--device', 'figma-android-compact', '--strategy', 'auto', '--text', '16'], { encoding: 'utf8' });
+  assert.match(text.stdout, /11\.65\.assp/);
+  const zero = spawnSync(process.execPath, [join(kit, 'cli.mjs'), 'compare', '--device', 'iphone-se', '--tablet', '768x1024', '--phone-value', '0', '--tablet-value', '40', '--strategy', 'auto'], { encoding: 'utf8' });
+  assert.equal(zero.status, 0);
+  assert.match(zero.stdout, /keep-as-adapt/);
+  const lh = lintText('.t { line-height: 24px; }', { file: 'a.css' });
+  assert.equal(lh.findings[0].rule, 'line-height-px');
+  const hints = summarizeHints(scanBaseHints([fx('design-sources')]));
+  const kinds = hints.flatMap((g) => g.kinds);
+  for (const k of ['figma-frame', 'html-device-frame', 'design-comment']) assert.ok(kinds.includes(k), k);
+});

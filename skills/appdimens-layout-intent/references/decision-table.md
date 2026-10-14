@@ -36,7 +36,9 @@ Keep one layout policy per screen. A different policy for one element needs a re
 | 17 | Line height, letter spacing | follow the text token | `lineHeight = 24.ssp` | Same policy as the font size, or a ratio (`1.5em`). |
 | 18 | Vertical rhythm explicitly tied to screen height (onboarding, splash) | `height` | `16.hdp` (48 on a 914-tall base) | Only with evidence; default spacing is rule 11. `hdp` grows with height ÷ 300. |
 | 19 | Width-driven columns/panels explicitly tied to screen width | `width` | `120.wdp` | Prefer `fill` + `weight` when it just shares space. |
-| 20 | Grid column count / pane count | `adapt` | breakpoints (`sw600` → 3 cols) | Counts never scale; they switch. |
+| 20 | Grid column count / pane count | `adapt` | breakpoints (`sw600` → 3 cols), or an auto-fill grid whose **min item width = the item width on the base frame, normalized** (`(412 − 32 − 12) ÷ 2 = 184` → `134asdp`), so the base screen shows exactly the designed columns | Counts never scale; they switch. Don't invent a different min width. |
+| 20b | Pinned bars (bottom nav, FAB, sticky footer) | layout primitive | the bar uses its token height; the scrolling content gets bottom padding = bar height token + safe-area inset (`env(safe-area-inset-bottom)`, `WindowInsets`, `SafeAreaView`) | Otherwise the last items hide behind the bar. |
+| 20c | Fixed-width container on large screens (tablet card `max-width: 440px`, centered sheet, dialog) | the container's own intent decides | either scale the container **with the same strategy** as its content (proportions preserved), or keep it fixed and use `bounded` (fluid, ≤ 1.2×) / fixed values inside | Never a fixed container with fully scaling content: at 768 the content grows ~1.5× inside the same 440 px and stops fitting. |
 | 21 | Real-world size (ruler, card preview at 85.6 mm) | `physical` | `85.6.mm` (units module) | |
 | 22 | Canvas / game world / board that must stay fully visible | `fit` | `ftsdp` | |
 | 23 | Background art that must cover | `fill` | `flsdp` | |

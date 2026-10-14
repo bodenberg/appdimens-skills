@@ -50,7 +50,7 @@ Root of the repo; schema `.appdimens/schemas/appdimens.config.schema.json`. It s
 Follow [references/base-screen.md](.appdimens/skills/appdimens-layout-intent/.appdimens/skills/appdimens-layout-intent/references/base-screen.md): logical size, resolution/density, orientation, aspect ratio, window vs screen, runtime height (system bars) and font scale of the screen the values were chosen on. Then apply **this rule literally**:
 
 1. `appdimens.config.json` has `baseScreen` (for this target) → use it. Don't ask.
-2. Otherwise exactly one unambiguous source — a single design frame/preset, one size in ≥ 80 % of the previews (`cli.mjs detect`), a `designSize`/base constant, or the platform default in create mode → use it, write `Base screen: … (assumed, unconfirmed)` in the intent sheet, proceed, and offer to record it.
+2. Otherwise exactly one unambiguous source — a single design frame/preset (Figma frame, Claude Design device frame), one size in ≥ 80 % of the previews, a `designSize`/base constant or a "designed at W×H" comment (`cli.mjs detect <app folder>` finds them), or the platform default in create mode → use it, write `Base screen: … (assumed, unconfirmed)` in the intent sheet, proceed, and offer to record it.
 3. Otherwise ask, before converting — conflicting sizes, a physical-px frame without density, a batch migration with no evidence, a base that contradicts the existing theme tokens, or height-driven values (`hdp`, fit/fill) with unclear system bars.
 
 Edits that only reuse or adjust existing AppDimens tokens never ask. **Shared UI code (Flutter, KMP, RN, web) has exactly one base screen**: the frame the designer treats as canonical (ask if unclear); other frames (e.g. iOS 393 next to Android 412) are only checked (≈ ±5 % expected) and real differences become `adapt` rules. `targets[].baseScreen` is only for targets with separate UI code.
@@ -77,7 +77,7 @@ Rules that are easy to get wrong:
 - Touch targets: the **visual** size is a normal token (48 on the base → `35.asdp`); the **hit area** is expanded separately with the platform API (`minimumInteractiveComponentSize`, `contentShape` + `frame(minWidth: 44)`, `hitSlop`). Never clamp the visual.
 - Text uses the `sp` kind (`ssp`, `assp`, `fssp`); `sem` only with a reason. Line height is a ratio of the font size, not a separately rounded token. Body text on tablets with large font scale: prefer `fssp` (auto × font scale 2 reaches ≈ 3.8×).
 - Fill/hug/weight are layout primitives, not numbers; images keep `aspectRatio` (not `hdp`); `hdp` only for values that must follow screen height.
-- **Precision:** theme tokens are exact (`--theme`, 0.01) and named by the design value (`space16 = 11.68.asdp`), so sums and the base stay maintainable; one-off call-site values use `design.rounding` (0.5). Android XML and SDPS .NET are integer-only (`--xml`). Mixed Compose + XML apps: `dimens.xml` is the single source and Compose reads it with `dimensionResource`.
+- **Precision:** theme tokens are exact (`--theme`, 0.01) and named by the design value (`space16 = 11.68.asdp`), so sums and the base stay maintainable; one-off call-site values use `design.rounding` (0.5). **Font sizes are always exact** (`--text` defaults to 0.01): a 0.5 rounding (16 → `11.5assp` = 15.79px) is enough to change where text wraps. Android XML and SDPS .NET are integer-only (`--xml`). Mixed Compose + XML apps: `dimens.xml` is the single source and Compose reads it with `dimensionResource`.
 
 ## Step 6 — implement through the platform skill
 

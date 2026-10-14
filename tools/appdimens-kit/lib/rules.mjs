@@ -100,7 +100,7 @@ function suggestion(lang, n, text, ctx) {
   const bs = ctx.base;
   if (bs) {
     try {
-      const rounding = xml ? 1 : ctx.config?.design?.rounding ?? 0.5;
+      const rounding = xml ? 1 : text ? 0.01 : ctx.config?.design?.rounding ?? 0.5;
       const r = normalize([Number(n) / (text ? bs.fontScale || 1 : 1)], { frame: bs.width, height: bs.height, runtimeHeight: bs.runtimeHeight, strategy, rounding, xml: lang === 'android-xml' });
       const base = r.rows[0].base;
       return `${syntax[lang](fmtNum(base), token, text)} (${n} on the base screen ${bs.width}×${bs.height}, ${strategy}${lang === 'android-xml' ? `, bucket ${r.xmlBucket}` : ''})`;
@@ -203,6 +203,10 @@ function reactNativeLine(line, ctx) {
     const n = Number(m[2]);
     if (Math.abs(n) <= ctx.threshold || isTouchMin(line, n) || fixedAt(line, m.index)) continue;
     const text = /^(fontSize|lineHeight|letterSpacing)$/.test(m[1]);
+    if (m[1] === 'lineHeight') {
+      out.push({ col: m.index + 1, severity: 'warning', rule: 'line-height-px', message: `lineHeight: ${m[2]} is fixed. Compute it from the font token (e.g. ssp(16) * 1.5) so it follows the text size.` });
+      continue;
+    }
     out.push({
       col: m.index + 1,
       severity: 'warning',
@@ -239,6 +243,10 @@ function cssLine(line, ctx) {
       const n = Number(p[1]);
       if (n <= ctx.threshold || n >= 999 || isTouchMin(prop, n)) continue; // hairlines, pill idiom, touch minimums
       const text = /^(font-size|line-height|letter-spacing)$/.test(prop);
+      if (prop === 'line-height') {
+        out.push({ col: m.index + 1, severity: 'warning', rule: 'line-height-px', message: `line-height: ${p[0]} is fixed. Use a unitless ratio of the element's font size (e.g. 24px / 16px = 1.5) so it follows the text token.` });
+        continue;
+      }
       out.push({
         col: m.index + 1,
         severity: 'warning',

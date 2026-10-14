@@ -80,7 +80,9 @@ The CLI implements all of these: `normalize --strategy <name> [--axis s|h|w] [--
 | **Existing web** | design width in tokens/comments, Playwright `viewport`, mobile-first breakpoint | Desktop-only products: the desktop window is the base. |
 | **New screens from a brief** | `appdimens.config.json`, else the platform default below | Say which one you used. |
 
-`node <package>/tools/appdimens-kit/cli.mjs detect .` reports the platform targets **and** the base-screen evidence found in code (preview devices, design sizes, test viewports).
+`node <package>/tools/appdimens-kit/cli.mjs detect <app folder>` reports the platform targets **and** the base-screen evidence: Figma JSON frames, Claude Design device frames, "designed at W×H" comments, fixed `meta viewport`, preview devices, `designSize`, test viewports. Run it on the app/design folder, not on a parent folder full of unrelated files.
+
+**A design frame always wins over a platform default**: a web target implemented from a 412-wide Android frame uses 412, not the web default 390.
 
 Platform defaults when nothing tells you (always confirm):
 

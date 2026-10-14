@@ -41,7 +41,7 @@ const USAGE = `appdimens-kit
       Existing tablet override (values-sw600dp, if (isTablet)…): after migrating, does the
       strategy already produce it? → delete-override, or keep-as-adapt with its base value.
 
-  lint [--json] [--force] <files or dirs…>
+  lint [--json] [--force] [--config <appdimens.config.json>] <files or dirs…>
       Flags fixed literals that should be tokens, strategy tokens without their import/module,
       obsolete APIs, invalid XML resources, JS-only web tokens in CSS and mixed .NET families.
       Files outside an AppDimens project are skipped unless --force. Exit 1 on errors.
@@ -90,7 +90,7 @@ if (!command || command === 'help' || flags.help) {
 
 if (command === 'lint') {
   if (!rest.length) fail('lint: pass at least one file or directory.');
-  const results = lintFiles(rest, { force: !!flags.force });
+  const results = lintFiles(rest, { force: !!flags.force, configPath: flags.config });
   const hasErrors = results.some((r) => r.findings.some((f) => f.severity === 'error'));
   if (flags.json) out(JSON.stringify(results, null, 2));
   else out(formatText(results).text);
@@ -114,7 +114,8 @@ if (command === 'normalize') {
   const axis = flags.axis || 's';
   const density = flags.density ? Number(flags.density) : 1;
   const xml = !!flags.xml;
-  const rounding = flags.rounding ? Number(flags.rounding) : xml ? 1 : 0.5;
+  // Font sizes are always exact: a 0.5 rounding (16 → 11.5assp = 15.79px) is enough to change line wrapping.
+  const rounding = flags.rounding ? Number(flags.rounding) : xml ? 1 : flags.text ? 0.01 : 0.5;
   const dpi = flags.dpi ? Number(flags.dpi) : screen.density ? screen.density * 160 : undefined;
   const fontScale = flags['font-scale'] ? Number(flags['font-scale']) : 1;
   const runtimeHeight = flags['runtime-height'] ? Number(flags['runtime-height']) : undefined;
@@ -198,17 +199,17 @@ if (command === 'compare') {
   const tablet = screenFrom(flags, 'tablet');
   const phoneValue = Number(flags['phone-value']);
   const tabletValue = Number(flags['tablet-value']);
-  if (!phone?.width || !tablet || !phoneValue || !tabletValue) fail('compare: --device <phone> --tablet <tablet> --phone-value <v> --tablet-value <v> are required.');
+  if (!phone?.width || !tablet || Number.isNaN(phoneValue) || Number.isNaN(tabletValue) || flags['phone-value'] === undefined || flags['tablet-value'] === undefined) fail('compare: --device <phone> --tablet <tablet> --phone-value <v> --tablet-value <v> are required.');
   const strategy = resolveStrategy(flags.strategy || 'scaled');
   let r;
   try {
-    r = compareOverride({ phoneValue, tabletValue, phone, tablet, strategy, axis: flags.axis || 's', xml: !!flags.xml });
+    r = compareOverride({ phoneValue, tabletValue, phone, tablet, strategy, axis: flags.axis || 's', xml: !!flags.xml, rounding: flags.rounding ? Number(flags.rounding) : flags.xml ? 1 : 0.5 });
   } catch (e) {
     fail(`compare: ${e.message}`);
   }
   if (flags.json) out(JSON.stringify(r, null, 2));
   else {
-    out(`${strategy}: base ${fmt(r.base)} → on ${tablet.name ?? 'tablet'} the strategy gives ${fmt(r.strategyOnTablet)}; the override sets ${fmt(r.override)} (×${r.ratio.toFixed(2)}).`);
+    out(`${strategy}: base ${fmt(r.base)} → on ${tablet.name ?? 'tablet'} the strategy gives ${fmt(r.strategyOnTablet)}; the override sets ${fmt(r.override)} (${Number.isFinite(r.ratio) ? `×${r.ratio.toFixed(2)}` : 'one side is 0'}).`);
     out(r.verdict === 'delete-override'
       ? 'Verdict: delete-override — the strategy already produces it (within 10 %); keeping it would scale twice.'
       : `Verdict: keep-as-adapt — express it as an adapt value at the breakpoint with base ${fmt(r.adaptBase)}.`);
@@ -235,6 +236,7 @@ if (command === 'detect') {
     out(`  ${`${fmt(g.width)}×${fmt(g.height)}`.padEnd(12)} ×${g.count} (${Math.round((g.count / total) * 100)} %)  ${g.devices.join(', ') || ''} (${g.kinds.join(', ')})`);
   if (summary.length && summary[0].count / total >= 0.8) out(`  → dominant: ${fmt(summary[0].width)}×${fmt(summary[0].height)} (≥ 80 %): use it as "assumed, unconfirmed".`);
   else if (summary.length > 1) out('  → no dominant size (< 80 %): ask which base the app uses.');
+  if (hints.some((h) => h.kind === 'html-device-frame')) out('  note: a prototype device frame was found — subtract its fake status bar / home indicator from the height before height-based conversions.');
   for (const h of hints.filter((x) => x.unknown)) out(`  ? ${h.label} at ${h.file}:${h.line} (not in catalog: check its size)`);
   process.exit(0);
 }

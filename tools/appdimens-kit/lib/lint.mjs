@@ -26,10 +26,19 @@ export function collectFiles(paths) {
  * Lints files. Files outside an AppDimens project are skipped unless `force` is set,
  * so the Claude Code hook stays silent in unrelated repositories.
  */
-export function lintFiles(paths, { force = false } = {}) {
+export function lintFiles(paths, { force = false, configPath } = {}) {
+  let explicit = null;
+  if (configPath) {
+    try {
+      explicit = JSON.parse(readFileSync(configPath, 'utf8'));
+    } catch (e) {
+      explicit = { __error: `${configPath}: ${e.message}` };
+    }
+  }
   const results = [];
   for (const file of collectFiles(paths)) {
-    const project = findProject(file);
+    const found = findProject(file);
+    const project = explicit ? { ...found, enabled: true, config: explicit } : found;
     if (!project.enabled && !force) continue;
     const config = project.config && !project.config.__error ? project.config : null;
     if (config?.lint?.ignore?.some((s) => file.includes(s))) continue;

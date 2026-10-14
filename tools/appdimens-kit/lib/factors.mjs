@@ -167,12 +167,14 @@ export function themeTokens(values, opts) {
  * dp did not grow. After migrating, the strategy already grows: compare what the override
  * did with what the strategy will do on the same tablet.
  */
-export function compareOverride({ phoneValue, tabletValue, phone, tablet, strategy = 'scaled', axis = 's', xml = false, tolerance = 0.1 }) {
+export function compareOverride({ phoneValue, tabletValue, phone, tablet, strategy = 'scaled', axis = 's', xml = false, tolerance = 0.1, rounding = 0.5 }) {
   const fPhone = xml ? xmlBucket(axisLength(phone, axis), axis) / W0 : factorFor(strategy, phone, { axis });
   const fTablet = xml ? xmlBucket(axisLength(tablet, axis), axis) / W0 : factorFor(strategy, tablet, { axis });
   const base = phoneValue / fPhone;
   const strategyOnTablet = base * fTablet;
+  if (phoneValue === 0 && tabletValue === 0) return { base: 0, strategyOnTablet: 0, override: 0, ratio: 1, verdict: 'delete-override', adaptBase: 0 };
+  if (phoneValue === 0 || tabletValue === 0) return { base: roundTo(phoneValue / fPhone, rounding), strategyOnTablet, override: tabletValue, ratio: Infinity, verdict: 'keep-as-adapt', adaptBase: roundTo(tabletValue / fTablet, rounding) };
   const ratio = tabletValue / strategyOnTablet;
   const verdict = Math.abs(ratio - 1) <= tolerance ? 'delete-override' : 'keep-as-adapt';
-  return { base, strategyOnTablet, override: tabletValue, ratio, verdict, adaptBase: tabletValue / fTablet };
+  return { base: roundTo(base, rounding), strategyOnTablet, override: tabletValue, ratio, verdict, adaptBase: roundTo(tabletValue / fTablet, rounding) };
 }

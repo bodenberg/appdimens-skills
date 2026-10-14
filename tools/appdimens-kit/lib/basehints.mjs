@@ -74,6 +74,37 @@ const RULES = [
     size: (m) => ({ width: Number(m[1]) }),
   },
   {
+    exts: ['.json'],
+    kind: 'figma-frame',
+    re: /"type"\s*:\s*"FRAME"[^{}]*?"absoluteBoundingBox"\s*:\s*\{[^}]*?"width"\s*:\s*([\d.]+)\s*,\s*"height"\s*:\s*([\d.]+)/g,
+    size: (m) => ({ width: Number(m[1]), height: Number(m[2]) }),
+    once: true, // the first (top-level) frame of the export
+  },
+  {
+    exts: ['.html', '.htm', '.vue', '.svelte', '.astro', '.jsx', '.tsx', '.css'],
+    kind: 'html-device-frame',
+    re: /\.(?:phone-frame|phone|device|device-frame|mockup|screen-frame)\s*\{[^}]*?width\s*:\s*(\d+)px\s*;\s*height\s*:\s*(\d+)px/g,
+    size: (m) => ({ width: Number(m[1]), height: Number(m[2]) }),
+  },
+  {
+    exts: ['.html', '.htm', '.vue', '.svelte', '.astro', '.jsx', '.tsx'],
+    kind: 'html-device-frame',
+    re: /class(?:Name)?="[^"]*(?:phone-frame|device-frame|mockup)[^"]*"[^>]*style=["{][^"}]*width:\s*['"]?(\d+)px['"]?\s*[;,]\s*height:\s*['"]?(\d+)px/g,
+    size: (m) => ({ width: Number(m[1]), height: Number(m[2]) }),
+  },
+  {
+    exts: ['.html', '.htm'],
+    kind: 'fixed-meta-viewport',
+    re: /<meta[^>]+name=["']viewport["'][^>]+content=["'][^"']*width=(\d+)/g,
+    size: (m) => ({ width: Number(m[1]) }),
+  },
+  {
+    exts: ['.html', '.htm', '.css', '.scss', '.js', '.jsx', '.ts', '.tsx', '.kt', '.swift', '.dart', '.vue', '.svelte', '.xml', '.xaml', '.md'],
+    kind: 'design-comment',
+    re: /(?:<!--|\/\/|\/\*|#)[^\n]*?\b(?:designed|design|qa'?d|tuned|built)\b[^\n]*?(\d{3,4})\s*[x×]\s*(\d{3,4})/gi,
+    size: (m) => ({ width: Number(m[1]), height: Number(m[2]) }),
+  },
+  {
     exts: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'],
     kind: 'test-viewport',
     re: /viewport\s*:\s*\{\s*width\s*:\s*(\d+)\s*,\s*height\s*:\s*(\d+)/g,
@@ -99,6 +130,7 @@ export function scanBaseHints(paths) {
       r.re.lastIndex = 0;
       let m;
       while ((m = r.re.exec(text))) {
+        if (r.once && hints.some((h) => h.file === file && h.kind === r.kind)) break;
         const device = r.device ? r.device(m) : null;
         const size = device ? { width: device.width, height: device.height } : r.size ? r.size(m) : null;
         if (!size && !device) {

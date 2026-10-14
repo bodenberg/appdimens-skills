@@ -17,7 +17,7 @@ import { install } from 'webdimens';
 install();                                  // once, in the app entry
 // React: useWebDimens() · Vue: app.use(WebDimens) · Angular: provideWebDimens() · Svelte: install() in main
 ```
-No build: `<script src="https://cdn.jsdelivr.net/npm/webdimens@3.2.1/dist/webdimens.global.js"></script>` (installs itself).
+No build: `<script src="https://cdn.jsdelivr.net/npm/webdimens@3.2.1/dist/webdimens.global.js"></script>` (installs itself; pin the exact version).
 
 Strategies register automatically the first time a token is seen (`p:16asdp`, `dimen('16fsdp')`). Tokens the runtime never sees — hand-written `var(--asdp)` or PostCSS output — need `install({ strategies: ['auto'] })` (or `'all'`).
 
@@ -28,6 +28,8 @@ Strategies register automatically the first time a token is seen (`p:16asdp`, `d
 | Markup you control | classes | `class="p:16sdp gap:12sdp fs:16ssp fs@sw600:20ssp"` |
 | Many declarations on one element | `data-dimen` | `data-dimen="padding: 8sdp 16sdp; font-size@landscape: 18ssp"` |
 | CSS files with a build (Vite/Next/webpack) | PostCSS `webdimens/postcss` | `padding: 16sdp; @dimen sw600 { padding: 24sdp; }` |
+| Hand-written CSS without a build (single-file pages, prototypes, Claude Design exports) | **`<style data-webdimens>`**: tokens inside are compiled by the runtime and strategies self-register | `<style data-webdimens> .card { padding: 11.5asdp; } </style>` |
+| CSS variables only | `calc(16 * var(--sdp))` + `install({ strategies: [...] })` for non-scaled prefixes | |
 | Sass | `@use 'webdimens/scss' as d;` | `padding: d.sdp(16)` |
 | React/Vue inline style, SSR-safe | `dimens()` | `style={dimens({ padding: '16sdp' })}` |
 | Canvas / measurement | JS | `dimen('2sdpPx')`, `sdp(16)` + `useDimens()` to re-render |
@@ -59,6 +61,8 @@ The smallest side of a desktop browser is often 800–1000, so `sdp` grows 2.7�
 | `sizing: ratio` | `aspect-ratio: 4 / 3; width:100%` |
 | `sizing: clamp` | `width: clamp(280px, 100%, 600px)` `/* ad:fixed clamp */` |
 | `sizing: fraction` | CSS `50vw` / `40vh` (`50dvh` on mobile), or `spaceW(50)` from `webdimens/percent` in JS |
+| line height | unitless ratio of the font size (`line-height: 1.375` for 22/16), never a px or separate `ssp` value | |
+| line height | unitless ratio of the font size (`line-height: 1.375` for 22/16), never px or a separate `ssp` value |
 | `truncate` | `display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden` |
 | `fit-text` | `autoResizeText(el, { min: 12, max: 34, maxLines: 2 })` from `webdimens/resize` (box must be constrained: `min-width:0`) |
 | `divider` | `border-top: 1px solid …` `/* ad:fixed hairline */` |

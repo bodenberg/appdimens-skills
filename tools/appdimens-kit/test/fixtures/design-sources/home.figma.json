@@ -1,0 +1,1 @@
+{ "document": { "children": [ { "type": "CANVAS", "children": [ { "id": "1:2", "type": "FRAME", "name": "Home", "absoluteBoundingBox": { "x": 0, "y": 0, "width": 412, "height": 917 }, "children": [ { "type": "FRAME", "absoluteBoundingBox": { "width": 40, "height": 40 } } ] } ] } ] } }
