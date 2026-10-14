@@ -4,6 +4,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { nearestFile } from './project.mjs';
+import { PREFIX, resolveStrategy } from './factors.mjs';
 
 // Strategy prefixes, longest first so `pwsdp` is power and not percent.
 const PREFIXES = [
@@ -61,22 +62,21 @@ function languageOf(file, text) {
   return null;
 }
 
+function prefixFor(name) {
+  return name ? PREFIX[resolveStrategy(name)] : undefined;
+}
+
 function policyPrefix(config) {
-  const layout = config?.strategy?.layout;
-  if (layout === 'adaptive') return 'a';
-  if (layout === 'bounded') return 'f';
-  if (layout === 'scaled') return '';
+  const p = prefixFor(config?.strategy?.layout);
+  if (p !== undefined) return p;
   const ff = config?.formFactors;
   if (Array.isArray(ff) && ff.some((f) => f !== 'phone')) return 'a';
   return '';
 }
 
 function textPrefix(config) {
-  const text = config?.strategy?.text;
-  if (text === 'adaptive') return 'a';
-  if (text === 'bounded') return 'f';
-  if (text === 'scaled') return '';
-  return policyPrefix(config);
+  const p = prefixFor(config?.strategy?.text);
+  return p !== undefined ? p : policyPrefix(config);
 }
 
 const suggest = {

@@ -30,7 +30,7 @@ Ship as AAB so Play strips unused resources. Both libraries also expose Compose 
 | fixed | plain `1dp` + `<!-- ad:fixed hairline -->` |
 | adaptive / bounded / fraction / others | **not available in XML.** Use `appdimens-android` code APIs (`16.asdp(ctx)`, px) from the View/Fragment, or resource qualifiers (`values-sw600dp/dimens.xml`) pointing at different `_Nsdp` values for an `adapt` rule |
 
-**Integers only.** `match-frame` normalization must round to whole numbers (`--rounding 1` in `appdimens-kit normalize`).
+**Integers only.** `match-base` normalization must round to whole numbers (`normalize --rounding 1`), and XML offers only the scaled strategy: `normalize --device <base> --rounding 1 16` → `@dimen/_12sdp` on a Medium Phone base.
 
 ## Theme the values once
 

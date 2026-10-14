@@ -1,0 +1,87 @@
+---
+name: appdimens-claude-design
+description: Use when implementing an app, or creating a new project, from Claude Design screens (HTML/React/CSS prototypes, an exported or handed-off Claude Design project, or its screenshots) with AppDimens on any platform — Android, iOS, KMP, Flutter, React Native, web or .NET. Identifies the viewport/device the screens were designed in, reads intent from the DOM and CSS (flex, grid, .map() lists, overflow, aspect-ratio, line-clamp, vw/vh, clamp(), media queries, Tailwind classes), converts CSS px into AppDimens base values for that base screen, and builds the screens natively.
+---
+
+# Claude Design screens → AppDimens app
+
+Follow `appdimens-layout-intent` (steps 1–7). Claude Design screens are code, so the structure is **explicit**: read it instead of guessing from pixels.
+
+## 0. Scope
+
+| Situation | Do |
+|---|---|
+| An app already exists | Implement the screens inside it (detect platform/library, reuse its theme and components). |
+| No project yet ("create the project from these screens") | Ask the target platform(s) if not given → scaffold the project with the platform's standard template → install the AppDimens library (platform skill) → write `appdimens.config.json` with the base screen → theme tokens → navigation from the screen list → screens. |
+| Target is the web | Keep the semantic HTML/CSS structure and replace px with `webdimens` tokens (see `appdimens-web`). |
+
+Get the screens as files (exported HTML/JSX/CSS bundle or handoff). With screenshots only, follow `appdimens-design-to-code` instead, with lower confidence.
+
+## 1. Base screen (the viewport the screens were designed in)
+
+Look, in this order, for:
+1. The device frame / canvas preset of the Claude Design project, or the size stated in the brief ("mobile app, iPhone 15").
+2. A phone mock wrapper in the markup (`width: 390px; height: 844px`, a `.device` / `.phone-frame` element).
+3. The root container's `max-width` / `width`, or `<meta name="viewport" content="width=…">`.
+4. The smallest media-query breakpoint the layout was written for (mobile-first).
+
+CSS px at 1× are logical units (dp/pt). Then **exclude prototype chrome** before measuring: fake status bars, home indicators, device bezels and notches drawn in HTML are not part of the app, and their height must not enter `hdp` conversions. Confirm the profile (size, orientation, font scale 1.0 unless the mockup sets a root `font-size`) and record it in `design.baseScreen`. See `../appdimens-layout-intent/references/base-screen.md`.
+
+## 2. Intent from DOM and CSS
+
+| In the Claude Design code | Intent |
+|---|---|
+| `display:flex; flex-direction:column` + `gap` | `stack-v` with gap |
+| `display:flex` (row) + `gap` | `stack-h` |
+| `{items.map(…)}`, repeated identical siblings | repetition → `list` (column), `grid` (wrap/grid), `carousel` (row + overflow-x) |
+| `display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr))` | `grid` with min item width |
+| `overflow-x:auto` / `scroll-snap-type:x` | `carousel` |
+| `overflow-y:auto`, `min-height:100vh/100dvh` page | `screen` + `scroll-v` |
+| `position:sticky/fixed` header/footer/tab bar | `nav` (use the platform component) |
+| `position:absolute` child on a `relative` parent | `overlay` (badge, FAB) |
+| `width:100%`, `flex:1`, `align-self:stretch` | `sizing: fill` |
+| `width: fit-content` / default inline size | `sizing: hug` |
+| `aspect-ratio: 4/3`, `object-fit` | `media`, `sizing: ratio` |
+| `max-width: 600px; margin: 0 auto` | `clamp` (content width cap, fixed) |
+| `-webkit-line-clamp`, `text-overflow: ellipsis` | `truncate` (maxLines) |
+| `<button>`, `<input>`, `<select>`, `role="tab"` | controls → platform/design-system components |
+| `border: 1px`, `box-shadow` | fixed hairline / elevation |
+| `@media (min-width: 768px) { … }` | `adapt` rule; breakpoints **from the design** are allowed |
+| CSS variables (`--space-4`), Tailwind theme | tokens → convert once, in the theme |
+
+## 3. Values: CSS units → AppDimens
+
+| CSS | Means | Becomes |
+|---|---|---|
+| `16px` (spacing, radius, size) | value on the base viewport | `normalize --frame <w> --height <h> --strategy <s> 16` |
+| `font-size: 1rem` / `16px` | text (1rem = 16px unless the root font-size changes) | `--text` → `…ssp` |
+| `50vw`, `40vh`, `100dvh` | literal share of the window | percent: `50.spaceW`, `40.spaceH` (or fill) |
+| `clamp(14px, 4vw, 20px)` | bounded growth | `fluid` (`fssp`) or `adapt` values at breakpoints |
+| `%` of the parent | fill / weight / fraction of the container | layout primitive, not a token |
+| `1px` borders, shadows | fixed | `1.dp` + `ad:fixed hairline` |
+
+Tailwind defaults (v3, if the mockup uses Tailwind): spacing `1` = 4px (`p-4` = 16px, `gap-3` = 12px), `text-xs/sm/base/lg/xl/2xl` = 12/14/16/18/20/24px, `rounded/-md/-lg/-xl/-2xl` = 4/6/8/12/16px, `rounded-full` = shape. Read `tailwind.config` if the theme was customised.
+
+Batch-convert the whole scale once:
+
+```bash
+node <package>/tools/appdimens-kit/cli.mjs normalize --frame 390 --height 844 --strategy auto 4 8 12 16 20 24 32 48
+node <package>/tools/appdimens-kit/cli.mjs normalize --frame 390 --height 844 --strategy auto --text 12 14 16 18 20 24
+```
+
+## 4. Implement
+
+Print the intent sheet (base screen in the header). Then the platform skill: theme first (spacing/radius/typography from the CSS variables or Tailwind scale), shared components next (one per repeated mockup component), screens last. Map web-only behaviour honestly: hover states → pressed/focus states; CSS animations → platform animations only if asked.
+
+## 5. Validate
+
+- `cli.mjs lint` on changed files.
+- Compare side by side **on the base screen**: the Claude Design screen at its viewport (Playwright screenshot of the HTML) vs the implementation at the same logical size (emulator/simulator/preview). Sizes must match within rounding.
+- Then 300, and the large form factors in `formFactors`.
+
+## Never
+
+- Measure the fake status bar / device frame as part of the layout.
+- Copy absolute positions from the mockup unless the intent is `overlay`.
+- Turn `vw/vh` into `wdp/hdp` (those are proportional growth, not a share of the window).
+- Ship web-only constructs (hover-only affordances) as the only way to reach a feature.

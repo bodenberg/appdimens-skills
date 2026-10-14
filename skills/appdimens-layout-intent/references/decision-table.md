@@ -24,7 +24,7 @@ Keep one layout policy per screen. A different policy for one element needs a re
 | 5 | Max readable content width on large screens | `fixed` or `adaptive` cap | `widthIn(max = 600.dp)` `// ad:fixed max-content-width` | A constraint, not a visual size. |
 | 6 | Literal share of the window (`fraction` sizing) | `fraction` | `50.spaceW`, `40.spaceH` (percent module) | Not `wdp`: `wdp` is proportional growth, not a share. |
 | 7 | Media (image/video/map) | `ratio` | width fill + `aspectRatio(4f/3f)` | Height never `hdp`. |
-| 8 | Full-bleed hero/banner height | `height` or `fraction` | `220.hdp` or `35.spaceH` | Only when the design says it tracks screen height. |
+| 8 | Full-bleed hero/banner height | `height` or `fraction` | `72.hdp` (220 on a 914-tall base) or `24.spaceH` | Only when the design says it tracks screen height. Always `normalize --axis h`. |
 | 9 | Touch target (button, icon-button, chip, list row tap area) | `L`, clamped | `Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)` + `height(48.asdp)` | Min: 48 dp Android · 44 pt Apple · 24 CSS px web (44 recommended) · 40 epx Windows. The minimum is a fixed value by design. |
 | 10 | Control height (button, input, chip) | `L` | `48.sdp` / `48.asdp` | Prefer hug + vertical padding when the design system does. |
 | 11 | Spacing: padding, margin, gap, spacer | `L` | `16.sdp` / `16.asdp` | Prefer the parent's gap over spacer elements. |
@@ -34,7 +34,7 @@ Keep one layout policy per screen. A different policy for one element needs a re
 | 15 | Text that must not follow the user's font scale (badge counter in a fixed circle, game score) | `T` with `em` kind | `10.sem` + reason | Rare. Consider `fit-text` instead. |
 | 16 | Text that must fit a box (`overflow: fit-text`) | resize | `autoResizeTextSp(…)` / `AutoResizeText` / `autoResizeText(el, {min,max})` | A fit-to-container problem, not a scale strategy. |
 | 17 | Line height, letter spacing | follow the text token | `lineHeight = 24.ssp` | Same policy as the font size, or a ratio (`1.5em`). |
-| 18 | Vertical rhythm explicitly tied to screen height (onboarding, splash) | `height` | `48.hdp` | Only with evidence; default spacing is rule 11. |
+| 18 | Vertical rhythm explicitly tied to screen height (onboarding, splash) | `height` | `16.hdp` (48 on a 914-tall base) | Only with evidence; default spacing is rule 11. `hdp` grows with height ÷ 300. |
 | 19 | Width-driven columns/panels explicitly tied to screen width | `width` | `120.wdp` | Prefer `fill` + `weight` when it just shares space. |
 | 20 | Grid column count / pane count | `adapt` | breakpoints (`sw600` → 3 cols) | Counts never scale; they switch. |
 | 21 | Real-world size (ruler, card preview at 85.6 mm) | `physical` | `85.6.mm` (units module) | |
@@ -43,38 +43,42 @@ Keep one layout policy per screen. A different policy for one element needs a re
 | 24 | TV-first or dashboard UI where linear growth is too strong | `damped` | `logsdp` / `pwsdp` | Needs a visual reason; ask before using. |
 | 25 | Anything else with a designed numeric size | `L` | `N.sdp` / `N.asdp` | |
 
+## User-chosen strategies and special features
+
+The defaults above are a starting point. When the user or the config picks another strategy, keep the same property rules (fixed stays fixed, text uses the `sp` kind) and change only the prefix and the factor:
+
+| Strategy | Pick it when | Base value from the base screen |
+|---|---|---|
+| `scaled` / `auto` | default phone-only / phone + bigger screens | `normalize --strategy scaled|auto` |
+| `power` | linear growth feels too big on large phones/tablets | `--strategy power` |
+| `fluid` | text/spacing must stay within 0.8×–1.2× | `--strategy fluid` |
+| `interpolated` | half of scaled growth | `--strategy interpolated` |
+| `logarithmic` | TV, dashboards, dense desktop UIs | `--strategy logarithmic` |
+| `diagonal` / `perimeter` | size must not change with rotation | `--strategy diagonal|perimeter` (reads both sides) |
+| `fit` / `fill` | contain / cover (boards, canvases, hero art) | `--strategy fit|fill` (reads both sides) |
+| `density` | pixel-density alignment (games, AR) | `--strategy density --dpi <dpi>` |
+| `percent` | literal share of the window | `--space w|h|sw` → `50.spaceW` |
+| `a` suffix | very tall/wide screens need correction | add `--aspect` |
+| **resize** | text/box must fit a container | not normalized: `min`/`max` are final sizes from the design intent |
+| **units** | real-world size (mm/cm/in) | not normalized: physical; accuracy depends on reported dpi |
+
+Rules: one strategy per screen; every non-scaled strategy needs its module/package/import (except web, where tokens self-register); `hdp`/`wdp` variants of any strategy read that axis of the base screen (`--axis h|w`).
+
 ## From design value to base value
 
-AppDimens' reference screen is **300 wide** (`16.sdp == 16` only at 300). A designer's frame is usually wider (360, 375, 390, 393, 412, 430). The project picks one rule once, in `design.normalization`:
+AppDimens' reference is **300 wide**; design frames and preview devices are usually 360–440. Converting is therefore never "same number": it depends on the **base screen profile** and the strategy. The full procedure (profile, identification per source, validation, normalization rules `match-base` / `design-at-300` / `as-is`) is in [base-screen.md](base-screen.md). In short:
 
-| `normalization` | Base value | Result on a device as wide as the frame | Use when |
-|---|---|---|---|
-| `design-at-300` | design value as-is | — designers draw on a 300-wide frame | New design systems. Cleanest numbers. |
-| `match-frame` | `design ÷ factor(policy, frameWidth)`, rounded to `design.rounding` (default 0.5) | ≈ the design value (pixel fidelity at the frame width) | Teams that compare the build against the design on the reference device. |
-| `as-is` | design value as-is | design × factor (16 → 19.2 on 360 with `sdp`) | The AppDimens default ("write 16, it grows comfortably"). Say it out loud, because the build will look larger than the design on the frame-width device. |
+```
+base = (value ÷ density) ÷ factor(strategy, base screen [, axis, aspect])
+```
 
-Factor by policy and smallest side `d` (portrait phone frames: `d` = frame width; landscape/desktop frames: `d` = frame height):
+```bash
+node <package>/tools/appdimens-kit/cli.mjs normalize --device medium-phone --strategy auto 16 12 24
+```
 
-| d | scaled `d/300` | adaptive (auto) | bounded (fluid) |
-|---|---|---|---|
-| 300 | 1.000 | 1.000 | 0.800 |
-| 320 | 1.067 | 1.067 | 0.800 |
-| 360 | 1.200 | 1.200 | 0.836 |
-| 375 | 1.250 | 1.250 | 0.849 |
-| 390 | 1.300 | 1.300 | 0.863 |
-| 393 | 1.310 | 1.310 | 0.865 |
-| 412 | 1.373 | 1.373 | 0.882 |
-| 430 | 1.433 | 1.433 | 0.898 |
-| 600 | 2.000 | 1.735 | 1.050 |
-| 768 | 2.560 | 1.869 | 1.200 |
-| 900 | 3.000 | 1.950 | 1.200 |
-| 1080 | 3.600 | 2.039 | 1.200 |
+Token columns in the tables above show syntax. Real base values come from `normalize` against the base screen (e.g. a 220 dp hero on a 914-tall Medium Phone is `72.hdp`, not `220.hdp`, which would be ≈ 670 dp there).
 
-Formulas: scaled `d/300`; auto `d/300` up to 480, then `1.6 + 0.4·ln(1 + (d−480)/300)`; fluid `clamp(0.8 + 0.4·(d−320)/448, 0.8, 1.2)`.
-
-**Do not do this arithmetic by hand.** Run `node <package>/tools/appdimens-kit/cli.mjs normalize --frame 360 --policy auto 16 12 24` and paste its output into the intent sheet.
-
-Rules:
-- Fixed-policy values (rule 1–3, minimum touch targets) are **never** normalized.
-- Several frames for the same screen (Mobile 360, Tablet 768): normalize from the smallest; the others become `adapt` overrides or confirm the chosen policy (compare `design_tablet ÷ design_mobile` against the factor ratio; if the designer kept 16 → 16, the intent is `bounded`/`fixed`, not `scaled`).
-- Web desktop frames (1440×900): the smallest side is 900, so every policy grows a lot. Design the mobile frame as the base and express the desktop frame as `adapt` overrides (`@w840`, `@w1200`), or use `bounded`/`fixed` for desktop-only products.
+Additional rules:
+- Fixed-policy values (rules 1–3 and touch minimums) are never normalized.
+- Several frames for the same screen (Mobile 360, Tablet 768): normalize from the base (mobile) frame; the others become `adapt` overrides or confirm the strategy (if the designer kept 16 → 16, the intent is `bounded`/`fixed`, not `scaled`).
+- Web desktop frames (1440×900): the smallest side is 900, so every strategy grows a lot. Use the mobile frame as the base and express desktop as `adapt` overrides (`@w840`, `@w1200`), or use `bounded`/`fixed` for desktop-only products.

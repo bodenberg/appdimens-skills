@@ -97,7 +97,7 @@ test('config policy changes the suggestion', () => {
 test('cli normalize prints a table', () => {
   const run = spawnSync(process.execPath, [join(kit, 'cli.mjs'), 'normalize', '--frame', '360', '--policy', 'auto', '16'], { encoding: 'utf8' });
   assert.equal(run.status, 0);
-  assert.match(run.stdout, /\| 16 \| 13\.5 \| 16\.2 \|/);
+  assert.match(run.stdout, /\| 16 \| 13\.5 \| 13\.5\.asdp \| 16\.2 \|/);
 });
 
 test('hook: errors exit 2, warnings add context, unrelated files are silent', () => {
@@ -115,4 +115,65 @@ test('hook: errors exit 2, warnings add context, unrelated files are silent', ()
   const quiet = call(fx('unrelated', 'Plain.kt'));
   assert.equal(quiet.status, 0);
   assert.equal(quiet.stdout, '');
+});
+
+import { factorFor, percentOf, STRATEGIES } from '../lib/factors.mjs';
+import { findDevice, looksLikePhysicalPx } from '../lib/devices.mjs';
+import { scanBaseHints, summarizeHints } from '../lib/basehints.mjs';
+
+const REF = { width: 300, height: 533, dpi: 160 };
+const close = (a, b, eps = 0.01) => assert.ok(Math.abs(a - b) < eps, `${a} ≈ ${b}`);
+
+test('every strategy is neutral on the reference screen (except fluid and density by design)', () => {
+  for (const s of STRATEGIES) {
+    const f = factorFor(s, REF);
+    if (s === 'fluid') close(f, 0.8);
+    else close(f, 1, 0.002);
+  }
+});
+
+test('strategy kernels match THEORY.md', () => {
+  const phone = { width: 411, height: 914, dpi: 420 };
+  close(factorFor('power', phone), Math.pow(411 / 300, 0.75));
+  close(factorFor('interpolated', phone), 0.5 + 0.5 * (411 / 300));
+  close(factorFor('logarithmic', phone), 1 + 0.4 * Math.log(411 / 300));
+  close(factorFor('diagonal', phone), Math.sqrt(411 ** 2 + 914 ** 2) / 611.6305);
+  close(factorFor('perimeter', phone), (411 + 914) / 833);
+  close(factorFor('fill', phone), Math.max(411 / 300, 914 / 533));
+  close(factorFor('fit', phone), Math.min(411 / 300, 914 / 533));
+  close(factorFor('density', phone), 420 / 160);
+  // hdp divides the height by 300, not 533
+  close(factorFor('scaled', phone, { axis: 'h' }), 914 / 300);
+  // the a suffix on a 16:9 screen is neutral for the aspect term
+  close(factorFor('scaled', { width: 400, height: 712 }, { aspect: true }), 1 + 100 / 300, 0.002);
+  assert.throws(() => factorFor('density', { width: 411, height: 914 }));
+  assert.throws(() => factorFor('scaled', { width: 411 }, { axis: 'h' }));
+});
+
+test('normalize handles density, axis and percentages', () => {
+  const px = normalize([48], { frame: 1080, height: 2400, density: 2.625 });
+  close(px.baseDevice.width, 411.43);
+  assert.equal(px.rows[0].base, 13.5);
+  const h = normalize([220], { frame: 411, height: 914, axis: 'h' });
+  assert.equal(h.rows[0].base, 72);
+  const [p] = percentOf([205], { frame: 411, height: 914, of: 'w' });
+  assert.equal(p.percent, 50);
+});
+
+test('device catalog and physical-px heuristic', () => {
+  assert.equal(findDevice('Medium Phone').width, 411);
+  assert.equal(findDevice('iPhone 15').width, 393);
+  assert.equal(findDevice('android compact').id, 'figma-android-compact');
+  assert.ok(looksLikePhysicalPx({ width: 1080, height: 2400 }));
+  assert.ok(!looksLikePhysicalPx({ width: 1920, height: 1080 }), 'landscape desktop is logical');
+  assert.ok(!looksLikePhysicalPx({ width: 411, height: 914 }));
+});
+
+test('base-screen evidence is found in code', () => {
+  const summary = summarizeHints(scanBaseHints([fx('android'), fx('flutter')]));
+  assert.deepEqual([summary[0].width, summary[0].height, summary[0].count], [411, 914, 2]);
+  const sizes = summary.map((g) => `${g.width}x${g.height}`);
+  assert.ok(sizes.includes('360x800'));
+  assert.ok(sizes.includes('673x841'));
+  assert.ok(sizes.includes('375x812'), 'flutter_screenutil designSize');
 });

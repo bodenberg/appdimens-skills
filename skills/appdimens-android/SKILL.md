@@ -75,4 +75,4 @@ Values are **px**: `view.setPadding(px, px, px, px)`, `textView.setTextSize(Type
 
 ## Verify
 
-`./gradlew :app:compileDebugKotlin` (or the module's build) and Compose previews at `widthDp = 300`, the design frame width and `widthDp = 600` when tablets are in scope: `@Preview(widthDp = 300) @Preview(widthDp = 360) @Preview(widthDp = 600)`.
+`./gradlew :app:compileDebugKotlin` (or the module's build) and Compose previews on the **base screen first** (e.g. `@Preview(device = "id:medium_phone")` or `"spec:width=412dp,height=917dp"` for a Figma Android Compact frame), then `@Preview(widthDp = 300)` and `@Preview(device = Devices.TABLET)` when tablets are in scope. On the base screen the result must match the source within rounding.

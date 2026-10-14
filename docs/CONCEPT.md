@@ -1,71 +1,67 @@
-# Conceito — interpretar a intenção do layout antes de escolher a unidade
+# Conceito — tela base e intenção antes do token
 
 ## O problema
 
-Quando uma IA converte um design em app, ela vê **aparência** (um card com padding 16) e não **comportamento**: se aquilo cresce, rola, vira lista, se adapta ao tablet ou fica fixo. Daí vêm os erros clássicos: padding fixo em `dp`, posicionamento absoluto copiado do Figma, divisor de 1 px escalado, fonte que ignora a acessibilidade, biblioteca errada para a plataforma e um layout que fica diferente do Figma.
+Ao converter um design ou aplicar o AppDimens em telas existentes, a IA erra por dois motivos:
 
-O AppDimens já resolve o "quanto cresce", com o mesmo vocabulário (`sdp`, `ssp`, `asdp`…) em todas as plataformas. Faltava resolver o que vem **antes**: *o que este elemento deve fazer quando a tela muda?*
+1. **Não sabe em que tela o valor foi escolhido.** `16` num frame Figma "Android Compact" (412 dp), num `@Preview` Medium Phone (411 dp) ou na referência do AppDimens (300) não é o mesmo `16`. Como o AppDimens calcula `valor × eixo ÷ 300`, trocar `16.dp` por `16.sdp` deixa o layout **37 % maior** num Medium Phone. Por isso "ficou diferente do Figma".
+2. **Vê aparência e não comportamento.** Ela não sabe se o elemento é lista, grade ou carrossel, se preenche ou abraça o conteúdo, se rola, se é fixo (hairline, área de toque) ou se precisa caber num espaço (resize).
 
 ## A ideia central
 
-O pacote é um "cérebro compartilhado" para Claude Code, Codex, Cursor e similares. Antes de qualquer código, a IA declara a **intenção** de cada elemento em cinco eixos:
+Antes de qualquer token, a IA responde e registra duas coisas.
 
-| Eixo | Exemplos |
+### 1. Perfil da tela base
+
+| Propriedade | Por que influencia |
 |---|---|
-| **role** (papel) | screen, list, grid, carousel, card, button, input, text, media, divider, overlay |
-| **sizing** (dimensionamento) | hug, fill, fixed, ratio, clamp, fraction |
-| **overflow** | scroll-v, scroll-h, wrap, truncate, fit-text |
-| **scale** (política de escala) | scaled (`sdp`), adaptive (`asdp`), bounded (`fsdp`), fixed, platform… |
-| **adapt** | mudanças em breakpoints (`sw600` → 3 colunas) |
+| Dimensão lógica (dp / pt / CSS px) | todas as estratégias por eixo |
+| Resolução física e densidade (dpi, @2x/@3x) | designs em px precisam ser divididos pela densidade; `density`, tokens `Px` e `units` dependem do dpi |
+| Orientação | qual lado é o menor; inversores |
+| Proporção (aspect ratio) | sufixo `a`, `fill`, `fit`, `diagonal`, `perimeter` |
+| Janela vs tela, insets | o AppDimens segue a janela; barras do sistema mudam a altura que o `hdp` lê |
+| Escala de fonte | `ssp` multiplica por ela |
 
-A unidade passa a ser consequência de uma **tabela de decisão**. Por exemplo: divisor → fixo; texto → família `sp` (respeita a fonte do usuário); área de toque → nunca abaixo de 48 dp / 44 pt; imagem → largura fill + `aspectRatio`, nunca `hdp`.
+A regra base da biblioteca está sempre presente: referência **300 × 533**; `sdp` lê o menor lado, `wdp` a largura e `hdp` a **altura ÷ 300** (não 533); `ssp` × escala de fonte.
 
-```text
-design / screenshot / spec / código existente
-  → plataforma + biblioteca      (detectadas no repositório)
-  → contrato do projeto          (appdimens.config.json)
-  → intenção de cada elemento    (com confiança e evidência)
-  → política de escala → token   (tabela de decisão)
-  → skill da plataforma          (código nativo correto)
-  → validação                    (appdimens-kit lint / hook)
+A conversão é feita pela CLI, nunca de cabeça:
+
+```
+valor base = (valor ÷ densidade) ÷ fator(estratégia, tela base [, eixo, proporção])
+16 dp num Medium Phone (411) com scaled → 16 ÷ 1,37 = 11,5.sdp → volta a ~15,8 dp nesse aparelho
 ```
 
-## Três modos, um modelo
+A tela base é **confirmada com o usuário** e gravada em `appdimens.config.json`, para não ser perguntada de novo.
 
-| Modo | Entrada | Skill |
-|---|---|---|
-| **Ler** | Figma, Claude Design, screenshot, spec | `appdimens-design-to-code` |
-| **Criar** | briefing | `appdimens-design-authoring`: o design já nasce com a intenção explícita (Auto Layout, variáveis `space.*`/`text.*`, tags como `[grid]` e `[fixed-scale]`, handoff) |
-| **Editar** | código existente | `appdimens-code-edit`: extrai a intenção do código (um `LazyColumn` já é lista; um `1.dp` é hairline) e a preserva |
+### 2. Intenção de cada elemento
 
-## Decisões que o pacote torna explícitas
+Cinco eixos: **papel** (screen, list, grid, carousel, card, button…), **dimensionamento** (hug, fill, fixed, ratio, clamp, fraction), **overflow** (scroll, wrap, truncate, fit-text), **política de escala** e **adaptação** (breakpoints). Uma tabela de decisão leva intenção → estratégia → token: divisor é fixo, texto usa a família `sp`, área de toque nunca fica abaixo do mínimo, imagem usa `aspectRatio`, texto que precisa caber usa **resize** e tamanho físico usa **units**.
 
-1. **Valor do design ≠ valor base.** A referência do AppDimens tem 300 de largura. Um frame de 360 com padding 16 vira `16.sdp`, que dá **19,2** num aparelho de 360. O projeto escolhe uma única vez (`design.normalization`) entre desenhar em 300, normalizar (`base = valor ÷ fator`) ou aceitar o crescimento. A conta é feita pela CLI (`appdimens-kit normalize`), nunca "de cabeça".
-2. **Confiança com evidência.** Anotações vencem a inferência. Acima de 0,8 a IA aplica; entre 0,5 e 0,8 aplica e marca para revisão; abaixo de 0,5 pergunta, juntando todas as dúvidas numa mensagem só.
-3. **Breakpoints não se inventam.** Eles vêm do config, do design (um frame de tablet) ou do usuário.
-4. **Fixo de propósito é declarado.** `// ad:fixed hairline`: o validador respeita a marca, e o revisor entende o porquê.
-5. **Uma estratégia por tela**, sempre com o módulo/pacote/import correspondente instalado.
+Todas as estratégias são suportadas quando o usuário escolhe ou o layout pede: scaled, auto, percent (`spaceW` literal), power, fluid, interpolated, logarithmic, diagonal, perimeter, fit, fill, density e o sufixo `a`.
 
-## Cobertura: todas as bibliotecas AppDimens
+## Os quatro fluxos
 
-`appdimens-dynamic`, `appdimens-sdps`, `appdimens-ssps`, `appdimens-kmp`, `appdimens-ios`, `appdimens-flutter`, `appdimens-react-native`, `appdimens-web` (`webdimens`), `appdimens-net-binding` (famílias SDPS e AppDimens.Net) e `appdimens-games`, em 9 skills de plataforma. As skills deste pacote cuidam da **intenção**; a skill de cada biblioteca (no repositório dela) continua sendo a autoridade sobre a API.
+| Fluxo | Entrada | Skill | Onde está a tela base |
+|---|---|---|---|
+| Implementar do **Figma** | frame, link, export, MCP, screenshot | `appdimens-design-to-code` | tamanho e preset do frame (px → ÷ densidade) |
+| Implementar ou **criar o projeto** a partir do **Claude Design** | HTML/React/CSS das telas | `appdimens-claude-design` | viewport ou moldura do protótipo, `max-width` e `meta viewport` (sem a status bar falsa) |
+| **Aplicar em telas existentes** | código atual | `appdimens-code-edit` | `@Preview(device=…)`, `.previewDevice`, `designSize`, `guidelineBaseWidth`, viewports de teste (`cli detect`) |
+| **Criar telas novas** | briefing | `appdimens-new-screen` | declarada pela IA (config ou padrão da plataforma) e confirmada |
 
-## Uma fonte, várias ferramentas
+## O pacote
 
-`skills/` é a fonte única. A partir dela:
+- **Skill central** `appdimens-layout-intent`, com referências de tela base, modelo de intenção, tabela de decisão e roteador de plataformas.
+- **4 skills de fluxo**, uma para cada linha da tabela acima.
+- **9 skills de plataforma**, cobrindo as 11 bibliotecas: dynamic, sdps/ssps, kmp, ios, flutter, react-native, web, net-binding e games.
+- **CLI `appdimens-kit`**:
+  - `detect`: plataformas e evidências da tela base no código;
+  - `devices`: catálogo de telas;
+  - `normalize`: todas as estratégias, eixo, densidade, sufixo `a`, `spaceW`;
+  - `lint`: validação do código.
+- **Hook** do Claude Code, gerado a partir das mesmas skills, e adaptadores para **Codex** (`AGENTS.md`) e **Cursor** (`.mdc`).
+- **Evals**: casos-ouro para medir as IAs.
 
-- **Claude Code**: plugin (skills + hook de validação) instalado via marketplace;
-- **Codex**: seção gerada para o `AGENTS.md` + `.appdimens/`;
-- **Cursor**: regras `.mdc` geradas;
-- `scripts/build-adapters.mjs --check` garante que nada saia de sincronia.
+## Fora do escopo
 
-## O que ficou de fora (por decisão)
-
-- **Plugin Figma**: fora do escopo. O Figma continua sendo uma das fontes que a skill sabe ler (inclusive pelo servidor MCP do Figma), mas não construímos o plugin.
-- **Codegen automático completo**: o pacote orienta a IA e valida o resultado; o código é escrito pelo agente no projeto real, seguindo os padrões do projeto.
-
-## Próximos passos sugeridos
-
-1. Rodar os casos de `evals/intent-cases.json` com Claude Code, Codex e Cursor e registrar a pontuação.
-2. Adicionar um caso a cada erro real que uma IA cometer.
-3. Publicar o marketplace e linkar o pacote no hub `bodenberg/appdimens` (seção "AI coding assistants").
+- **Plugin Figma**: o Figma é só uma fonte de leitura (inclusive pelo MCP).
+- **Codegen automático**: o agente escreve o código no projeto real; o pacote orienta, calcula e valida.

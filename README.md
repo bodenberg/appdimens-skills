@@ -1,7 +1,7 @@
 # appdimens-skills
 
 **A shared brain for AI coding agents that build UIs with [AppDimens](https://github.com/bodenberg/appdimens).**
-Claude Code, Codex, Cursor and similar tools learn to decide **what each layout element is supposed to do** (list, grid, carousel, card, fill, hug, scroll, fixed hairline…) **before** choosing the platform, the AppDimens library, the unit (`sdp`, `ssp`, `asdp`, `hdp`…) and the strategy, and a validator catches the usual mistakes after every edit.
+Claude Code, Codex, Cursor and similar tools learn to identify **the base screen the values were chosen on** (size, resolution, density, orientation, aspect, font scale) and **what each layout element is supposed to do** (list, grid, carousel, card, fill, hug, scroll, fixed hairline…) **before** choosing the platform, the AppDimens library, the unit (`sdp`, `ssp`, `asdp`, `hdp`…) and the strategy, and a validator catches the usual mistakes after every edit.
 
 🇧🇷 [Resumo em português](#-resumo-em-português) · 📄 [Conceito completo (PT-BR)](docs/CONCEPT.md)
 
@@ -9,10 +9,11 @@ Claude Code, Codex, Cursor and similar tools learn to decide **what each layout 
 
 | Part | What it does |
 |---|---|
-| `skills/appdimens-layout-intent` | Core: the layout-intent model, the intent → unit decision table, platform router, project contract. |
-| `skills/appdimens-design-to-code` | Read mode: Figma / Claude Design / screenshot / spec → intent → code. |
-| `skills/appdimens-design-authoring` | Create mode: produce designs that are already unambiguous for AppDimens (Auto Layout, variables, intent tags, handoff spec). |
-| `skills/appdimens-code-edit` | Edit mode: recover intent from existing code and preserve it while migrating / refactoring. |
+| `skills/appdimens-layout-intent` | Core: base screen profile, layout-intent model, intent → strategy/unit decision table, platform router, project contract. |
+| `skills/appdimens-design-to-code` | Figma / screenshot / spec → base screen → intent → code. |
+| `skills/appdimens-claude-design` | Claude Design screens (HTML/React/CSS) → implement in an app or create the project. |
+| `skills/appdimens-code-edit` | Apply AppDimens to existing screens, keeping their look on the screen they were built for. |
+| `skills/appdimens-new-screen` | Create new screens directly with AppDimens, from a declared base screen. |
 | `skills/appdimens-<platform>` | One per platform, covering **every AppDimens library** (table below). |
 | `schemas/` | `appdimens.config.json` (the per-project contract) and the layout-intent JSON schema. |
 | `tools/appdimens-kit` | Zero-dependency Node CLI: `lint`, `normalize` (design value → base value), `detect` (platform targets). |
@@ -61,7 +62,11 @@ Then add `appdimens.config.json` at your project root (or let the agent propose 
   "$schema": "./.appdimens/schemas/appdimens.config.schema.json",
   "targets": [{ "platform": "android-compose", "library": "appdimens-dynamic", "version": "3.2.0" }],
   "formFactors": ["phone", "tablet"],
-  "design": { "source": "figma", "frameWidth": 360, "normalization": "match-frame" },
+  "design": {
+    "source": "figma",
+    "baseScreen": { "id": "figma-android-compact", "width": 412, "height": 917, "unit": "dp", "orientation": "portrait", "fontScale": 1, "confirmed": true },
+    "normalization": "match-base"
+  },
   "breakpoints": [{ "name": "tablet", "when": "sw600" }]
 }
 ```
@@ -69,9 +74,11 @@ Then add `appdimens.config.json` at your project root (or let the agent propose 
 ## The CLI
 
 ```bash
-node tools/appdimens-kit/cli.mjs detect .                                  # which platforms/libraries
-node tools/appdimens-kit/cli.mjs normalize --frame 360 --policy auto 16 24  # design → base values
-node tools/appdimens-kit/cli.mjs lint src/                                  # validate
+node tools/appdimens-kit/cli.mjs detect .                                              # platforms, libraries, base-screen evidence in code
+node tools/appdimens-kit/cli.mjs devices                                               # base-screen catalog (dp / pt / CSS px)
+node tools/appdimens-kit/cli.mjs normalize --device medium-phone --strategy auto 16 24  # value on base screen → AppDimens base
+node tools/appdimens-kit/cli.mjs normalize --frame 1080 --height 2400 --density 2.625 48  # design drawn in physical px
+node tools/appdimens-kit/cli.mjs lint src/                                              # validate
 ```
 
 `lint` flags: fixed literals that should be tokens (`16.dp`, `padding: 16`, `16px`, `android:padding="16dp"`, `Padding="16"`), strategy tokens without their import/module, obsolete APIs (`balanced`, `fxdp`…), XML resources that don't exist (`_700sdp`, `_13.5sdp`), JS-only web tokens in CSS/classes, `*Px` in React Native `fontSize`, and mixed .NET families. Deliberately fixed values carry a reason: `// ad:fixed hairline`.
@@ -88,7 +95,7 @@ npm run check               # adapters in sync + tests (use in CI)
 
 ## 🇧🇷 Resumo em português
 
-Um **pacote de skills** que ensina IAs (Claude Code, Codex, Cursor…) a **interpretar a intenção do layout** antes de escrever código: se o elemento é lista, grade, carrossel, card, se preenche, abraça o conteúdo, rola ou é fixo. Só depois a IA escolhe a plataforma, a **biblioteca AppDimens certa** (todas as 11 são cobertas), a unidade (`sdp`, `ssp`, `asdp`, `hdp`…) e a estratégia. Funciona em três modos: **ler** um design (Figma, Claude Design, screenshot), **criar** um design já pronto para AppDimens, e **editar** código existente sem quebrar o que era fixo de propósito. Um validador (`appdimens-kit lint`, rodando como hook no Claude Code) pega os erros comuns. Instalação e detalhes acima; o conceito completo está em [docs/CONCEPT.md](docs/CONCEPT.md).
+Um **pacote de skills** que ensina IAs (Claude Code, Codex, Cursor…) a, antes de escrever código, **(1) identificar a tela base** em que os valores foram escolhidos (dimensões, resolução, densidade/pontos, orientação, proporção, escala de fonte) e **(2) interpretar a intenção do layout** (lista, grade, carrossel, card; preenche, abraça, rola ou é fixo). Só então a IA escolhe a **biblioteca AppDimens certa** (todas as 11 são cobertas), a estratégia (scaled, auto, fluid, power…, além de resize e units) e o valor base correto, calculado pela CLI para manter a aparência na tela base. Os quatro fluxos são: implementar a partir do **Figma**, implementar ou criar o projeto a partir de telas do **Claude Design**, **aplicar o AppDimens em telas existentes** e **criar telas novas** já com o AppDimens. Um validador (`appdimens-kit lint`, que roda como hook no Claude Code) pega os erros comuns. O conceito completo está em [docs/CONCEPT.md](docs/CONCEPT.md).
 
 ## License
 

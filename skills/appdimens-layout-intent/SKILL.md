@@ -1,97 +1,110 @@
 ---
 name: appdimens-layout-intent
-description: Use before writing, converting, reviewing or editing any UI sizing in a project that uses (or should use) AppDimens on any platform — Android Compose/Views/XML, Kotlin Multiplatform, iOS/macOS SwiftUI/UIKit, Flutter, React Native, Web (webdimens), .NET MAUI/WPF/WinForms/WinUI or Android games. Trigger on sdp/ssp/asdp/assp/hdp/wdp/sem, "@dimen/_16sdp", "{sdp:16}", "16sdp", responsive layout, tablets/foldables/TV/desktop sizing, or converting a Figma / Claude Design / screenshot into UI. It turns every element into an explicit layout intent (role, sizing, overflow, scale policy, adaptation) and only then picks platform, library, unit and strategy.
+description: Use before writing, converting, reviewing or editing any UI sizing in a project that uses (or should use) AppDimens on any platform — Android Compose/Views/XML, Kotlin Multiplatform, iOS/macOS SwiftUI/UIKit, Flutter, React Native, Web (webdimens), .NET MAUI/WPF/WinForms/WinUI or Android games. Trigger on sdp/ssp/asdp/assp/hdp/wdp/sem, "@dimen/_16sdp", "{sdp:16}", "16sdp", responsive layout, tablets/foldables/TV/desktop sizing, converting Figma or Claude Design screens, applying AppDimens to existing screens, or creating new screens. It fixes the base screen the values were chosen on, turns every element into an explicit layout intent, and only then picks library, strategy and token.
 ---
 
-# AppDimens — layout intent first
+# AppDimens — base screen and layout intent first
 
-AppDimens gives every platform the same vocabulary (`sdp`, `ssp`, `asdp`…), but the vocabulary only answers *how much* a value grows. This skill answers the question that comes first: **what is this element supposed to do when the screen changes?** Decide the intent, then the unit falls out of a table.
+AppDimens gives every platform the same vocabulary (`sdp`, `ssp`, `asdp`…), but a token only answers *how much a value grows from the 300-wide reference*. Two questions come first:
+
+1. **On which screen was this value chosen?** (the base screen: size, resolution, density, orientation, aspect, font scale)
+2. **What is this element supposed to do when the screen changes?** (the intent)
+
+Answer both, then the token falls out of a table and a calculation.
 
 ```
-input (design, screenshot, spec or existing code)
-  → 1. platform + library        (references/platform-router.md)
-  → 2. project contract          (appdimens.config.json)
-  → 3. intent per element        (references/intent-model.md)
-  → 4. scale policy → token      (references/decision-table.md)
-  → 5. platform skill writes code (appdimens-<platform>)
-  → 6. validate                  (appdimens-kit lint)
+source (Figma · Claude Design · existing screens · brief)
+  → 1. platform + library          references/platform-router.md   ·  cli detect
+  → 2. project contract            appdimens.config.json
+  → 3. base screen profile          references/base-screen.md       ·  cli detect / devices  → CONFIRM
+  → 4. intent per element           references/intent-model.md
+  → 5. strategy + token per value   references/decision-table.md    ·  cli normalize
+  → 6. platform skill writes code   appdimens-<platform>
+  → 7. validate                     cli lint · check on the base screen, 300, large screens
 ```
 
-Paths below: `<package>` is the root of this kit (two folders above this file: the Claude Code plugin root, or `.appdimens/` when installed with `scripts/install.mjs`).
+Paths: `<package>` is the root of this kit (two folders above this file: the Claude Code plugin root, or `.appdimens/` when installed with `scripts/install.mjs`).
+
+## Which workflow skill
+
+| The user wants to… | Skill |
+|---|---|
+| Implement screens from **Figma**, a screenshot or a spec | `appdimens-design-to-code` |
+| Implement or create the project from **Claude Design** screens | `appdimens-claude-design` |
+| Apply AppDimens to **existing screens** (migrate, refactor, fix tablet/TV) | `appdimens-code-edit` |
+| Create **new screens** directly with AppDimens (no design file) | `appdimens-new-screen` |
+
+All of them follow the steps below.
 
 ## Step 1 — platform and library
 
-Detect it from the repository (build files), never from the design: run `node <package>/tools/appdimens-kit/cli.mjs detect .` and use [references/platform-router.md](references/platform-router.md). One project may have several targets (e.g. Android Compose + Web). If nothing is detectable and the user did not say, ask — this is the one question you may never guess.
+Detect from the repository, never from the design: `node <package>/tools/appdimens-kit/cli.mjs detect .`, then [references/platform-router.md](references/platform-router.md). One project may have several targets. If nothing is detectable and the user did not say, ask.
 
-## Step 2 — the project contract (`appdimens.config.json`)
+## Step 2 — project contract (`appdimens.config.json`)
 
-Look for `appdimens.config.json` at the repo root (schema: `schemas/appdimens.config.schema.json` in this package). It holds the decisions that are made **once per project**, so you never re-ask them:
+Root of the repo; schema `schemas/appdimens.config.schema.json`. It stores decisions made **once**: targets, `formFactors`, default strategies, the **base screen** and normalization rule, allowed breakpoints, token file locations. Missing → propose one with what you detected, ask only for the rest, write it after confirmation.
 
-| Field | Why it matters |
-|---|---|
-| `targets[]` | platform, library, version, source paths |
-| `formFactors` | `phone` only → `scaled`; anything bigger in the list → `auto` by default |
-| `strategy.layout` / `strategy.text` | project-wide default policy (overrides the table defaults) |
-| `design.frameWidth` + `design.normalization` | how a design value becomes a base value (Step 4) |
-| `breakpoints` | the only breakpoints you may use; never invent others |
+## Step 3 — base screen profile (mandatory, confirm it)
 
-If the file is missing and the task is more than a one-line fix, propose one (fill what you detected, ask only for what you could not) and write it after the user confirms.
+Follow [references/base-screen.md](references/base-screen.md). Identify logical size, resolution/density, orientation, aspect ratio, window vs screen, insets and font scale of the screen the values were chosen on (Figma frame, Claude Design viewport, `@Preview` device, `designSize`…). Say it in one line with the resulting factor and wait for a yes unless the config already holds it:
 
-## Step 3 — intent per element
+> Base screen: Medium Phone 411×914 dp, 420 dpi, portrait, font 1.0 → `sdp` ×1.37, `hdp` ×3.05 → `16.dp` becomes `11.5.sdp`. OK?
 
-For every node you are about to implement, decide the intent along five axes — `role`, `sizing`, `overflow`, `scale`, `adapt` — following [references/intent-model.md](references/intent-model.md). Use, in priority order:
+Remember the base rule: tokens are `value × axis ÷ 300`; `sdp` reads the smallest side, `wdp` the width, `hdp` the **height ÷ 300** (not 533); `ssp` × font scale. With `as-is` the same number grows 20–47 % on today's phones.
 
-1. **Explicit annotations** — layer names such as `Products [grid] [fill]`, a design-spec table, code comments `// ad:fixed hairline`.
-2. **Structure** — Auto Layout direction/wrap/fill/hug, repeated siblings, scroll containers, existing native components in code.
-3. **Heuristics** — scored, each with evidence (see the model).
+## Step 4 — intent per element
 
-Confidence rules: **≥ 0.8** apply and record the evidence; **0.5–0.8** apply and list it under "needs review"; **< 0.5** ask, batching all low-confidence questions into one message.
+Five axes — `role`, `sizing`, `overflow`, `scale`, `adapt` — per [references/intent-model.md](references/intent-model.md), from explicit annotations > structure > scored heuristics. Confidence **≥ 0.8** apply; **0.5–0.8** apply and list under "needs review"; **< 0.5** ask, all questions in one message.
 
-## Step 4 — scale policy → token
+## Step 5 — strategy and token per value
 
-Look up each property in [references/decision-table.md](references/decision-table.md). For normalization numbers run `node <this-package>/tools/appdimens-kit/cli.mjs normalize --frame <w> --policy <scaled|auto|fluid> <values…>` instead of doing the math. Key rules that are easy to get wrong:
+[references/decision-table.md](references/decision-table.md) gives the strategy per property; the default strategy comes from `formFactors` (phone only → `scaled`; bigger screens → `auto`) unless the user or config chose another one (`power`, `fluid`, `logarithmic`, `fit`, `fill`, `diagonal`, `perimeter`, `interpolated`, `density`, `percent`). Special features: **resize** for fit-to-container text/boxes, **units** for physical sizes. Then compute every base value — never by hand:
 
-- **Hairlines, borders, dividers, elevation, focus rings → fixed** (`1.dp`, `1pt`, `1px`). Never `1.sdp`.
-- **Text → the `sp` kind** of the layout strategy (`ssp`, `assp`, `fssp`), which respects the user's font scale. `sem` only when text must ignore it (a fixed badge) — say why.
-- **Touch targets never drop below the platform minimum** (48 dp Android, 44 pt Apple, 24 CSS px web) — clamp with a fixed minimum.
-- **Fill / hug / weight are layout primitives, not numbers.** A container that fills its parent gets `fillMaxWidth` / `.frame(maxWidth: .infinity)` / `Expanded` / `flex: 1`, never `300.wdp`.
-- **Images keep their ratio:** width fills, height comes from `aspectRatio`. Not `hdp`.
-- **Platform chrome stays native** (status/nav bars, default app bars, system controls with their own metrics).
-- **Design value ≠ base value.** A design drawn on a frame wider than 300 must be normalized per `design.normalization` (see the table, section "From design value to base value").
+```bash
+node <package>/tools/appdimens-kit/cli.mjs normalize --device medium-phone --strategy auto 16 12 24
+node <package>/tools/appdimens-kit/cli.mjs normalize --device medium-phone --axis h 220          # hdp
+node <package>/tools/appdimens-kit/cli.mjs normalize --frame 1080 --height 2400 --density 2.625 48  # px design
+node <package>/tools/appdimens-kit/cli.mjs normalize --device medium-phone --space w 205          # 50.spaceW
+```
 
-## Step 5 — implement through the platform skill
+Rules that are easy to get wrong: hairlines/borders/elevation/platform chrome/minimum touch targets stay **fixed** (never normalized); text uses the `sp` kind (`ssp`, `assp`, `fssp`), `sem` only with a reason; fill/hug/weight are layout primitives, not numbers; images keep `aspectRatio` (not `hdp`); `hdp` only for values that must follow screen height.
 
-Load the matching skill — `appdimens-android`, `appdimens-android-xml`, `appdimens-kmp`, `appdimens-apple`, `appdimens-flutter`, `appdimens-react-native`, `appdimens-web`, `appdimens-dotnet`, `appdimens-games`. It maps intent to native layout primitives and gives exact install lines, setup, imports and token syntax. If the project also has the library's own upstream skill (shipped in each AppDimens repo under `skills/`), it is the authority on API details; this package is the authority on intent.
+## Step 6 — implement through the platform skill
 
-## Step 6 — validate
+`appdimens-android`, `appdimens-android-xml`, `appdimens-kmp`, `appdimens-apple`, `appdimens-flutter`, `appdimens-react-native`, `appdimens-web`, `appdimens-dotnet`, `appdimens-games`: install lines, setup, imports, token syntax, intent → native primitives. The library's own upstream skill (in its repo under `skills/`) is the authority on API details; this package is the authority on base screen and intent.
 
-Run `node <this-package>/tools/appdimens-kit/cli.mjs lint <changed files>` (the Claude Code plugin runs it automatically after each edit). Fix errors. A warning on a value whose fixed intent is real is silenced with an inline marker that states the reason: `// ad:fixed hairline`, `<!-- ad:fixed -->`, `/* ad:fixed */`, `# ad:fixed`.
+## Step 7 — validate
+
+- `node <package>/tools/appdimens-kit/cli.mjs lint <changed files>` (the Claude Code plugin runs it after each edit). Deliberate fixed values carry a reason: `// ad:fixed hairline`.
+- Check on the **base screen first** (must match the source within rounding), then 300, then the large form factors. Say which you checked and how.
 
 ## Output contract
 
-Before code for a screen or component, print an **intent sheet** — it is the reviewable contract:
+Before code, print the **intent sheet** with the base screen in the header:
 
 ```
 Target: android-compose · appdimens-dynamic 3.2.0 · strategy auto (formFactors: phone, tablet)
-Design: frame 360 → normalization reference-300 (×0.833, rounded to 0.5)
+Base screen: Figma "Android Compact" 412×917 dp · portrait · font 1.0 (confirmed) · match-base · asdp ×1.373
 
-| Node             | Role    | Sizing W/H   | Overflow | Scale                | Tokens                         | Conf |
-|------------------|---------|--------------|----------|----------------------|--------------------------------|------|
-| Home             | screen  | fill / fill  | scroll-v | —                    | —                              | 0.95 |
-| Home/Products    | grid    | fill / hug   | none     | spacing adaptive     | gap 12.asdp; cols 2 → 3 @sw600 | 0.82 |
-| ProductCard      | card    | fill / hug   | none     | spacing adaptive     | pad 12.asdp, radius 8.asdp     | 0.90 |
-| ProductCard/Img  | media   | fill / ratio | clip     | —                    | aspectRatio 4:3                | 0.90 |
-| ProductCard/Line | divider | fill / fixed | none     | fixed                | 1.dp  (ad:fixed hairline)      | 1.00 |
+| Node             | Role    | Sizing W/H   | Overflow | Scale          | Source → token                   | Conf |
+|------------------|---------|--------------|----------|----------------|----------------------------------|------|
+| Home             | screen  | fill / fill  | scroll-v | —              | —                                | 0.95 |
+| Home/Products    | grid    | fill / hug   | none     | spacing auto   | gap 12 → 9.asdp; cols 2→3 @sw600 | 0.82 |
+| ProductCard      | card    | fill / hug   | none     | spacing auto   | pad 16 → 11.5.asdp, r 12 → 9     | 0.90 |
+| ProductCard/Img  | media   | fill / ratio | clip     | —              | aspectRatio 4:3                  | 0.90 |
+| ProductCard/Line | divider | fill / fixed | none     | fixed          | 1 → 1.dp (ad:fixed hairline)     | 1.00 |
+| Title            | text    | fill / hug   | fit-text | resize         | 12…28 sp, 2 lines                | 0.85 |
 Needs review: Products grid (inferred from 4 repeated siblings + wrap).
 ```
 
-Then the code, then the lint result. Never state that output "matches the design" on sizes you did not normalize or verify.
+Then the code, then the lint result and what was checked on which screen.
 
 ## Never
 
-- Treat design values as final tokens without checking the frame width and normalization.
-- Use absolute positioning unless the intent is `overlay` (badge, FAB, floating label) — and say so.
-- Invent breakpoints, strategies, tokens or suffixes. The real strategy prefixes are: `''` scaled, `a` auto, `p` percent, `pw` power, `f` fluid, `i` interpolated, `log` logarithmic, `dg` diagonal, `pr` perimeter, `ft` fit, `fl` fill, `d` density (+ resize and units APIs).
-- Generate obsolete names: `balanced(…)`, `.balanced().dp`, `defaultScaling`, `.fxdp`, `.dydp`, `fx`, `dy`, `AppDimens.fixed(…)`, `densdp`, `fillsdp`, `fitsdp`. Map BALANCED → auto, DEFAULT/FIXED → scaled, PERCENTAGE/DYNAMIC → percent.
-- Recommend the `i` / `ia` (ignore multi-window) suffixes unless the user asks about split-screen behaviour (exception: game HUDs, see `appdimens-games`).
+- Convert values before the base screen is known and confirmed (or recorded in the config).
+- Treat physical px (resolution) as dp/pt.
+- Use absolute positioning unless the intent is `overlay`.
+- Invent breakpoints, strategies, tokens or suffixes. Real prefixes: `''` scaled, `a` auto, `p` percent, `pw` power, `f` fluid, `i` interpolated, `log` logarithmic, `dg` diagonal, `pr` perimeter, `ft` fit, `fl` fill, `d` density (+ resize and units APIs).
+- Generate obsolete names: `balanced(…)`, `.balanced().dp`, `defaultScaling`, `.fxdp`, `.dydp`, `fx`, `dy`, `AppDimens.fixed(…)`, `densdp`, `fillsdp`, `fitsdp` (BALANCED → auto, DEFAULT/FIXED → scaled, PERCENTAGE/DYNAMIC → percent).
+- Recommend `i` / `ia` (ignore multi-window) unless asked about split-screen (exception: game HUDs).
 - Mix several strategies inside one component without a stated reason.

@@ -2,7 +2,7 @@
 // Generates the Codex (AGENTS.md) and Cursor (.mdc rules) adapters from skills/ — the single
 // source of truth. Run after editing any SKILL.md:  node scripts/build-adapters.mjs
 // CI / pre-commit:                                    node scripts/build-adapters.mjs --check
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,7 +24,7 @@ const GLOBS = {
   'appdimens-dotnet': '**/*.xaml,**/*.cs',
 };
 
-const ORDER = ['appdimens-layout-intent', 'appdimens-design-to-code', 'appdimens-design-authoring', 'appdimens-code-edit'];
+const ORDER = ['appdimens-layout-intent', 'appdimens-design-to-code', 'appdimens-claude-design', 'appdimens-code-edit', 'appdimens-new-screen'];
 
 function parseSkill(dir) {
   const raw = readFileSync(join(skillsDir, dir, 'SKILL.md'), 'utf8');
@@ -100,6 +100,21 @@ function build() {
 const check = process.argv.includes('--check');
 const files = build();
 let stale = 0;
+// Rules for skills that no longer exist.
+const rulesDir = join(outDir, 'cursor', 'rules');
+if (existsSync(rulesDir)) {
+  for (const f of readdirSync(rulesDir)) {
+    const path = join(rulesDir, f);
+    if (files.has(path)) continue;
+    if (check) {
+      stale++;
+      console.error(`orphan: ${path.replace(root + '/', '')}`);
+    } else {
+      rmSync(path);
+      console.log(`removed ${path.replace(root + '/', '')}`);
+    }
+  }
+}
 for (const [path, content] of files) {
   const current = existsSync(path) ? readFileSync(path, 'utf8') : null;
   if (current === content) continue;

@@ -107,6 +107,7 @@ Example: `Products [grid] [fill] [sw600:cols=3]`, `Divider [fixed-scale]`, `Hero
 
 The same model is used in three directions:
 
-- **Read** (design → code): infer intent from the design → `appdimens-design-to-code`.
-- **Create** (brief → design): author the design with the intent already explicit → `appdimens-design-authoring`.
-- **Edit** (code → code): recover intent from existing code and preserve it → `appdimens-code-edit`.
+- **Read a design** (Figma, screenshot, spec → code): infer intent from the design → `appdimens-design-to-code`.
+- **Claude Design screens** (HTML/React/CSS → app or new project): read intent from DOM/CSS → `appdimens-claude-design`.
+- **Edit** (existing screens → AppDimens): recover intent from the code and keep the look on its base screen → `appdimens-code-edit`.
+- **Create** (brief → new screens in code): state the base screen you design for, then build from explicit intent → `appdimens-new-screen`.
