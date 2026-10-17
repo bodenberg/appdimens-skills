@@ -16,7 +16,7 @@ Android/iOS/Flutter.
 | `outputs/` | Screens built by blind agents (round 2) that only received the skills, the input and the config |
 | `compare.mjs` | Screenshots reference vs implementation on the base screen, element boxes (`data-k`), pixel diff, a naive "same number → sdp" baseline, and 300 / 768 / 1024 renders |
 | `summary.mjs` | Before/after image from two `compare` reports |
-| `results/` | Images and reports of the last run (round 1 = before the fixes in commit 14fc886, round 2 = after) |
+| `results/` | Reports of the last run (round 1 = before the fixes in commit 14fc886, round 2 = after). The comparison images are not committed: `compare.mjs` and `summary.mjs` write them to `shots/`, and the images of this run are in the `0.1.1` tag |
 
 ## Run
 
