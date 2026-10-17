@@ -74,8 +74,8 @@ test('react native', () => {
 });
 
 test('web css and markup', () => {
-  assert.deepEqual(rulesAt(fx('web', 'styles.css')), ['1:raw-unit:warning', '2:raw-unit:warning', '5:px-token-in-css:error']);
-  assert.deepEqual(rulesAt(fx('web', 'index.html')), ['2:px-token-in-css:error', '3:js-only-token:error', '5:raw-unit:warning']);
+  assert.deepEqual(rulesAt(fx('web', 'styles.css')), ['1:raw-unit:warning', '2:raw-unit:warning', '5:px-unit-in-css:error']);
+  assert.deepEqual(rulesAt(fx('web', 'index.html')), ['2:px-unit-in-css:error', '3:js-only-unit:error', '5:raw-unit:warning']);
 });
 
 test('dotnet', () => {

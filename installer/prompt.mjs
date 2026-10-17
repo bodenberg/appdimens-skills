@@ -29,9 +29,9 @@ function withKeys(render, onKey) {
       draw(true);
       resolve(value);
     };
-    const handler = (_, key = {}) => {
-      if (key.ctrl && key.name === 'c') return done(null, new Error('Aborted'));
-      const r = onKey(key);
+    const handler = (_, press = {}) => {
+      if (press.ctrl && press.name === 'c') return done(null, new Error('Aborted'));
+      const r = onKey(press);
       if (r && 'value' in r) return done(r.value);
       draw();
     };
@@ -54,15 +54,15 @@ export function multiselect(title, items) {
       });
       return `${c.bold('?')} ${c.bold(title)} ${c.dim('(↑/↓ move · space toggle · a all · enter confirm)')}\n${rows.join('\n')}`;
     },
-    (key) => {
-      if (key.name === 'up') cursor = (cursor - 1 + state.length) % state.length;
-      else if (key.name === 'down') cursor = (cursor + 1) % state.length;
-      else if (key.name === 'space') {
+    (press) => {
+      if (press.name === 'up') cursor = (cursor - 1 + state.length) % state.length;
+      else if (press.name === 'down') cursor = (cursor + 1) % state.length;
+      else if (press.name === 'space') {
         if (!state[cursor].locked) state[cursor].checked = !state[cursor].checked;
-      } else if (key.name === 'a') {
+      } else if (press.name === 'a') {
         const all = state.every((s) => s.checked);
         state.forEach((s) => (s.checked = s.locked || !all));
-      } else if (key.name === 'return') return { value: state.filter((s) => s.checked).map((s) => s.value) };
+      } else if (press.name === 'return') return { value: state.filter((s) => s.checked).map((s) => s.value) };
       return null;
     },
   );
@@ -77,10 +77,10 @@ export function select(title, items, initial = 0) {
       const rows = items.map((s, i) => `${i === cursor ? c.cyan('› ' + s.label) : '  ' + s.label}${s.hint ? ' ' + c.dim(s.hint) : ''}`);
       return `${c.bold('?')} ${c.bold(title)} ${c.dim('(↑/↓ · enter)')}\n${rows.join('\n')}`;
     },
-    (key) => {
-      if (key.name === 'up') cursor = (cursor - 1 + items.length) % items.length;
-      else if (key.name === 'down') cursor = (cursor + 1) % items.length;
-      else if (key.name === 'return') return { value: items[cursor].value };
+    (press) => {
+      if (press.name === 'up') cursor = (cursor - 1 + items.length) % items.length;
+      else if (press.name === 'down') cursor = (cursor + 1) % items.length;
+      else if (press.name === 'return') return { value: items[cursor].value };
       return null;
     },
   );

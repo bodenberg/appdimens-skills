@@ -107,7 +107,7 @@ const C = [
   ['web', 'useWebDimens (React)', 'appdimens-web', 'useWebDimens'],
   ['web', 'provideWebDimens (Angular)', 'appdimens-web', 'provideWebDimens'],
   ['web', 'autoResizeText (resize)', 'appdimens-web', 'autoResizeText'],
-  ['web', 'class token syntax p:16sdp', 'appdimens-web', 'p:16sdp'],
+  ['web', 'class syntax p:16sdp', 'appdimens-web', 'p:16sdp'],
   ['web', 'webdimens.global.js build', 'appdimens-web', 'webdimens\\.global\\.js'],
   // ---------- appdimens-dotnet (appdimens-net-binding)
   ['dotnet', 'version 3.6.1', 'appdimens-net-binding', '3\\.6\\.1', true, ['--include=*.props', '--include=*.csproj', '--include=README.md']],

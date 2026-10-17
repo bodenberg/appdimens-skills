@@ -1,6 +1,6 @@
 {
   "name": "appdimens-skills",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Shared brain for AI coding agents: interpret layout intent, then implement it with the right AppDimens library, unit and strategy on Android, XML, KMP, Apple, Flutter, React Native, Web, .NET and Games.",
   "author": { "name": "Jean Bodenberg", "url": "https://github.com/bodenberg" },
   "homepage": "https://github.com/bodenberg/appdimens-skills",

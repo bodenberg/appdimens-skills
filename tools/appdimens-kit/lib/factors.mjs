@@ -17,7 +17,7 @@ export const STRATEGIES = ['scaled', 'auto', 'percent', 'power', 'fluid', 'inter
 const ALIASES = { adaptive: 'auto', bounded: 'fluid' };
 export const resolveStrategy = (s) => ALIASES[s] || s;
 
-/** Token prefix per strategy (`16.<prefix>sdp`). */
+/** Unit prefix per strategy (`16.<prefix>sdp`). */
 export const PREFIX = { scaled: '', auto: 'a', percent: 'p', power: 'pw', fluid: 'f', interpolated: 'i', logarithmic: 'log', diagonal: 'dg', perimeter: 'pr', fit: 'ft', fill: 'fl', density: 'd' };
 
 /** Strategies whose kernel reads one axis (s/h/w); the others read the whole screen. */
@@ -26,7 +26,7 @@ export const AXIS_STRATEGIES = new Set(['scaled', 'auto', 'percent', 'power', 'f
 const smin = (s) => Math.min(s.width, s.height ?? s.width);
 const smax = (s) => Math.max(s.width, s.height ?? s.width);
 
-/** Axis length a token family reads: s = smallest side (sdp/ssp), h = height (hdp/hsp), w = width (wdp/wsp). */
+/** Axis length a unit family reads: s = smallest side (sdp/ssp), h = height (hdp/hsp), w = width (wdp/wsp). */
 export function axisLength(screen, axis = 's') {
   if (axis === 'h') {
     if (!screen.height) throw new Error('axis h (hdp/hsp) needs the base screen height.');
@@ -61,7 +61,7 @@ const kernels = {
 export const aspectLog = (s) => Math.log(smax(s) / smin(s) / RHO0);
 
 /**
- * Multiplier of one token on one screen.
+ * Multiplier of one unit on one screen.
  * opts.aspect  → the `a` suffix (sdpa…): scaled uses 1 + (sw − 300)(1/300 + κ·L); satellites × (1 + κ·L).
  * opts.text    → sp kind (ssp…): × fontScale (the base screen is assumed to be fontScale 1).
  */
@@ -142,7 +142,7 @@ export function normalize(values, { frame, height, runtimeHeight, policy = 'scal
   };
 }
 
-/** Literal-percentage tokens (spaceW / spaceH / spaceSw): percent = value ÷ axis × 100. */
+/** Literal percentages (spaceW / spaceH / spaceSw): percent = value ÷ axis × 100. */
 export function percentOf(values, { frame, height, of = 'w', density = 1, rounding = 0.5 }) {
   const screen = { width: frame / density, height: height ? height / density : undefined };
   const axisValue = of === 'h' ? axisLength(screen, 'h') : of === 'sw' ? smin(screen) : screen.width;
@@ -154,10 +154,10 @@ export function percentOf(values, { frame, height, of = 'w', density = 1, roundi
 }
 
 /**
- * Theme tokens keep full precision and the design number in their name, so sums and
+ * Theme scale values keep full precision and the design number in their name, so sums and
  * ratios survive (space8 + space8 == space16) and the base can be changed in one place.
  */
-export function themeTokens(values, opts) {
+export function themeScale(values, opts) {
   const exact = normalize(values, { ...opts, rounding: opts.xml ? 1 : 0.01 });
   return exact.rows.map((r) => ({ name: r.design, base: r.base, resultOnFrame: r.resultOnFrame }));
 }

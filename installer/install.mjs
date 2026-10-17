@@ -207,8 +207,8 @@ function gateText(kitRef) {
     'In a project that depends on AppDimens (appdimens-*, webdimens, Bodenberg.AppDimens.*, AppDimens.Net), before writing or converting UI sizes:',
     '',
     `1. Base screen: use \`appdimens.config.json → design.baseScreen\`; else one unambiguous source (a design frame, ≥ 80 % of previews, a "designed at W×H" comment — \`node ${kitRef}/tools/appdimens-kit/cli.mjs detect <app folder>\`, or the platform default for new screens) stated as "assumed, unconfirmed"; else ask (one message, ≤ 5 questions).`,
-    `2. Never re-label a number (\`16.dp\` → \`16.sdp\` grows 20–47 % on phones). Convert with \`node ${kitRef}/tools/appdimens-kit/cli.mjs normalize --device <base> --strategy <s> <values…>\` (\`--theme\` theme tokens, \`--text\` fonts (exact), \`--xml\` Android XML, \`--axis h\` hdp, \`--density\` px frames).`,
-    '3. Decide each element\'s intent (role, fill/hug, scroll, fixed) before choosing tokens. Hairlines, elevation and platform chrome stay fixed; touch targets: visual size is a token, the hit area uses the platform API.',
+    `2. Never re-label a number (\`16.dp\` → \`16.sdp\` grows 20–47 % on phones). Convert with \`node ${kitRef}/tools/appdimens-kit/cli.mjs normalize --device <base> --strategy <s> <values…>\` (\`--theme\` theme scale, \`--text\` fonts (exact), \`--xml\` Android XML, \`--axis h\` hdp, \`--density\` px frames).`,
+    '3. Decide each element\'s intent (role, fill/hug, scroll, fixed) before choosing units. Hairlines, elevation and platform chrome stay fixed; touch targets: visual size scales, the hit area uses the platform API.',
     `4. Follow ${kitRef}/skills/appdimens-layout-intent/SKILL.md and the platform skill; validate with \`node ${kitRef}/tools/appdimens-kit/cli.mjs lint <files>\`.`,
   ].join('\n');
 }

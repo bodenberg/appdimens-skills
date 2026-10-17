@@ -70,8 +70,8 @@ export function validate(schema, data) {
   return errors;
 }
 
-function suggest(key, known) {
-  const k = key.toLowerCase();
+function suggest(name, known) {
+  const k = name.toLowerCase();
   const hit = known.find((n) => n.toLowerCase() === k) || known.find((n) => distance(n.toLowerCase(), k) <= 2);
   return hit ? ` (did you mean "${hit}"?)` : '';
 }
