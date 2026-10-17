@@ -20,7 +20,7 @@ Desktop windows are large and resizable, so with `formFactors` containing `deskt
 
 ## 2. Setup (required; without it metrics are zero or calls throw)
 
-| Host | SDPS | AppDimens.Net |
+| UI framework | SDPS | AppDimens.Net |
 |---|---|---|
 | MAUI | `builder.UseAppDimensSdps()` in `MauiProgram.cs` + `AppDimensSdpsWindow.Attach(window)` in `CreateWindow` | `AppDimensMaui.AttachWindow(window)` in `App.CreateWindow`, before creating pages |
 | WPF | `AppDimensWpf.Initialize(this)` **before** `InitializeComponent()` | same call, `AppDimens.Net.Wpf` |
