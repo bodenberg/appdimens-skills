@@ -135,6 +135,15 @@ Every strategy is supported (`--strategy scaled|auto|percent|power|fluid|interpo
 
 The contract is validated before it is used. `appdimens.config.json` is checked against `schemas/appdimens.config.schema.json` and for platform ↔ library pairs. If it fails, `lint`, `detect`, `normalize` and the hook stop with exit 2 and name each field (`/design/baseScreen/width: must be number, got string`, `unknown property "widht" (did you mean "width"?)`). `validate` prints the same list and exits 1.
 
+## Privacy and network
+
+Nothing in this plugin uses the network, reads credentials, or sends data anywhere.
+
+- The skills are Markdown instructions. When they say "token" they mean a **design token**, a named size such as `space16 = 11.68.asdp`. When the .NET skill says "host" it means the **UI framework** the app runs in (MAUI, WPF, WinForms, WinUI 3), and `AppDimensHost` is a class of the AppDimens.Net library.
+- The Claude Code hook runs `node ${CLAUDE_PLUGIN_ROOT}/tools/appdimens-kit/hook.mjs` after each edit. It reads the edited file and, inside the project, `appdimens.config.json` and the build files that declare the AppDimens dependency (`build.gradle(.kts)`, `gradle/libs.versions.toml`), and writes its findings to the session. It has no dependencies and makes no network calls.
+- The kit CLI (`tools/appdimens-kit/cli.mjs`) reads only the files and folders you pass it and prints to the terminal. It reads no environment variables.
+- The npm installer (`npx appdimens-skills`) is not part of the plugin's runtime. It checks whether folders such as `~/.claude` or `~/.codex` exist to detect installed agents and copies the skills into them; it does not read the files inside them.
+
 ## Quality
 
 - `npm test` — lint rules, scale math (checked against the published AppDimens numbers), hook contract, installer (project/global install, idempotency, uninstall).
