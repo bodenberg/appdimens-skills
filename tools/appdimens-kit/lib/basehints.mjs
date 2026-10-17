@@ -149,12 +149,12 @@ export function summarizeHints(hints) {
   const groups = new Map();
   for (const h of hints) {
     if (h.unknown) continue;
-    const key = `${h.width}x${h.height ?? '?'}`;
-    const g = groups.get(key) || { width: h.width, height: h.height, count: 0, devices: new Set(), kinds: new Set() };
+    const size = `${h.width}x${h.height ?? '?'}`;
+    const g = groups.get(size) || { width: h.width, height: h.height, count: 0, devices: new Set(), kinds: new Set() };
     g.count++;
     if (h.device) g.devices.add(h.name);
     g.kinds.add(h.kind);
-    groups.set(key, g);
+    groups.set(size, g);
   }
   return [...groups.values()].sort((a, b) => b.count - a.count).map((g) => ({ ...g, devices: [...g.devices], kinds: [...g.kinds] }));
 }

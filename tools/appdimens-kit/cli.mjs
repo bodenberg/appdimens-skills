@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // appdimens-kit — helpers for AI agents (and humans) implementing AppDimens layouts.
 import { formatText, lintFiles } from './lib/lint.mjs';
-import { AXIS_STRATEGIES, PREFIX, compareOverride, normalize, percentOf, resolveStrategy, themeTokens } from './lib/factors.mjs';
+import { AXIS_STRATEGIES, PREFIX, compareOverride, normalize, percentOf, resolveStrategy, themeScale } from './lib/factors.mjs';
 import { detectTargets, findProject } from './lib/project.mjs';
 import { ConfigError, loadConfig, validateIntents } from './lib/config.mjs';
 import { existsSync, readFileSync } from 'node:fs';
@@ -36,9 +36,9 @@ const USAGE = `appdimens-kit
       --aspect    the "a" suffix (sdpa…), which depends on the aspect ratio
       --text      sp kind (ssp…)
       --xml       Android XML resources: integer names, factor = resource bucket ÷ 300
-      --theme     theme tokens: exact (0.01) base values named by the design number
-      --space     literal percentage tokens instead (spaceW / spaceH / spaceSw)
-      --syntax    token syntax: kotlin|swift|dart (16.sdp, default) · web (16sdp) · rn (sdp(16));
+      --theme     theme scale: exact (0.01) base values named by the design number
+      --space     literal percentages instead (spaceW / spaceH / spaceSw)
+      --syntax    output syntax: kotlin|swift|dart (16.sdp, default) · web (16sdp) · rn (sdp(16));
                   defaults to the platform of appdimens.config.json found from the current folder
 
   compare --device <phone> --tablet <id|WxH> --phone-value <v> --tablet-value <v>
@@ -47,8 +47,8 @@ const USAGE = `appdimens-kit
       strategy already produce it? → delete-override, or keep-as-adapt with its base value.
 
   lint [--json] [--force] [--config <appdimens.config.json>] <files or dirs…>
-      Flags fixed literals that should be tokens, strategy tokens without their import/module,
-      obsolete APIs, invalid XML resources, JS-only web tokens in CSS and mixed .NET families.
+      Flags fixed literals that should scale, strategy units without their import/module,
+      obsolete APIs, invalid XML resources, JS-only web units in CSS and mixed .NET families.
       Files outside an AppDimens project are skipped unless --force. Exit 1 on errors.
 
   validate [appdimens.config.json] [--intent <file.json>…] [--json]
@@ -68,9 +68,9 @@ function parseFlags(args) {
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a.startsWith('--')) {
-      const key = a.slice(2);
-      if (BOOLEAN.includes(key)) flags[key] = true;
-      else flags[key] = args[++i];
+      const name = a.slice(2);
+      if (BOOLEAN.includes(name)) flags[name] = true;
+      else flags[name] = args[++i];
     } else rest.push(a);
   }
   return { flags, rest };
@@ -83,14 +83,14 @@ const fail = (s) => {
 };
 const fmt = (n) => (n === undefined ? '?' : Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2))));
 
-function screenFrom(flags, key = 'device') {
-  const q = flags[key];
+function screenFrom(flags, flag = 'device') {
+  const q = flags[flag];
   if (q) {
     const d = findDevice(q) || (parseSize(q) && { ...parseSize(q), name: q });
     if (!d) fail(`unknown screen "${q}". Run "devices" for the list, or pass WxH.`);
     return { width: d.width, height: d.height, name: d.name, density: d.density };
   }
-  if (key !== 'device') return null;
+  if (flag !== 'device') return null;
   return { width: Number(flags.frame), height: flags.height ? Number(flags.height) : undefined, name: null };
 }
 
@@ -160,7 +160,7 @@ if (command === 'normalize') {
     warnings.push(`${strategy} reads the whole screen and ignores the axis: ${PREFIX[strategy]}hdp / ${PREFIX[strategy]}wdp equal ${PREFIX[strategy]}sdp.`);
   if (fontScale !== 1) warnings.push(`Text measured at font scale ${fontScale}: values were divided by it (ssp multiplies by the user's font scale at runtime).`);
   if (axis === 'h' && !runtimeHeight && AXIS_STRATEGIES.has(strategy))
-    warnings.push('Height-based token: the platform may report a window height without system bars (Android targetSdk ≤ 34). If so, pass --runtime-height.');
+    warnings.push('Height-based unit: the platform may report a window height without system bars (Android targetSdk ≤ 34). If so, pass --runtime-height.');
 
   if (flags.space) {
     const rows = percentOf(values, { frame: screen.width, height: runtimeHeight ?? screen.height, of: flags.space, density, rounding });
@@ -168,7 +168,7 @@ if (command === 'normalize') {
     else {
       const name = { w: 'spaceW', h: 'spaceH', sw: 'spaceSw' }[flags.space];
       out(`literal percentage of ${flags.space} (percent strategy module)`);
-      out('\n| on base screen | percent | token | resolves to on base screen |\n|---:|---:|---|---:|');
+      out('\n| on base screen | percent | dimen | resolves to on base screen |\n|---:|---:|---|---:|');
       for (const r of rows) out(`| ${fmt(r.design)} | ${fmt(r.percent)} | ${fmt(r.percent)}.${name} | ${fmt(r.resultOnFrame)} |`);
       for (const w of warnings) out(`\n⚠ ${w}`);
     }
@@ -186,19 +186,19 @@ if (command === 'normalize') {
   result.warnings = warnings;
   const kindAxis = AXIS_STRATEGIES.has(strategy) || xml ? axis : 's';
   const kind = (flags.text ? { s: 'ssp', h: 'hsp', w: 'wsp' } : { s: 'sdp', h: 'hdp', w: 'wdp' })[kindAxis];
-  const token = `${PREFIX[strategy]}${kind}${flags.aspect ? 'a' : ''}`;
+  const unit = `${PREFIX[strategy]}${kind}${flags.aspect ? 'a' : ''}`;
   const xmlName = (b) => `@dimen/_${b < 0 ? `minus${fmt(-b)}` : fmt(b)}${kind}`;
   const platform = flags.syntax || projectConfig(process.cwd())?.targets?.[0]?.platform;
   const syntax = /^(web|css)$/.test(platform) ? 'web' : /^(rn|react-native)$/.test(platform) ? 'rn' : 'dot';
-  const tok = (b) => (syntax === 'web' ? `${fmt(b)}${token}` : syntax === 'rn' ? `${token}(${fmt(b)})` : `${fmt(b)}.${token}`);
+  const tok = (b) => (syntax === 'web' ? `${fmt(b)}${unit}` : syntax === 'rn' ? `${unit}(${fmt(b)})` : `${fmt(b)}.${unit}`);
 
   if (flags.theme) {
-    const rows = themeTokens(input, opts);
+    const rows = themeScale(input, opts);
     if (flags.json) {
       out(JSON.stringify({ ...result, theme: rows }, null, 2));
       process.exit(0);
     }
-    out(`theme tokens · ${strategy}${xml ? ' · XML' : ''} · factor ${result.factor.toFixed(4)} · ${xml ? 'integer' : 'exact (0.01)'} base values, named by the value on the base screen`);
+    out(`theme scale · ${strategy}${xml ? ' · XML' : ''} · factor ${result.factor.toFixed(4)} · ${xml ? 'integer' : 'exact (0.01)'} base values, named by the value on the base screen`);
     out('');
     const prefix = flags.text ? 'text' : 'space';
     for (const r of rows)
@@ -219,7 +219,7 @@ if (command === 'normalize') {
     ` · ${strategy}${flags.aspect ? ' + a' : ''} reads ${result.axis === 'screen' ? 'the whole screen' : `axis ${axis} = ${fmt(result.axisLength)}`}` +
     `${xml ? ` · XML bucket ${result.xmlBucket}` : ''} · factor ${result.factor.toFixed(4)} · rounding ${rounding}`);
   out('');
-  out('| on base screen | AppDimens base | token | resolves to on base screen |');
+  out('| on base screen | AppDimens base | dimen | resolves to on base screen |');
   out('|---:|---:|---|---:|');
   for (const r of result.rows) out(`| ${fmt(r.design)} | ${fmt(r.base)} | ${xml ? xmlName(r.base) : tok(r.base)} | ${fmt(r.resultOnFrame)} |`);
   for (const w of warnings) out(`\n⚠ ${w}`);

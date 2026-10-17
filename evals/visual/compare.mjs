@@ -34,7 +34,7 @@ const CASES = [
     impl: join(V, OUT, 'figma.html'),
     naive: () => naive(readFileSync(join(V, 'refs/figma-reference.html'), 'utf8').replace('width:412px;height:917px;', 'width:100%;min-height:100vh;')),
     base: { vw: 412, vh: 917 },
-    keys: ['title', 'avatar', 'search', 'chip', 'section', 'card', 'cardimg', 'cardtitle', 'price', 'nav', 'navicon'],
+    elements: ['title', 'avatar', 'search', 'chip', 'section', 'card', 'cardimg', 'cardtitle', 'price', 'nav', 'navicon'],
   },
   {
     id: 'claude-design',
@@ -44,7 +44,7 @@ const CASES = [
     naive: () =>
       naive(readFileSync(join(V, 'inputs/claude-design/profile.html'), 'utf8'), '.phone-frame{width:100%;height:auto;min-height:100vh}.status-bar,.home-indicator{display:none}body{background:#F9FAFB;display:block}'),
     base: { vw: 390, vh: 797 },
-    keys: ['header', 'avatar', 'name', 'email', 'stats', 'statvalue', 'list', 'row', 'rowicon', 'rowlabel', 'button'],
+    elements: ['header', 'avatar', 'name', 'email', 'stats', 'statvalue', 'list', 'row', 'rowicon', 'rowlabel', 'button'],
   },
   {
     id: 'responsive',
@@ -53,7 +53,7 @@ const CASES = [
     impl: join(V, OUT, 'responsive.html'),
     naive: () => naive(readFileSync(join(V, 'inputs/responsive/login.html'), 'utf8')),
     base: { vw: 375, vh: 667 },
-    keys: ['logo', 'title', 'sub', 'label', 'input', 'button', 'link', 'social', 'footer'],
+    elements: ['logo', 'title', 'sub', 'label', 'input', 'button', 'link', 'social', 'footer'],
   },
 ];
 
@@ -115,7 +115,7 @@ for (const c of CASES) {
   const nv = await shot(browser, { html: c.naive(), vw: c.base.vw, vh: c.base.vh, out: P('naive-base') });
   const diffImpl = diff(P('ref'), P('impl-base'), P('diff-impl'));
   const diffNaive = diff(P('ref'), P('naive-base'), P('diff-naive'));
-  const rows = c.keys.map((k) => {
+  const rows = c.elements.map((k) => {
     const r = ref[k];
     const i = impl[k];
     const n = nv[k];

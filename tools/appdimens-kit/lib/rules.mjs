@@ -29,7 +29,7 @@ const capitalize = (s) => s[0].toUpperCase() + s.slice(1);
 const OBSOLETE = [
   [/(?<!\.)\bbalanced\s*\(/, 'balanced(…) is obsolete → auto strategy (asdp / assp).'],
   [/\.balanced\(\)/, '.balanced() is obsolete → auto strategy (asdp / assp).'],
-  [/\bwebdimens\.balanced\b/, 'webdimens.balanced is obsolete → auto tokens (16asdp).'],
+  [/\bwebdimens\.balanced\b/, 'webdimens.balanced is obsolete → auto units (16asdp).'],
   [/\bdefaultScaling\b/, 'defaultScaling is obsolete → scaled strategy (sdp / ssp).'],
   [/\.(fxdp|dydp)\b/, '.fxdp / .dydp are obsolete → .sdp (scaled) or .psdp (percent).'],
   [/\b(densdp|fillsdp|fitsdp)\b/, 'densdp / fillsdp / fitsdp are obsolete → dsdp / flsdp / ftsdp.'],
@@ -96,19 +96,19 @@ function suggestion(lang, n, text, ctx) {
   const xml = lang === 'android-xml' || lang === 'xaml';
   const strategy = xml ? 'scaled' : resolveStrategy(text ? ctx.config?.strategy?.text || ctx.config?.strategy?.layout || defaultStrategy(ctx.config) : ctx.config?.strategy?.layout || defaultStrategy(ctx.config));
   const kind = text ? 'ssp' : 'sdp';
-  const token = `${PREFIX[strategy] ?? ''}${kind}`;
+  const unit = `${PREFIX[strategy] ?? ''}${kind}`;
   const bs = ctx.base;
   if (bs) {
     try {
       const rounding = xml ? 1 : text ? 0.01 : ctx.config?.design?.rounding ?? 0.5;
       const r = normalize([Number(n) / (text ? bs.fontScale || 1 : 1)], { frame: bs.width, height: bs.height, runtimeHeight: bs.runtimeHeight, strategy, rounding, xml: lang === 'android-xml' });
       const base = r.rows[0].base;
-      return `${syntax[lang](fmtNum(base), token, text)} (${n} on the base screen ${bs.width}×${bs.height}, ${strategy}${lang === 'android-xml' ? `, bucket ${r.xmlBucket}` : ''})`;
+      return `${syntax[lang](fmtNum(base), unit, text)} (${n} on the base screen ${bs.width}×${bs.height}, ${strategy}${lang === 'android-xml' ? `, bucket ${r.xmlBucket}` : ''})`;
     } catch {
       /* fall through to the command */
     }
   }
-  return `a ${token} token converted from the base screen: node "${CLI}" normalize --device <base screen> --strategy ${strategy}${text ? ' --text' : ''}${xml ? ' --xml' : ''} ${n} (or add design.baseScreen to appdimens.config.json)`;
+  return `a ${unit} value converted from the base screen: node "${CLI}" normalize --device <base screen> --strategy ${strategy}${text ? ' --text' : ''}${xml ? ' --xml' : ''} ${n} (or add design.baseScreen to appdimens.config.json)`;
 }
 
 function defaultStrategy(config) {
@@ -204,7 +204,7 @@ function reactNativeLine(line, ctx) {
     if (Math.abs(n) <= ctx.threshold || isTouchMin(line, n) || fixedAt(line, m.index)) continue;
     const text = /^(fontSize|lineHeight|letterSpacing)$/.test(m[1]);
     if (m[1] === 'lineHeight') {
-      out.push({ col: m.index + 1, severity: 'warning', rule: 'line-height-px', message: `lineHeight: ${m[2]} is fixed. Compute it from the font token (e.g. ssp(16) * 1.5) so it follows the text size.` });
+      out.push({ col: m.index + 1, severity: 'warning', rule: 'line-height-px', message: `lineHeight: ${m[2]} is fixed. Compute it from the font size (e.g. ssp(16) * 1.5) so it follows the text size.` });
       continue;
     }
     out.push({
@@ -244,41 +244,41 @@ function cssLine(line, ctx) {
       if (n <= ctx.threshold || n >= 999 || isTouchMin(prop, n)) continue; // hairlines, pill idiom, touch minimums
       const text = /^(font-size|line-height|letter-spacing)$/.test(prop);
       if (prop === 'line-height') {
-        out.push({ col: m.index + 1, severity: 'warning', rule: 'line-height-px', message: `line-height: ${p[0]} is fixed. Use a unitless ratio of the element's font size (e.g. 24px / 16px = 1.5) so it follows the text token.` });
+        out.push({ col: m.index + 1, severity: 'warning', rule: 'line-height-px', message: `line-height: ${p[0]} is fixed. Use a unitless ratio of the element's font size (e.g. 24px / 16px = 1.5) so it follows the text size.` });
         continue;
       }
       out.push({
         col: m.index + 1,
         severity: 'warning',
         rule: 'raw-unit',
-        message: `${prop}: ${p[0]} does not scale. Use ${suggestion('css', n, text, ctx)}${CSS_ALIAS[prop] ? ` (class form: ${CSS_ALIAS[prop]}:<token>)` : ''}, or mark "/* ad:fixed <reason> */".`,
+        message: `${prop}: ${p[0]} does not scale. Use ${suggestion('css', n, text, ctx)}${CSS_ALIAS[prop] ? ` (class form: ${CSS_ALIAS[prop]}:<dimen>)` : ''}, or mark "/* ad:fixed <reason> */".`,
       });
     }
   }
-  out.push(...pxTokenInCss(line));
+  out.push(...pxUnitInCss(line));
   return out;
 }
 
-function pxTokenInCss(line) {
+function pxUnitInCss(line) {
   const out = [];
   const re = /(?<![\w.])\d+(?:\.\d+)?[a-z]*(?:dp|sp|em)[A-Za-z]*Px\b/g;
   let m;
   while ((m = re.exec(line)))
-    out.push({ col: m.index + 1, severity: 'error', rule: 'px-token-in-css', message: `${m[0]} is a JS-only token (device pixels). Use the token without "Px" in CSS, classes or data-dimen.` });
+    out.push({ col: m.index + 1, severity: 'error', rule: 'px-unit-in-css', message: `${m[0]} is a JS-only unit (device pixels). Use the unit without "Px" in CSS, classes or data-dimen.` });
   return out;
 }
 
 function webMarkupLine(line, ctx, state) {
   const out = [];
-  // class / className / data-dimen attributes: Px tokens and inverted sp/em tokens are JS-only
+  // class / className / data-dimen attributes: Px units and inverted sp/em units are JS-only
   const attr = /\b(class|className|data-dimen)\s*=\s*(["'`{])([^"'`}]*)/g;
   let m;
   while ((m = attr.exec(line))) {
-    for (const f of pxTokenInCss(m[3])) out.push({ ...f, col: m.index + 1 });
+    for (const f of pxUnitInCss(m[3])) out.push({ ...f, col: m.index + 1 });
     const inv = /\b\d+(?:\.\d+)?[a-z]*(?:sp|em)(?:Ph|Lh|Pw|Lw)\b/g;
     let i;
     while ((i = inv.exec(m[3])))
-      out.push({ col: m.index + 1, severity: 'error', rule: 'js-only-token', message: `${i[0]} (sp/em with an inverter) is JS-only. Use dimen('${i[0]}') or a non-inverted token in markup.` });
+      out.push({ col: m.index + 1, severity: 'error', rule: 'js-only-unit', message: `${i[0]} (sp/em with an inverter) is JS-only. Use dimen('${i[0]}') or a non-inverted unit in markup.` });
   }
   if (state.inStyle || state.isCss) out.push(...cssLine(line, ctx));
   // React inline styles: style={{ padding: 16 }} is 16 CSS px
@@ -289,7 +289,7 @@ function webMarkupLine(line, ctx, state) {
       const n = Number(k[2]);
       if (n <= ctx.threshold || isTouchMin(line, n) || fixedAt(line, k.index)) continue;
       const text = /^(fontSize|lineHeight)$/.test(k[1]);
-      out.push({ col: k.index + 1, severity: 'warning', rule: 'raw-unit', message: `Inline style ${k[1]}: ${k[2]} is ${k[2]} CSS px and does not scale. Use dimens({ ${k[1]}: '<token>' }) with ${suggestion('css', n, text, ctx)}, or mark "// ad:fixed <reason>".` });
+      out.push({ col: k.index + 1, severity: 'warning', rule: 'raw-unit', message: `Inline style ${k[1]}: ${k[2]} is ${k[2]} CSS px and does not scale. Use dimens({ ${k[1]}: '<dimen>' }) with ${suggestion('css', n, text, ctx)}, or mark "// ad:fixed <reason>".` });
     }
   }
   return out;
@@ -358,7 +358,7 @@ function xamlLine(line, ctx) {
 // ---------------------------------------------------------------------------------------------
 // File-level checks
 
-function strategyTokens(text, lang) {
+function strategyUnits(text, lang) {
   const used = new Map(); // strategy -> first index
   const add = (strategy, index) => {
     if (!used.has(strategy)) used.set(strategy, index);
@@ -461,8 +461,8 @@ export function lintText(text, { file, config = null, project = null } = {}) {
     if (lang === 'web-markup' && /<\/style>/i.test(line)) state.inStyle = false;
   });
 
-  // Strategy tokens need their module/package/import (web registers strategies automatically).
-  for (const [strategy, index] of strategyTokens(text, lang)) {
+  // Strategy units need their module/package/import (web registers strategies automatically).
+  for (const [strategy, index] of strategyUnits(text, lang)) {
     if (!hasStrategyImport(text, lang, strategy)) {
       findings.push({
         line: lineOf(text, index),
