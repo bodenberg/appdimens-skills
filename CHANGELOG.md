@@ -3,7 +3,7 @@
 ## 0.1.2
 
 - **Listing icon** for the Claude directory (`.claude-plugin/icon.png`).
-- **Lint rule ids renamed**: `px-token-in-css` is now `px-unit-in-css` and `js-only-token` is now `js-only-unit`. The kit's code and CLI output say "unit", "dimen" or "theme scale" instead of "token", so the directory's security scan no longer reads them as credentials. `normalize --theme` prints the same values under the header `theme scale`.
+- **Lint rule ids renamed**: `px-token-in-css` is now `px-unit-in-css` and `js-only-token` is now `js-only-unit`. The kit's code and CLI output say "unit", "dimen" or "theme scale" instead of "token", which also means an access token. `normalize --theme` prints the same values under the header `theme scale`.
 - **README: Privacy and network** section. The plugin makes no network calls and reads no credentials or environment variables.
 - The visual eval screenshots are no longer committed; `compare.mjs` and `summary.mjs` regenerate them.
 
