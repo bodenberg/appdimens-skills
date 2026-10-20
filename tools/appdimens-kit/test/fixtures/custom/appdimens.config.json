@@ -1,0 +1,6 @@
+{
+  "targets": [{ "platform": "android-compose", "library": "appdimens-dynamic", "strategies": ["custom"] }],
+  "strategy": { "layout": "custom:brand", "text": "custom:brandText" },
+  "customStrategies": { "file": "appdimens-strategies.json", "ids": ["brand", "brandText", "exprCurve"] },
+  "design": { "baseScreen": { "width": 411, "height": 914 } }
+}

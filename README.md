@@ -115,6 +115,17 @@ Agents that share a folder (`.agents/skills`) get one copy. The CLI, schemas and
 }
 ```
 
+### Project-defined strategies (unreleased AppDimens modules)
+
+A project can define its own scaling strategies in one JSON file, using the format in [`schemas/custom-strategy.schema.json`](schemas/custom-strategy.schema.json). A strategy sets the reference frame, axis, curve, bounds, font-scale policy and rules per device class. When no built-in curve fits, it can use **free-form formulas** written as text (`"type": "expression"`, `"formula"`). Every AppDimens custom module reads that file and produces the same numbers: Android, KMP, Games + Unity, Apple, Flutter, React Native, Web and .NET. Declare it once:
+
+```json
+"strategy": { "layout": "custom:brand", "text": "custom:brand" },
+"customStrategies": { "file": "design/appdimens-strategies.json", "ids": ["brand"] }
+```
+
+Agents then use `cdp` / `csp` with those ids only. The kit validates the file, converts design values (`normalize --strategy custom:brand`) and explains the numbers per screen (`custom explain`).
+
 ## The kit CLI
 
 ```bash
@@ -129,11 +140,14 @@ npx appdimens-skills kit compare --device medium-phone --tablet medium-tablet --
 npx appdimens-skills kit lint src/                                             # validate the code
 npx appdimens-skills kit validate                                              # appdimens.config.json against its schema
 npx appdimens-skills kit validate --intent intents.json                        # layout-intent sheets against theirs
+npx appdimens-skills kit custom check design/appdimens-strategies.json          # custom strategies: schema + engine (extends, formulas…)
+npx appdimens-skills kit custom explain brand --devices medium-phone,medium-tablet --values 16,24
+npx appdimens-skills kit normalize --device medium-phone --strategy custom:brand 16 24   # base values for cdp(brand)
 ```
 
-Every strategy is supported (`--strategy scaled|auto|percent|power|fluid|interpolated|logarithmic|diagonal|perimeter|fit|fill|density`, `--axis s|h|w`, `--aspect`, `--space w|h|sw`), with the token printed in the project's syntax (`--syntax web|rn|…`). `lint` — and the Claude Code hook, on the lines each edit wrote — flags fixed literals that should be tokens (with a suggestion converted from the configured base screen, never the same number re-labelled), strategy tokens without their import/module, obsolete APIs, XML resources that don't exist, JS-only web tokens in CSS, `*Px` in React Native `fontSize` and mixed .NET families. Deliberately fixed values carry a reason: `// ad:fixed hairline`.
+Every strategy is supported (`--strategy scaled|auto|percent|power|fluid|interpolated|logarithmic|diagonal|perimeter|fit|fill|density|custom:<id>`, `--axis s|h|w`, `--aspect`, `--space w|h|sw`), with the token printed in the project's syntax (`--syntax web|rn|…`). `lint` — and the Claude Code hook, on the lines each edit wrote — flags fixed literals that should be tokens (with a suggestion converted from the configured base screen, never the same number re-labelled), strategy tokens without their import/module, obsolete APIs, XML resources that don't exist, JS-only web tokens in CSS, `*Px` in React Native `fontSize` and mixed .NET families. Deliberately fixed values carry a reason: `// ad:fixed hairline`.
 
-The contract is validated before it is used. `appdimens.config.json` is checked against `schemas/appdimens.config.schema.json` and for platform ↔ library pairs. If it fails, `lint`, `detect`, `normalize` and the hook stop with exit 2 and name each field (`/design/baseScreen/width: must be number, got string`, `unknown property "widht" (did you mean "width"?)`). `validate` prints the same list and exits 1.
+The contract is validated before it is used. `appdimens.config.json` is checked against `schemas/appdimens.config.schema.json`, for platform ↔ library pairs, and (with `customStrategies`) against the strategies file: it must load, and the declared ids and every `custom:<id>` must exist. If it fails, `lint`, `detect`, `normalize` and the hook stop with exit 2 and name each field (`/design/baseScreen/width: must be number, got string`, `unknown property "widht" (did you mean "width"?)`). `validate` prints the same list and exits 1.
 
 ## Privacy and network
 
@@ -164,7 +178,7 @@ node scripts/verify-upstream.mjs <clones> # skill claims vs the AppDimens librar
 
 ## 🇧🇷 Resumo em português
 
-Um **pacote de skills** que ensina agentes de IA a, antes de escrever código, **(1) identificar a tela base** em que os valores foram escolhidos (dimensões, resolução, densidade/pontos, orientação, proporção, escala de fonte) e **(2) interpretar a intenção do layout** (lista, grade, carrossel, card; preenche, abraça, rola ou é fixo). Só então o agente escolhe a **biblioteca AppDimens certa** (todas são cobertas, inclusive .NET e Games), a estratégia (scaled, auto, fluid, power… além de resize e units) e o valor base, calculado pela CLI para manter a aparência na tela base.
+Um **pacote de skills** que ensina agentes de IA a, antes de escrever código, **(1) identificar a tela base** em que os valores foram escolhidos (dimensões, resolução, densidade/pontos, orientação, proporção, escala de fonte) e **(2) interpretar a intenção do layout** (lista, grade, carrossel, card; preenche, abraça, rola ou é fixo). Só então o agente escolhe a **biblioteca AppDimens certa** (todas são cobertas, inclusive .NET e Games), a estratégia (scaled, auto, fluid, power… além de resize e units, ou uma **estratégia própria do projeto**, `custom:<id>`, definida em JSON com fórmulas livres) e o valor base, calculado pela CLI para manter a aparência na tela base.
 
 **Instalação:** `npx appdimens-skills`. O instalador detecta os clientes e IDEs agênticos instalados na máquina (Claude Code, Codex, Gemini CLI, OpenClaw, Hermes, Cursor, Copilot, Windsurf) e as plataformas do projeto, e você escolhe os agentes, as skills opcionais, o escopo (projeto ou usuário), o hook de validação e a criação do `appdimens.config.json`. Para automação: `--agents`, `--skills`, `--global` e `--yes`. Para remover: `npx appdimens-skills uninstall`.
 

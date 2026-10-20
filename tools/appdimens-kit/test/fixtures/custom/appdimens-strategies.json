@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "default": "brand",
+  "strategies": [
+    { "id": "brand", "extends": "power",
+      "reference": { "width": 360, "height": 640 },
+      "curve": { "type": "power", "exponent": 0.8 },
+      "clamp": { "min": 0.85, "max": 1.6 },
+      "fontScale": { "max": 1.3 },
+      "rules": [
+        { "name": "large", "when": { "device": ["tablet", "desktop"] }, "set": { "curve": { "type": "logarithmic", "k": 0.4 } } },
+        { "name": "wideLandscape", "when": { "orientation": "landscape", "smallestWidth": { "min": 600 } }, "set": { "multiplier": 0.9 } }
+      ] },
+    { "id": "brandText", "extends": "brand", "valueClamp": { "min": 10, "max": 32 } },
+    { "id": "steps", "axis": "width",
+      "curve": { "type": "breakpoints", "points": [ { "at": 360, "factor": 1 }, { "at": 600, "factor": 1.25 }, { "at": 840, "factor": 1.5 } ] } },
+    { "id": "heightLinear", "axis": "height", "reference": { "width": 360, "height": 800 } },
+    { "id": "diag", "axis": "diagonal", "aspectRatio": { "enabled": true, "sensitivity": 0.004 } },
+    { "id": "perim", "axis": "perimeter", "curve": { "type": "interpolated", "t": 0.6 }, "multiplier": 1.05 },
+    { "id": "minSide", "axis": "min", "curve": "linear", "aspectRatio": true, "fontScale": "ignore" },
+    { "id": "maxSide", "axis": "max", "curve": { "type": "logarithmic", "k": 0.3 } },
+    { "id": "fixed", "curve": { "type": "constant", "factor": 1.1 },
+      "rules": [ { "when": { "device": "watch" }, "set": { "curve": { "type": "constant", "factor": 0.9 } } } ] },
+    { "id": "mwSafe", "ignoreMultiWindow": true,
+      "rules": [ { "when": { "aspectRatio": { "max": 1.3 } }, "set": { "clamp": { "max": 1.5 } } },
+                 { "when": { "multiWindow": true, "width": { "min": 300, "max": 500 }, "height": { "max": 600 } }, "set": { "multiplier": 2 } } ] },
+    { "id": "mwBoost", "rules": [ { "name": "split", "when": { "multiWindow": true }, "set": { "multiplier": 0.5 } } ] },
+    { "id": "tv", "extends": "tvSafe" },
+    { "id": "wear", "extends": "wearable" },
+    { "id": "exprCurve", "reference": { "width": 360, "height": 640 },
+      "curve": { "type": "expression", "expression": "pow(ratio, 0.8) * (tablet || desktop ? 0.9 : 1) + (landscape ? 0.05 : 0)" } },
+    { "id": "exprSmooth", "axis": "width",
+      "curve": { "type": "expression", "expression": "lerp(0.9, 1.4, smoothstep(320, 1200, axis))" },
+      "rules": [ { "name": "watch", "when": { "device": "watch" }, "set": { "curve": { "type": "expression", "expression": "!multiWindow && sw >= 180 ? 0.95 : 1" } } } ] },
+    { "id": "exprMath",
+      "curve": { "type": "expression", "expression": "clamp(1 + log2(sw / 300) * 0.3 - abs(aspectRatio - 1.78) * 0.1 + step(600, sw) * 0.05 + sign(fontScale - 1) * 0.01 + round(density) * 0.001 + floor(height / 100) % 3 * 0.01 + max(1, 2, 0.5) * 0.002 + min(sqrt(ref), ln(e ^ 2)) * 0.001 + exp(0) * 0.001 + ceil(0.2) * 0.001 + log10(100) * 0.001 - -0.001 + shortSide / longSide * 0.01 + diagonal / perimeter * 0.01 + (portrait == 1) * 0.002 + (refWidth != refHeight) * 0.001 - pi / 1000 + 2 ^ 3 ^ 0.5 * 0.0001, 0.5, 3)" } },
+    { "id": "exprFormula", "curve": { "type": "power", "exponent": 0.6 }, "formula": "max(scaled, base) + (tv ? 4 : 0)" },
+    { "id": "exprReplace", "curve": { "type": "constant", "factor": 1 }, "formula": "base * pow(sw / 360, 0.7) * factor + 2" }
+  ]
+}

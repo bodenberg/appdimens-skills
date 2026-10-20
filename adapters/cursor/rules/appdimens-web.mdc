@@ -71,6 +71,22 @@ The smallest side of a desktop browser is often 800–1000, so `sdp` grows 2.7�
 | touch target | visual size as a token + hit area via padding or a `::before` overlay reaching `44px` (`/* ad:fixed touch-min */`; WCAG 2.2 AA minimum 24px) — never clamp the visual |
 | `adapt` | conditions `@sw600` `@w840` `@landscape` `@tv` in classes/`data-dimen`/`@dimen`; structural changes with regular media/container queries |
 
+## Custom strategies (`webdimens/custom`, unreleased)
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+```ts
+import { loadScalingStrategies, getScalingStrategy, cdp, csp } from 'webdimens/custom';
+import strategies from './appdimens-strategies.json';
+
+loadScalingStrategies(strategies);                     // registers ids, publishes --cdp-<id> / --csp-<id>
+const brand = getScalingStrategy('brand')!;
+el.style.padding = brand.css(16);                      // "calc(16 * var(--cdp-brand))" — responsive, SSR-safe
+cdp(16, 'brand');                                      // number (CSS px) for canvas / JS layout
+```
+
+CSS (PostCSS plugin or `dimens()`): `padding: 16cdp-brand; font-size: 14csp-brand;`. Frameworks: `useScalingStrategy()` (React, Vue), `scalingStrategy()` (Svelte), `injectScalingStrategy()` (Angular). Value-dependent strategies (`valueClamp`, `formula`) produce px literals instead of a `var()`.
+
 ## Lint (what `appdimens-kit lint` flags here)
 
 - In CSS/SCSS/Vue/Svelte styles: `padding|margin|gap|font-size|border-radius|width|height|top|…: Npx` with N > 2 → `Nsdp` (PostCSS) or the class form. Media-query thresholds are not flagged.

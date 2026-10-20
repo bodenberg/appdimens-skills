@@ -55,6 +55,23 @@ Every XAML prefix needs its `xmlns` (put them in one merged `AppDimensImports.xa
 | touch target | visual size as a token + `MinimumHeightRequest="48"` on the tappable container `<!-- ad:fixed touch-min -->` | visual token + `MinHeight="40"` (Fluent) on the control |
 | `adapt` | `{scaled:14, Tablet=18, Desktop=20}`, `{sdpQualifier:16, Qualified=20, QualifierType=SmallWidth, Threshold=600}` (SDPS), `VisualStateManager` adaptive triggers | `VisualStateManager` + `AdaptiveTrigger MinWindowWidth` |
 
+## Custom strategies (`AppDimens.Net.Custom`, unreleased — AppDimens.Net family only)
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+```csharp
+// dotnet add package AppDimens.Net.Custom   (included in AppDimens.Net.Sdk)
+using AppDimens.Net.Custom;
+
+ScalingStrategies.LoadJson(File.ReadAllText("appdimens-strategies.json"));   // once
+var brand = ScalingStrategies.Require("brand");
+float pad = 16.Cdp(brand);     // dp; CdpPx → px
+float title = 20.Csp(brand);   // sp units like Ssp (CspDp = final size)
+using (CustomDimens.Use(brand)) { BuildPage(); }   // scope; or ScalingStrategies.Default = brand
+```
+
+The SDPS family has no custom strategies. On Windows, macOS and Linux the device class is `desktop`; override it with `CustomDimens.DeviceClassResolver`.
+
 ## Lint (what `appdimens-kit lint` flags here)
 
 - XAML `Padding|Margin|Spacing|FontSize|WidthRequest|HeightRequest|CornerRadius|Width|Height="16"` numeric literals > 2 → markup extensions.

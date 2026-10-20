@@ -756,6 +756,252 @@
         ],
         "must_ask": false
       }
+    },
+    {
+      "id": "custom-strategy-declared",
+      "mode": "create",
+      "config": {
+        "targets": [
+          {
+            "platform": "android-compose",
+            "library": "appdimens-dynamic",
+            "strategies": [
+              "custom"
+            ]
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ],
+        "strategy": {
+          "layout": "custom:brand",
+          "text": "custom:brand"
+        },
+        "customStrategies": {
+          "file": "appdimens-strategies.json",
+          "ids": [
+            "brand"
+          ]
+        },
+        "design": {
+          "baseScreen": {
+            "id": "medium-phone",
+            "width": 411,
+            "height": 914,
+            "unit": "dp",
+            "confirmed": true
+          },
+          "normalization": "match-base"
+        }
+      },
+      "files": {
+        "appdimens-strategies.json": {
+          "version": 1,
+          "default": "brand",
+          "strategies": [
+            {
+              "id": "brand",
+              "reference": {
+                "width": 360,
+                "height": 640
+              },
+              "curve": {
+                "type": "power",
+                "exponent": 0.8
+              },
+              "clamp": {
+                "min": 0.85,
+                "max": 1.6
+              },
+              "fontScale": {
+                "max": 1.3
+              },
+              "rules": [
+                {
+                  "name": "large",
+                  "when": {
+                    "device": [
+                      "tablet",
+                      "desktop"
+                    ]
+                  },
+                  "set": {
+                    "curve": {
+                      "type": "logarithmic",
+                      "k": 0.4
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "input": "Create a profile header in Compose: avatar 48, padding 16, gap 12, name text 20, subtitle text 16.",
+      "expect": {
+        "strategy": "strategy.layout is custom:brand → cdp/csp with the brand strategy, converted with normalize --strategy custom:brand on Medium Phone (factor 1.1118)",
+        "tokens": "padding 14.5.cdp(Brand), gap 11.cdp(Brand), avatar 43.cdp(Brand), name 17.99.csp(Brand), subtitle 14.39.csp(Brand); imports compose.custom + custom"
+      },
+      "assert": {
+        "must_match": [
+          "14\\.5\\.cdp\\(",
+          "11\\.cdp\\(",
+          "\\.csp\\(",
+          "compose\\.custom"
+        ],
+        "must_not_match": [
+          "\\b16\\.cdp\\(",
+          "\\.asdp\\b",
+          "\\.sdp\\b"
+        ],
+        "must_ask": false
+      }
+    },
+    {
+      "id": "custom-no-invented-id",
+      "mode": "edit",
+      "config": {
+        "targets": [
+          {
+            "platform": "android-compose",
+            "library": "appdimens-dynamic",
+            "strategies": [
+              "custom"
+            ]
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet"
+        ],
+        "strategy": {
+          "layout": "custom:brand",
+          "text": "custom:brand"
+        },
+        "customStrategies": {
+          "file": "appdimens-strategies.json",
+          "ids": [
+            "brand"
+          ]
+        },
+        "design": {
+          "baseScreen": {
+            "id": "medium-phone",
+            "width": 411,
+            "height": 914,
+            "unit": "dp",
+            "confirmed": true
+          },
+          "normalization": "match-base"
+        }
+      },
+      "files": {
+        "appdimens-strategies.json": {
+          "version": 1,
+          "default": "brand",
+          "strategies": [
+            {
+              "id": "brand",
+              "reference": {
+                "width": 360,
+                "height": 640
+              },
+              "curve": {
+                "type": "power",
+                "exponent": 0.8
+              },
+              "clamp": {
+                "min": 0.85,
+                "max": 1.6
+              },
+              "fontScale": {
+                "max": 1.3
+              },
+              "rules": [
+                {
+                  "name": "large",
+                  "when": {
+                    "device": [
+                      "tablet",
+                      "desktop"
+                    ]
+                  },
+                  "set": {
+                    "curve": {
+                      "type": "logarithmic",
+                      "k": 0.4
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "input": "On Android TV the settings screen looks too small. Fix it.",
+      "expect": {
+        "decision": "device differences belong in the strategy's rules: propose adding a rule {\"when\": {\"device\": \"tv\"}, \"set\": {…}} to brand in appdimens-strategies.json (it is a project-wide file → confirm first), check it with custom check / custom explain; never add if (isTv) at call sites or invent a new strategy id"
+      },
+      "assert": {
+        "must_match": [
+          "\"device\"\\s*:\\s*\"tv\"|device:\\s*\"tv\"",
+          "appdimens-strategies\\.json"
+        ],
+        "must_not_match": [
+          "if\\s*\\(\\s*isTv",
+          "custom:tv\\b",
+          "UiModeType\\.TELEVISION\\s*\\)\\s*\\?"
+        ],
+        "must_ask": true
+      }
+    },
+    {
+      "id": "custom-free-formula",
+      "mode": "create",
+      "config": {
+        "targets": [
+          {
+            "platform": "web",
+            "library": "webdimens"
+          },
+          {
+            "platform": "android-compose",
+            "library": "appdimens-dynamic"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet",
+          "desktop"
+        ],
+        "design": {
+          "baseScreen": {
+            "id": "web-mobile",
+            "width": 390,
+            "height": 844,
+            "unit": "css-px",
+            "confirmed": true
+          }
+        }
+      },
+      "input": "Our design system says spacing grows with the square root of (smallest side ÷ 360), 10 % less on tablets and desktops, never below 0.9× or above 1.8×. It must give the same numbers on the website and the Android app.",
+      "expect": {
+        "decision": "no built-in curve gives this → one custom strategies JSON shared by both targets, curve {\"type\": \"expression\", \"expression\": \"sqrt(ratio) * (tablet || desktop ? 0.9 : 1)\"} with reference 360 wide and clamp 0.9–1.8 (or a rule per device), declared in customStrategies; validated with appdimens-kit custom check; used as cdp(…, 'ds') on web and 16.cdp(Ds) on Android"
+      },
+      "assert": {
+        "must_match": [
+          "\"type\"\\s*:\\s*\"expression\"",
+          "sqrt\\(",
+          "customStrategies",
+          "custom check"
+        ],
+        "must_not_match": [
+          "\"type\"\\s*:\\s*\"custom\"",
+          "Math\\.sqrt\\("
+        ],
+        "must_ask": false
+      }
     }
   ]
 }

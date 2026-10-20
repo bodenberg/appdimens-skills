@@ -29,6 +29,12 @@ commonMain.dependencies {
 | fit-text | `com.appdimens.kmp.compose.resize.*` | `autoResizeTextSp(…)` in `BoxWithConstraints` |
 | non-Compose code | `com.appdimens.kmp.code.*` | needs an `AppDimensContext` |
 
+## Custom strategies (`appdimens-kmp-custom`, unreleased)
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+`implementation("io.github.bodenberg:appdimens-kmp-custom")` in `commonMain`. Compose: `import com.appdimens.kmp.compose.custom.*` → `16.cdp(Brand)`, `14.csp(Brand)`, `ProvideScalingStrategy(Brand) { … }`. Code API: `16.cdp(appContext, Brand)` → px. Load the JSON once with `ScalingStrategies.loadJson(text)` (read it from your resources), then `ScalingStrategies.getOrThrow("brand")`. The device class comes from the UI mode, and desktop targets map to `desktop`.
+
 ## Platform notes
 
 - Compose: no setup for plain tokens; `AppDimensProvider { }` for facilitators (`sdpMode`, `sdpScreen`).

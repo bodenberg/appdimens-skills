@@ -56,11 +56,16 @@ Todas as estratégias são suportadas quando o usuário escolhe ou o layout pede
 - **CLI `appdimens-kit`**:
   - `detect`: plataformas e evidências da tela base no código;
   - `devices`: catálogo de telas;
-  - `normalize`: todas as estratégias, eixo, densidade, sufixo `a`, `spaceW`;
+  - `normalize`: todas as estratégias, eixo, densidade, sufixo `a`, `spaceW` e estratégias do projeto (`custom:<id>`);
+  - `custom check` / `custom explain`: valida o JSON de estratégias próprias (`schemas/custom-strategy.schema.json`, incluindo fórmulas livres) e mostra fator, regras e valores em cada tela, com o mesmo motor de todas as plataformas;
   - `lint`: validação do código;
   - `validate`: confere o `appdimens.config.json` com o schema e com os pares plataforma ↔ biblioteca (e, com `--intent`, as fichas de intenção). Se o contrato for inválido, `lint`, `detect`, `normalize` e o hook param com exit 2 e apontam cada campo errado; um contrato inválido nunca é usado.
 - **Instalador npm** (`npx appdimens-skills`) para Claude Code, Codex, Gemini CLI, OpenClaw, Hermes, Cursor, Copilot e Windsurf, mais o **hook** do Claude Code e o plugin.
 - **Evals**: casos-ouro para medir as IAs e um teste visual com agentes cegos (`evals/visual/`).
+
+## Estratégias próprias do projeto
+
+Quando nenhuma curva embutida atende, o projeto define as suas num único JSON (`customStrategies` no `appdimens.config.json`). O arquivo traz frame de referência, eixo, curva ou **fórmula livre em texto**, limites, política de fonte e regras por tipo de dispositivo. Todas as bibliotecas AppDimens leem o mesmo arquivo e chegam aos mesmos números. Os agentes só usam os ids declarados: diferenças por dispositivo viram `rules` no JSON, nunca `if` no código.
 
 ## Uma fonte, vários agentes
 

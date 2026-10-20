@@ -62,6 +62,20 @@ Decide intent first with `appdimens-layout-intent`. Units are **points**: a Figm
 
 `UIStackView(spacing: 16.sdp)`, `UICollectionViewCompositionalLayout` for list/grid/carousel (`.fractionalWidth`, `.estimated(…)` with sdp insets), Auto Layout anchors with `constant: 16.sdp`, `heightAnchor.constraint(greaterThanOrEqualToConstant: 44)` for touch minimums. `layer.cornerRadius = 12.sdp`.
 
+## Custom strategies (`AppDimensCustom`, unreleased)
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+```swift
+.product(name: "AppDimensCustom", package: "appdimens-ios")
+import AppDimensCustom
+
+try ScalingStrategies.load(resource: "appdimens-strategies")   // once, at launch
+let brand = try ScalingStrategies.require("brand")
+Text("Hi").font(.system(size: 14.csp(brand))).padding(16.cdp(brand))   // csp = final point size
+ContentView().scalingStrategy(brand)                                     // scope; @CustomDimension(16) inside
+```
+
 ## Lint (what `appdimens-kit lint` flags here)
 
 - `.padding(16)`, `spacing: 16`, `cornerRadius: 12`, `.frame(width: 120…)` numeric literals > 2 → tokens.

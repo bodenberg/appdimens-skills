@@ -2,6 +2,7 @@
 // An invalid contract is never used: callers get the errors and stop.
 import { readFileSync } from 'node:fs';
 import { loadSchema, validate } from './schema.mjs';
+import { projectStrategies } from './custom.mjs';
 
 /** Libraries each platform target can declare (beyond the schema's enums). */
 export const LIBRARIES_OF_PLATFORM = {
@@ -60,5 +61,36 @@ export function loadConfig(path) {
     return { config: null, errors: [{ path: '/', message: `not valid JSON: ${e.message}` }] };
   }
   const errors = validateConfig(data);
+  if (!errors.length) errors.push(...customStrategyErrors(data, path));
   return { config: errors.length ? null : data, errors };
+}
+
+/**
+ * customStrategies cross-checks: the file loads and passes the strategy schema + engine, the
+ * listed ids / default exist, and every custom:<id> used by `strategy` is declared.
+ */
+export function customStrategyErrors(config, configPath) {
+  const errors = [];
+  const used = ['layout', 'text']
+    .map((k) => [k, config?.strategy?.[k]])
+    .filter(([, v]) => typeof v === 'string' && v.startsWith('custom:'));
+  const loaded = projectStrategies(config, configPath);
+  if (!loaded) {
+    for (const [k, v] of used) errors.push({ path: `/strategy/${k}`, message: `${v} needs customStrategies.file (the strategies JSON the targets load)` });
+    return errors;
+  }
+  for (const e of loaded.errors) errors.push({ path: '/customStrategies/file', message: `${loaded.file}${e.path === '/' ? '' : e.path}: ${e.message}` });
+  if (loaded.errors.length) return errors;
+  const known = new Set(loaded.configs.keys());
+  const declared = config.customStrategies.ids ?? [...known];
+  (config.customStrategies.ids ?? []).forEach((id, i) => {
+    if (!known.has(id)) errors.push({ path: `/customStrategies/ids/${i}`, message: `"${id}" is not in ${loaded.file} (has: ${[...known].join(', ')})` });
+  });
+  const def = config.customStrategies.default;
+  if (def !== undefined && !declared.includes(def)) errors.push({ path: '/customStrategies/default', message: `"${def}" is not one of the declared ids (${declared.join(', ')})` });
+  for (const [k, v] of used) {
+    const id = v.slice('custom:'.length);
+    if (!declared.includes(id)) errors.push({ path: `/strategy/${k}`, message: `${v}: "${id}" is not a declared custom strategy (${declared.join(', ')})` });
+  }
+  return errors;
 }

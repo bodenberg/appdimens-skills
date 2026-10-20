@@ -70,6 +70,21 @@ RN styles are in dp. `*Px` functions (`sdpPx`) are only for Skia/native modules/
 
 Fold/flip, car, watch and desk modes come from the app via `<AppDimensProvider uiModeType={…}>`; TV is detected automatically.
 
+## Custom strategies (`appdimens-react-native/custom`, unreleased)
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+```tsx
+import {loadCustomStrategies, requireCustomStrategy, cdp, csp, useCustomStrategy, CustomStrategyProvider} from 'appdimens-react-native/custom';
+
+loadCustomStrategies(require('./appdimens-strategies.json'));   // once, at startup
+const brand = requireCustomStrategy('brand');
+const s = useCustomStrategy(brand);                              // re-renders on window changes
+<View style={{padding: s.dp(16)}}><Text style={{fontSize: s.sp(14)}}>Hi</Text></View>
+```
+
+`csp` returns a value for `fontSize`: RN applies the font scale itself, and the strategy policy is pre-compensated. Never put a `Px` value in `fontSize`.
+
 ## Lint (what `appdimens-kit lint` flags here)
 
 - Numeric style literals > 2 for `padding*`, `margin*`, `gap`, `width`, `height`, `borderRadius`, `fontSize`, `lineHeight`, `top/left/…` → tokens.

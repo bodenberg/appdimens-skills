@@ -4,6 +4,7 @@
 // A "screen" is { width, height, dpi?, fontScale? } in logical units (dp / pt / CSS px).
 
 import { readFileSync } from 'node:fs';
+import { customFactor, isCustom } from './custom.mjs';
 
 export const W0 = 300; // reference shorter side
 export const H0 = 533; // reference longer side
@@ -65,7 +66,10 @@ export const aspectLog = (s) => Math.log(smax(s) / smin(s) / RHO0);
  * opts.aspect  → the `a` suffix (sdpa…): scaled uses 1 + (sw − 300)(1/300 + κ·L); satellites × (1 + κ·L).
  * opts.text    → sp kind (ssp…): × fontScale (the base screen is assumed to be fontScale 1).
  */
-export function factorFor(strategy, screen, { axis = 's', aspect = false, text = false, k = KAPPA } = {}) {
+export function factorFor(strategy, screen, { axis = 's', aspect = false, text = false, k = KAPPA, custom } = {}) {
+  if (!(screen?.width > 0)) throw new Error('Screen width must be a positive number.');
+  // custom:<id> — the strategy owns its axis, aspect ratio and font-scale policy.
+  if (isCustom(strategy)) return customFactor(strategy, screen, custom, { text });
   const s = resolveStrategy(strategy);
   const kernel = kernels[s];
   if (!kernel) throw new Error(`Unknown strategy "${strategy}". Use one of: ${STRATEGIES.join(', ')}.`);
@@ -112,15 +116,15 @@ export function roundTo(value, step) {
  * AppDimens base values that resolve to the same size on that screen:
  *   base = (value ÷ density) ÷ factor(strategy, base screen)
  */
-export function normalize(values, { frame, height, runtimeHeight, policy = 'scaled', strategy, rounding = 0.5, axis = 's', density = 1, aspect = false, dpi, fontScale, xml = false } = {}) {
+export function normalize(values, { frame, height, runtimeHeight, policy = 'scaled', strategy, rounding = 0.5, axis = 's', density = 1, aspect = false, dpi, fontScale, xml = false, custom, device } = {}) {
   const s = resolveStrategy(strategy || policy);
   // runtimeHeight = the height the platform reports to the library (may exclude system bars);
   // it replaces the frame height for every kernel that reads the height.
   const h = runtimeHeight ? runtimeHeight / density : height ? height / density : undefined;
-  const screen = { width: frame / density, height: h, dpi, fontScale };
+  const screen = { width: frame / density, height: h, dpi, fontScale, density, device };
   if (xml && s !== 'scaled') throw new Error('Android XML resources only exist for the scaled strategy.');
   const bucket = xml ? xmlBucket(axisLength(screen, axis), axis) : undefined;
-  const f = xml ? bucket / W0 : factorFor(s, screen, { axis, aspect });
+  const f = xml ? bucket / W0 : factorFor(s, screen, { axis, aspect, custom });
   return {
     baseDevice: { width: screen.width, height: screen.height, frameHeight: height ? height / density : undefined },
     strategy: s,

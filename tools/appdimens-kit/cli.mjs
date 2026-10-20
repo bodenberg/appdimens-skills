@@ -8,6 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, findDevice, looksLikePhysicalPx, parseSize } from './lib/devices.mjs';
 import { scanBaseHints, summarizeHints } from './lib/basehints.mjs';
+import { isCustom, loadStrategiesFile, projectStrategies, resolveCustom } from './lib/custom.mjs';
 
 const USAGE = `appdimens-kit
 
@@ -31,7 +32,10 @@ const USAGE = `appdimens-kit
                   --dpi <dpi>    for the density strategy (default: catalog density × 160)
                   --font-scale <f>  text was measured at this font scale (with --text)
       --strategy  scaled (default) auto percent power fluid interpolated logarithmic
-                  diagonal perimeter fit fill density
+                  diagonal perimeter fit fill density · custom:<id> (a project strategy:
+                  customStrategies.file of appdimens.config.json, or --custom <file>)
+      --class     device class of the base screen for custom rules (phone tablet desktop tv
+                  watch car vr; default: from the catalog entry / size)
       --axis      s (sdp/ssp, smallest side, default) · h (hdp/hsp) · w (wdp/wsp) — single-axis strategies only
       --aspect    the "a" suffix (sdpa…), which depends on the aspect ratio
       --text      sp kind (ssp…)
@@ -51,9 +55,16 @@ const USAGE = `appdimens-kit
       obsolete APIs, invalid XML resources, JS-only web units in CSS and mixed .NET families.
       Files outside an AppDimens project are skipped unless --force. Exit 1 on errors.
 
+  custom check [file] [--json]
+      Checks a custom strategies JSON (schemas/custom-strategy.schema.json + the engine:
+      extends, cycles, free-form expressions, bounds). Default: customStrategies.file.
+  custom explain <id> [--custom <file>] --devices <id|WxH>,… [--class <c>] [--values 16,24]
+      Factor, matched rules and resolved values of one strategy on several screens — the same
+      numbers every AppDimens platform produces.
+
   validate [appdimens.config.json] [--intent <file.json>…] [--json]
       Checks the project contract against schemas/appdimens.config.schema.json (plus
-      platform ↔ library pairs), or layout-intent sheets (an object or an array) against
+      platform ↔ library pairs, customStrategies file / ids / custom:<id> uses), or layout-intent sheets (an object or an array) against
       schemas/layout-intent.schema.json. Default: the config found from the current folder.
       Exit 0 valid · 1 invalid.
 
@@ -88,10 +99,31 @@ function screenFrom(flags, flag = 'device') {
   if (q) {
     const d = findDevice(q) || (parseSize(q) && { ...parseSize(q), name: q });
     if (!d) fail(`unknown screen "${q}". Run "devices" for the list, or pass WxH.`);
-    return { width: d.width, height: d.height, name: d.name, density: d.density };
+    return { width: d.width, height: d.height, name: d.name, density: d.density, device: classOf(d) };
   }
   if (flag !== 'device') return null;
   return { width: Number(flags.frame), height: flags.height ? Number(flags.height) : undefined, name: null };
+}
+
+/** Device class a catalog screen stands for (custom strategy rules). */
+function classOf(d) {
+  const id = String(d.id ?? d.name ?? '');
+  if (/desktop|laptop|web-1366|web-fhd/.test(id)) return 'desktop';
+  return Math.min(d.width, d.height ?? d.width) >= 600 ? 'tablet' : 'phone';
+}
+
+/** Custom strategies for --strategy custom:<id>: --custom <file>, else the project's customStrategies. */
+function customStrategiesFor(flags) {
+  let loaded;
+  if (flags.custom) loaded = loadStrategiesFile(flags.custom);
+  else {
+    const p = findProject(process.cwd());
+    if (p.configErrors?.length) fail(new ConfigError(p.configPath, p.configErrors).message + '\nFix it (or run: validate) before continuing.');
+    loaded = projectStrategies(p.config, p.configPath);
+  }
+  if (!loaded) fail('custom strategies: pass --custom <file> or declare customStrategies.file in appdimens.config.json.');
+  if (loaded.errors.length) fail(`${loaded.file} is invalid:\n${loaded.errors.map((e) => `  ${e.path}: ${e.message}`).join('\n')}`);
+  return loaded.configs;
 }
 
 /** The project's validated config (or null when there is none); exits 2 when it is invalid. */
@@ -138,6 +170,9 @@ if (command === 'devices') {
 if (command === 'normalize') {
   const screen = screenFrom(flags);
   const strategy = resolveStrategy(flags.strategy || flags.policy || 'scaled');
+  const custom = isCustom(strategy) ? customStrategiesFor(flags) : undefined;
+  if (custom && (flags.xml || flags.space || flags.aspect)) fail('normalize: custom strategies own their axis and aspect ratio; --xml, --space and --aspect do not apply.');
+  if (flags.class) screen.device = flags.class;
   const axis = flags.axis || 's';
   const density = flags.density ? Number(flags.density) : 1;
   const xml = !!flags.xml;
@@ -156,7 +191,7 @@ if (command === 'normalize') {
       'Pass --density (Android 420 dpi = 2.625, 480 dpi = 3, iOS @2x = 2, @3x = 3), or --logical if it really is logical.');
 
   const warnings = [];
-  if (axis !== 's' && !AXIS_STRATEGIES.has(strategy))
+  if (axis !== 's' && !custom && !AXIS_STRATEGIES.has(strategy))
     warnings.push(`${strategy} reads the whole screen and ignores the axis: ${PREFIX[strategy]}hdp / ${PREFIX[strategy]}wdp equal ${PREFIX[strategy]}sdp.`);
   if (fontScale !== 1) warnings.push(`Text measured at font scale ${fontScale}: values were divided by it (ssp multiplies by the user's font scale at runtime).`);
   if (axis === 'h' && !runtimeHeight && AXIS_STRATEGIES.has(strategy))
@@ -176,7 +211,7 @@ if (command === 'normalize') {
   }
 
   const input = flags.text ? values.map((v) => v / fontScale) : values;
-  const opts = { frame: screen.width, height: screen.height, runtimeHeight, strategy, rounding, axis, density, aspect: !!flags.aspect, dpi, xml };
+  const opts = { frame: screen.width, height: screen.height, runtimeHeight, strategy, rounding, axis, density, aspect: !!flags.aspect, dpi, xml, custom, device: screen.device };
   let result;
   try {
     result = normalize(input, opts);
@@ -186,11 +221,14 @@ if (command === 'normalize') {
   result.warnings = warnings;
   const kindAxis = AXIS_STRATEGIES.has(strategy) || xml ? axis : 's';
   const kind = (flags.text ? { s: 'ssp', h: 'hsp', w: 'wsp' } : { s: 'sdp', h: 'hdp', w: 'wdp' })[kindAxis];
-  const unit = `${PREFIX[strategy]}${kind}${flags.aspect ? 'a' : ''}`;
+  const customId = custom ? strategy.slice('custom:'.length) : null;
+  const unit = custom ? (flags.text ? 'csp' : 'cdp') : `${PREFIX[strategy]}${kind}${flags.aspect ? 'a' : ''}`;
   const xmlName = (b) => `@dimen/_${b < 0 ? `minus${fmt(-b)}` : fmt(b)}${kind}`;
   const platform = flags.syntax || projectConfig(process.cwd())?.targets?.[0]?.platform;
   const syntax = /^(web|css)$/.test(platform) ? 'web' : /^(rn|react-native)$/.test(platform) ? 'rn' : 'dot';
-  const tok = (b) => (syntax === 'web' ? `${fmt(b)}${unit}` : syntax === 'rn' ? `${unit}(${fmt(b)})` : `${fmt(b)}.${unit}`);
+  const tok = (b) => custom
+    ? (syntax === 'web' ? `${fmt(b)}${unit}-${customId}` : syntax === 'rn' ? `${unit}(${fmt(b)}, ${customId})` : `${fmt(b)}.${unit}(${customId})`)
+    : (syntax === 'web' ? `${fmt(b)}${unit}` : syntax === 'rn' ? `${unit}(${fmt(b)})` : `${fmt(b)}.${unit}`);
 
   if (flags.theme) {
     const rows = themeScale(input, opts);
@@ -216,7 +254,7 @@ if (command === 'normalize') {
   }
   out(`base screen ${screen.name ? `${screen.name} ` : ''}${fmt(result.baseDevice.width)}×${fmt(result.baseDevice.height)}` +
     `${density !== 1 ? ` (resolution ÷ density ${density})` : ''}${runtimeHeight ? ' (runtime height)' : ''}` +
-    ` · ${strategy}${flags.aspect ? ' + a' : ''} reads ${result.axis === 'screen' ? 'the whole screen' : `axis ${axis} = ${fmt(result.axisLength)}`}` +
+    ` · ${strategy}${flags.aspect ? ' + a' : ''}${custom ? ` (${screen.device ?? 'size-based'} class)` : ` reads ${result.axis === 'screen' ? 'the whole screen' : `axis ${axis} = ${fmt(result.axisLength)}`}`}` +
     `${xml ? ` · XML bucket ${result.xmlBucket}` : ''} · factor ${result.factor.toFixed(4)} · rounding ${rounding}`);
   out('');
   out('| on base screen | AppDimens base | dimen | resolves to on base screen |');
@@ -273,6 +311,65 @@ if (command === 'detect') {
   if (hints.some((h) => h.kind === 'html-device-frame')) out('  note: a prototype device frame was found — subtract its fake status bar / home indicator from the height before height-based conversions.');
   for (const h of hints.filter((x) => x.unknown)) out(`  ? ${h.label} at ${h.file}:${h.line} (not in catalog: check its size)`);
   process.exit(0);
+}
+
+if (command === 'custom') {
+  const [sub, ...more] = rest;
+  if (sub === 'check') {
+    const file = more[0];
+    let loaded;
+    if (file) loaded = loadStrategiesFile(file);
+    else {
+      const p = findProject(process.cwd());
+      loaded = p.config ? projectStrategies(p.config, p.configPath) : null;
+      if (!loaded) fail('custom check: pass a file, or run it in a project whose appdimens.config.json declares customStrategies.file.');
+    }
+    const report = {
+      file: loaded.file,
+      errors: loaded.errors,
+      defaultId: loaded.defaultId,
+      strategies: [...loaded.configs.entries()].map(([id, c]) => ({
+        id,
+        axis: c.axis,
+        curve: c.curve.type === 'expression' ? `expression(${c.curve.expression.source})` : c.curve.type,
+        rules: c.rules.map((r, i) => r.name ?? `#${i}`),
+        valueDependent: c.minValue !== undefined || c.maxValue !== undefined || !!c.formula || c.rules.some((r) => r.patch.minValue !== undefined || r.patch.maxValue !== undefined || r.patch.formula),
+      })),
+    };
+    if (flags.json) out(JSON.stringify(report, null, 2));
+    else if (report.errors.length) out(`✖ ${report.file}: ${report.errors.length} error(s)\n${report.errors.map((e) => `  ${e.path}: ${e.message}`).join('\n')}`);
+    else {
+      out(`✔ ${report.file}: ${report.strategies.length} strateg${report.strategies.length === 1 ? 'y' : 'ies'}${report.defaultId ? ` (default: ${report.defaultId})` : ''}`);
+      for (const st of report.strategies) out(`  ${st.id.padEnd(16)} ${st.axis.padEnd(14)} ${st.curve}${st.rules.length ? ` · rules ${st.rules.join(', ')}` : ''}${st.valueDependent ? ' · value-dependent (cached lane)' : ''}`);
+    }
+    process.exit(report.errors.length ? 1 : 0);
+  }
+  if (sub === 'explain') {
+    const id = more[0];
+    if (!id || !flags.devices) fail('custom explain: <id> and --devices <id|WxH>,… are required.');
+    const configs = customStrategiesFor(flags);
+    const values = String(flags.values ?? '16').split(',').map(Number).filter((n) => !Number.isNaN(n));
+    const rows = String(flags.devices).split(',').map((q) => {
+      const d = findDevice(q.trim()) || (parseSize(q.trim()) && { ...parseSize(q.trim()), name: q.trim() });
+      if (!d) fail(`unknown screen "${q}". Run "devices" for the list, or pass WxH.`);
+      const screen = { width: d.width, height: d.height, density: d.density, device: flags.class || classOf(d) };
+      let r;
+      try {
+        r = resolveCustom(`custom:${id}`, screen, configs);
+      } catch (e) {
+        fail(`custom explain: ${e.message}`);
+      }
+      return { screen: d.name ?? q, width: d.width, height: d.height, device: screen.device, factor: r.factor, rules: [...r.appliedRules], values: values.map((v) => ({ base: v, dp: r.scale(v), spDp: r.scaleSpDp(v) })), explain: r.explain(id) };
+    });
+    if (flags.json) out(JSON.stringify(rows, null, 2));
+    else {
+      out(`| screen | class | factor | rules | ${values.map((v) => `${fmt(v)} →`).join(' | ')} |`);
+      out(`|---|---|---:|---|${values.map(() => '---:').join('|')}|`);
+      for (const r of rows) out(`| ${r.screen} (${fmt(r.width)}×${fmt(r.height)}) | ${r.device} | ${r.factor.toFixed(4)} | ${r.rules.join(', ') || '—'} | ${r.values.map((v) => fmt(v.dp)).join(' | ')} |`);
+    }
+    process.exit(0);
+  }
+  fail('custom: use "custom check [file]" or "custom explain <id> --devices …".');
 }
 
 if (command === 'validate') {

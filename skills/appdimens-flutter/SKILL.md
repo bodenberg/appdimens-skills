@@ -52,6 +52,20 @@ Wrap once: `runApp(AppDimensApp(child: MaterialApp(...)))`, or `AppDimensScopeBi
 
 Typography: put sizes in `ThemeData.textTheme` built inside the provider (`TextStyle(fontSize: 16.ssp)`), so the theme is rebuilt when the snapshot changes.
 
+## Custom strategies (`appdimens_custom`, unreleased)
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+```dart
+// pubspec: appdimens_custom (or appdimens_bom)
+import 'package:appdimens_custom/appdimens_custom.dart';
+
+ScalingStrategies.loadJson(await rootBundle.loadString('assets/appdimens-strategies.json'));
+final brand = ScalingStrategies.getOrThrow('brand');
+Padding(padding: EdgeInsets.all(16.cdpWith(brand)), child: Text('Hi', style: TextStyle(fontSize: 14.cspWith(brand))));
+ScalingStrategyScope(strategy: brand, child: …)   // then context.cdp(16) / context.csp(14)
+```
+
 ## Lint (what `appdimens-kit lint` flags here)
 
 - `EdgeInsets.all(16)`, `EdgeInsets.symmetric(horizontal: 16)`, `SizedBox(height: 16)`, `BorderRadius.circular(12)`, `fontSize: 16` numeric literals > 2 → tokens.

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **Custom scaling strategies.** This release supports the new custom modules of every AppDimens library: `appdimens-dynamic-custom`, `appdimens-kmp-custom`, `appdimens-games-custom` (+ Unity C#), `AppDimensCustom`, `appdimens_custom`, `appdimens-react-native/custom`, `webdimens/custom` and `AppDimens.Net.Custom`.
+  - **`schemas/custom-strategy.schema.json`** is the official cross-platform format. It covers reference, axis, curves, factor/value bounds, aspect ratio, font-scale policy, rules per device class / screen range / orientation / multi-window, `extends`, and free-form text formulas (`"type": "expression"`, `"formula"`).
+  - **`appdimens.config.json`** gains `customStrategies` (`file`, `ids`, `default`), `strategy.layout` / `strategy.text` accept `custom:<id>`, and `targets[].strategies` accepts `custom`. `validate` loads the file and checks the ids and every `custom:<id>` use.
+  - **Kit:** `custom check [file]`, `custom explain <id> --devices …`, `normalize --strategy custom:<id>` (also `--custom <file>` and `--class`). Lint suggests `cdp`/`csp` with the project strategy, and flags `cdp`/`csp` without the custom import. The math runs on `lib/custom-engine.mjs`, generated from the webdimens engine by `scripts/sync-custom-engine.mjs` and checked against the shared 540-case parity fixture.
+  - **Skills:** a *Project-defined strategies* section in the decision table, a custom row in the platform router, a *Custom strategies* section in every platform skill (Android XML: scaled only), and notes in the new-screen, code-edit, design-to-code and Claude Design workflows. There are 3 new eval cases (`custom-strategy-declared`, `custom-no-invented-id`, `custom-free-formula`).
+
 ## 0.1.2
 
 - **Listing icon** for the Claude directory (`.claude-plugin/icon.png`).

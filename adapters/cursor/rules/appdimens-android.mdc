@@ -70,6 +70,22 @@ Theme first: put tokens in one object (`object Spacing { val md get() = 16.sdp }
 
 Values are **px**: `view.setPadding(px, px, px, px)`, `textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, DimenSsp.ssp(ctx, 16))`. Don't pass a px value to an API that expects dp. XML layouts belong to `appdimens-android-xml`.
 
+## Custom strategies (`appdimens-dynamic-custom`, unreleased)
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+```kotlin
+implementation("io.github.bodenberg:appdimens-dynamic-custom")
+import com.appdimens.dynamic.custom.*            // ScalingStrategies, scalingStrategy { }, CustomPresets
+import com.appdimens.dynamic.compose.custom.*    // cdp / csp / ProvideScalingStrategy
+
+ScalingStrategies.loadAsset(context, "appdimens-strategies.json")   // once (Application)
+val Brand = ScalingStrategies.getOrThrow("brand")
+Modifier.padding(16.cdp(Brand)); Text(fontSize = 14.csp(Brand))      // or ProvideScalingStrategy(Brand) { 16.cdp }
+```
+
+Views / Kotlin code: `16.cdp(context, Brand)` returns **px** (`code.custom`), and `14.cspUnits(context, Brand)` is for `setTextSize(COMPLEX_UNIT_SP, …)`.
+
 ## Lint (what `appdimens-kit lint` flags here)
 
 - `N.dp` with N > 2 and `N.sp` literals in Compose files → use the policy token, or mark `// ad:fixed <reason>`.

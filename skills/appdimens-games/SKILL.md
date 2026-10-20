@@ -46,6 +46,12 @@ World layer: `WorldScale.fitPx/fillPx` equal the factors of `ViewportMode.FIT_AL
 - JNI: `com.appdimens.games.jni.NativeBridge`.
 - Unity/C#: `AppDimensGames.Screen.Update(wDp, hDp, dpi)`, `MathKernels.Scaled/Auto/Fit/Fill/ToPx`, `World.ViewportRect(mode, w, h, dw, dh)`.
 
+## Custom strategies (`appdimens-games-custom`, unreleased)
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+Kotlin: `64f.cdp(Hud)` → px from the live `GameScreen` (`cdpDp`, `cdpi` = resize-invariant, `csp`). Compose HUD: `import com.appdimens.games.compose.custom.*` → `64.cdp(Hud)`, `18.csp(Hud)`. C# (Unity/Godot): add `AppDimensGamesCustom.cs` + `AppDimensGamesCustom.Engine.cs`, then `CustomKernels.Cdp(64f, hud)` and `CustomKernels.Csp(18f, hud)` (final size). `CustomPresets.GAME_HUD` / `GameHud` is the usual parent. HUD only: world and gameplay sizes stay on `GameWorld` / fit / fill.
+
 ## Never
 
 - Invent stems; they are identical to `appdimens-dynamic`.
