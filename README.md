@@ -124,7 +124,7 @@ A project can define its own scaling strategies in one JSON file, using the form
 "customStrategies": { "file": "design/appdimens-strategies.json", "ids": ["brand"] }
 ```
 
-Agents then use `cdp` / `csp` with those ids only. When the user just wants to write the math, the skills recommend the simplest form first: one typed code line with autocomplete on Android, web and React Native (`scalingFormula { base * pow(sw / 360f, 0.8f) }`, `CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }`), or the same formula as text for JSON (`{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}`). The kit validates the file, converts design values (`normalize --strategy custom:brand`) and explains the numbers per screen (`custom explain`).
+Agents then use `cdp` / `csp` with those ids only. When the user just wants to write the math, the skills recommend the simplest form first: one typed code line with autocomplete on every platform (`scalingFormula { base * pow(sw / 360f, 0.8f) }`, `CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }`), or the same formula as text for JSON (`{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}`). The kit validates the file, converts design values (`normalize --strategy custom:brand`) and explains the numbers per screen (`custom explain`).
 
 ## The kit CLI
 

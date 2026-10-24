@@ -65,7 +65,7 @@ Todas as estratégias são suportadas quando o usuário escolhe ou o layout pede
 
 ## Estratégias próprias do projeto
 
-Quando nenhuma curva embutida atende, o projeto define as suas num único JSON (`customStrategies` no `appdimens.config.json`). O arquivo traz frame de referência, eixo, curva ou **fórmula livre em texto**, limites, política de fonte e regras por tipo de dispositivo. Todas as bibliotecas AppDimens leem o mesmo arquivo e chegam aos mesmos números. Os agentes só usam os ids declarados: diferenças por dispositivo viram `rules` no JSON, nunca `if` no código. Quando o usuário só quer escrever a conta, os skills recomendam primeiro a forma mais simples: uma linha de código tipada com autocomplete (Android, web, React Native: `scalingFormula { base * pow(sw / 360f, 0.8f) }`, `CustomScaleStrategy { … }`), ou a mesma fórmula em texto para JSON (`{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}`).
+Quando nenhuma curva embutida atende, o projeto define as suas num único JSON (`customStrategies` no `appdimens.config.json`). O arquivo traz frame de referência, eixo, curva ou **fórmula livre em texto**, limites, política de fonte e regras por tipo de dispositivo. Todas as bibliotecas AppDimens leem o mesmo arquivo e chegam aos mesmos números. Os agentes só usam os ids declarados: diferenças por dispositivo viram `rules` no JSON, nunca `if` no código. Quando o usuário só quer escrever a conta, os skills recomendam primeiro a forma mais simples: uma linha de código tipada com autocomplete (em todas as plataformas, por exemplo Android: `scalingFormula { base * pow(sw / 360f, 0.8f) }`, `CustomScaleStrategy { … }`), ou a mesma fórmula em texto para JSON (`{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}`).
 
 ## Uma fonte, vários agentes
 

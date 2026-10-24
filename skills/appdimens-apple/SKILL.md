@@ -66,7 +66,14 @@ Decide intent first with `appdimens-layout-intent`. Units are **points**: a Figm
 
 Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
 
-Simplest strategy, when the user just wants to write the math: one strategy holding only a text formula, `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` (`base` = the value passed; the result is the scaled value; shaped `base * (…)` it costs one multiply). Check it with `appdimens-kit custom explain --formula "base * pow(sw / 360, 0.8)" --devices …`.
+Simplest strategy, when the user just wants to write the math: one typed closure, autocompleted:
+
+```swift
+let product = CustomScaleStrategy { s in s.clamp(s.width / 360, 0.85, 1.8) }   // factor: once per window
+let hud = scalingFormula { $0.base * $0.pow($0.sw / 360, 0.8) }                 // final value (base = the value passed)
+```
+
+Scope names match the text language: `base` (formula only) `sw width height shortSide longSide diagonal perimeter aspectRatio ratio density fontScale device`, flags `phone tablet desktop tv watch car vr landscape portrait multiWindow`, math `pow sqrt ln log10 exp abs round min max clamp lerp smoothstep`. A non-finite factor falls back to 1 on Apple. Inline text throws on a bad formula: `try 16.cdp("base * (sw / 360)")`. For JSON or remote config, the same formula as text: `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` (shaped `base * (…)` it costs one multiply). Check numbers with `appdimens-kit custom explain --formula "<text>" --devices …`.
 
 ```swift
 .product(name: "AppDimensCustom", package: "appdimens-ios")

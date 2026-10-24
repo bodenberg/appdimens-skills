@@ -59,7 +59,15 @@ Every XAML prefix needs its `xmlns` (put them in one merged `AppDimensImports.xa
 
 Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
 
-Simplest strategy, when the user just wants to write the math: one strategy holding only a text formula, `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` (`base` = the value passed; the result is the scaled value; shaped `base * (…)` it costs one multiply). Check it with `appdimens-kit custom explain --formula "base * pow(sw / 360, 0.8)" --devices …`.
+Simplest strategy, when the user just wants to write the math: one typed lambda, autocompleted (PascalCase scope members):
+
+```csharp
+var product = CustomScaleStrategy.Create(s => s.Clamp(s.Width / 360f, 0.85f, 1.8f)); // factor: once per window
+var hud = ScalingStrategy.Formula(s => s.Base * s.Pow(s.Sw / 360f, 0.8f));            // final value (Base = the value passed)
+var dp = 16f.Cdp(product);
+```
+
+Scope: `Base` (formula only) `Sw Width Height ShortSide LongSide Diagonal Perimeter AspectRatio Ratio Density FontScale Device`, flags `Phone Tablet Desktop Tv Watch Car Vr Landscape Portrait MultiWindow`, math `Pow Sqrt Ln Log10 Exp Abs Round Min Max Clamp Lerp Smoothstep`. Inline text: `16f.Cdp("base * (sw / 360)")`. For JSON or remote config, the same formula as text: `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` (shaped `base * (…)` it costs one multiply). Check numbers with `appdimens-kit custom explain --formula "<text>" --devices …`.
 
 ```csharp
 // dotnet add package AppDimens.Net.Custom   (included in AppDimens.Net.Sdk)
