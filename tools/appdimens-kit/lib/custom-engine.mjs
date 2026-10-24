@@ -527,6 +527,8 @@ function validateConfig(config) {
     if (c.minFactor !== void 0 && c.maxFactor !== void 0 && c.minFactor > c.maxFactor) {
       throw new RangeError(`${where}: minFactor must be <= maxFactor`);
     }
+    if (c.minValue !== void 0 && c.minValue < 0) throw new RangeError(`${where}: minValue must be >= 0`);
+    if (c.maxValue !== void 0 && c.maxValue < 0) throw new RangeError(`${where}: maxValue must be >= 0`);
     if (c.minValue !== void 0 && c.maxValue !== void 0 && c.minValue > c.maxValue) {
       throw new RangeError(`${where}: minValue must be <= maxValue`);
     }
@@ -622,7 +624,7 @@ function evaluateCurve(curve, ratio, axisDp, screen, refDp = NaN, reference = DE
   }
 }
 var ResolvedScaling = class {
-  constructor(screen, config, factor, appliedRules, axisDp, referenceDp, curveFactor, aspectRatioMultiplier) {
+  constructor(screen, config, factor, appliedRules, axisDp, referenceDp, curveFactor, aspectRatioMultiplier, multiWindowIgnored = false) {
     this.screen = screen;
     this.config = config;
     this.factor = factor;
@@ -631,7 +633,8 @@ var ResolvedScaling = class {
     this.referenceDp = referenceDp;
     this.curveFactor = curveFactor;
     this.aspectRatioMultiplier = aspectRatioMultiplier;
-    const e = config.formula?.baseCoefficient;
+    this.multiWindowIgnored = multiWindowIgnored;
+    const e = multiWindowIgnored ? void 0 : config.formula?.baseCoefficient;
     this.proportional = !!e;
     this.formulaCoefficient = e ? e.evaluate(expressionVariables(screen, referenceDp > 0 ? axisDp / referenceDp : 1, axisDp, referenceDp, config.reference)) : NaN;
   }
@@ -653,6 +656,7 @@ var ResolvedScaling = class {
       if (max !== void 0 && magnitude > max) magnitude = max;
       out = out < 0 ? -magnitude : magnitude;
     }
+    if (this.multiWindowIgnored) return out;
     if (this.config.formula) {
       const ratio = this.referenceDp > 0 ? this.axisDp / this.referenceDp : 1;
       out = this.config.formula.evaluate(
@@ -687,7 +691,8 @@ var ResolvedScaling = class {
       out += ` clamp[${c.minFactor !== void 0 ? fmt(c.minFactor) : "-"}, ${c.maxFactor !== void 0 ? fmt(c.maxFactor) : "-"}]`;
     }
     out += ` => factor ${fmt(this.factor)}`;
-    if (c.formula) out += ` then Formula(${c.formula.source})`;
+    if (this.multiWindowIgnored) out += " (multi-window ignored)";
+    else if (c.formula) out += ` then Formula(${c.formula.source})`;
     else if (c.transform) out += " then transform";
     if (this.appliedRules.length) out += ` rules=[${this.appliedRules.join(", ")}]`;
     return out;
@@ -728,7 +733,7 @@ function resolveScaling(base, screen) {
   const axisDp = readAxis(screen, cfg.axis);
   const refDp = readReference(cfg.reference, cfg.axis);
   if (cfg.ignoreMultiWindow && screen.isMultiWindow) {
-    return new ResolvedScaling(screen, cfg, 1, applied, axisDp, refDp, 1, 1);
+    return new ResolvedScaling(screen, cfg, 1, applied, axisDp, refDp, 1, 1, true);
   }
   const ratio = refDp > 0 ? axisDp / refDp : 1;
   const curveFactor = evaluateCurve(cfg.curve, ratio, axisDp, screen, refDp, cfg.reference);
@@ -813,6 +818,16 @@ function readDevice(v, path) {
   }
   return v;
 }
+function obj(v, path) {
+  if (v === void 0 || v === null) return void 0;
+  if (typeof v !== "object" || Array.isArray(v)) throw new TypeError(`${path} must be an object`);
+  return v;
+}
+function bool(v, path) {
+  if (v === void 0 || v === null) return void 0;
+  if (typeof v !== "boolean") throw new TypeError(`${path} must be a boolean`);
+  return v;
+}
 function readPatch(o, path) {
   const out = {};
   if (o.reference) {
@@ -827,25 +842,27 @@ function readPatch(o, path) {
   }
   if (o.curve !== void 0) out.curve = readCurve(o.curve, `${path}.curve`);
   if (o.multiplier !== void 0) out.multiplier = num(o.multiplier, `${path}.multiplier`);
-  if (o.clamp) {
-    out.minFactor = num(o.clamp.min, `${path}.clamp.min`);
-    out.maxFactor = num(o.clamp.max, `${path}.clamp.max`);
+  const clamp = obj(o.clamp, `${path}.clamp`);
+  if (clamp) {
+    out.minFactor = num(clamp.min, `${path}.clamp.min`);
+    out.maxFactor = num(clamp.max, `${path}.clamp.max`);
   }
-  if (o.valueClamp) {
-    out.minValue = num(o.valueClamp.min, `${path}.valueClamp.min`);
-    out.maxValue = num(o.valueClamp.max, `${path}.valueClamp.max`);
+  const valueClamp = obj(o.valueClamp, `${path}.valueClamp`);
+  if (valueClamp) {
+    out.minValue = num(valueClamp.min, `${path}.valueClamp.min`);
+    out.maxValue = num(valueClamp.max, `${path}.valueClamp.max`);
   }
   const ar = o.aspectRatio;
   if (ar !== void 0) {
     if (typeof ar === "boolean") out.aspectRatio = ar;
     else if (ar && typeof ar === "object") {
-      out.aspectRatio = ar.enabled ?? true;
+      out.aspectRatio = bool(ar.enabled, `${path}.aspectRatio.enabled`) ?? true;
       out.sensitivity = num(ar.sensitivity, `${path}.aspectRatio.sensitivity`);
     } else throw new TypeError(`${path}.aspectRatio must be a boolean or object`);
   }
   if (o.sensitivity !== void 0 && out.sensitivity === void 0) out.sensitivity = num(o.sensitivity, `${path}.sensitivity`);
   if (o.fontScale !== void 0) out.fontScale = readFontScale(o.fontScale, `${path}.fontScale`);
-  if (o.ignoreMultiWindow !== void 0) out.ignoreMultiWindow = o.ignoreMultiWindow === true;
+  out.ignoreMultiWindow = bool(o.ignoreMultiWindow, `${path}.ignoreMultiWindow`);
   if (o.transform !== void 0) {
     if (typeof o.transform !== "function") throw new TypeError(`${path}.transform must be a function`);
     out.transform = o.transform;
@@ -858,7 +875,8 @@ function readPatch(o, path) {
   return Object.freeze(out);
 }
 function readRange(r, path) {
-  if (!r) return [void 0, void 0];
+  if (r === void 0 || r === null) return [void 0, void 0];
+  if (typeof r !== "object" || Array.isArray(r)) throw new TypeError(`${path} must be an object with min/max`);
   return [num(r.min, `${path}.min`), num(r.max, `${path}.max`)];
 }
 function readCondition(o, path) {
@@ -879,7 +897,7 @@ function readCondition(o, path) {
   [out.minWidth, out.maxWidth] = readRange(o.width, `${path}.width`);
   [out.minHeight, out.maxHeight] = readRange(o.height, `${path}.height`);
   [out.minAspectRatio, out.maxAspectRatio] = readRange(o.aspectRatio, `${path}.aspectRatio`);
-  if (o.multiWindow !== void 0) out.multiWindow = o.multiWindow === true;
+  out.multiWindow = bool(o.multiWindow, `${path}.multiWindow`);
   for (const k of Object.keys(out)) if (out[k] === void 0) delete out[k];
   return Object.freeze(out);
 }
@@ -889,10 +907,12 @@ function configFromSpec(spec, parent, path) {
   if (spec.valueClamp === null) cfg = { ...cfg, minValue: void 0, maxValue: void 0 };
   if (spec.formula === null) cfg = { ...cfg, formula: void 0 };
   const rules = (spec.rules ?? []).map((r, i) => {
-    if (!r || typeof r !== "object" || !r.set) throw new TypeError(`${path}.rules[${i}].set is required`);
+    if (!r || typeof r !== "object") throw new TypeError(`${path}.rules[${i}] must be an object`);
+    const set = obj(r.set, `${path}.rules[${i}].set`);
+    if (!set) throw new TypeError(`${path}.rules[${i}].set is required`);
     return Object.freeze({
-      condition: readCondition(r.when, `${path}.rules[${i}].when`),
-      patch: readPatch(r.set, `${path}.rules[${i}].set`),
+      condition: readCondition(obj(r.when, `${path}.rules[${i}].when`), `${path}.rules[${i}].when`),
+      patch: readPatch(set, `${path}.rules[${i}].set`),
       ...r.name !== void 0 ? { name: r.name } : {}
     });
   });
@@ -938,6 +958,8 @@ function patchToSpec(p, defaults) {
   if (p.minValue !== void 0 || p.maxValue !== void 0) o.valueClamp = range(p.minValue, p.maxValue);
   if (p.aspectRatio !== void 0 && (!defaults || p.aspectRatio || p.sensitivity !== void 0)) {
     o.aspectRatio = p.sensitivity !== void 0 ? { enabled: p.aspectRatio, sensitivity: p.sensitivity } : { enabled: p.aspectRatio };
+  } else if (p.aspectRatio === void 0 && p.sensitivity !== void 0) {
+    o.sensitivity = p.sensitivity;
   }
   if (p.fontScale && (!defaults || p.fontScale.type !== "follow")) o.fontScale = fontScaleToSpec(p.fontScale);
   if (p.ignoreMultiWindow !== void 0 && (!defaults || p.ignoreMultiWindow)) o.ignoreMultiWindow = p.ignoreMultiWindow;
