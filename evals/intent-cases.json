@@ -1002,6 +1002,48 @@
         ],
         "must_ask": false
       }
+    },
+    {
+      "id": "custom-write-the-math",
+      "mode": "create",
+      "config": {
+        "targets": [
+          {
+            "platform": "web",
+            "library": "webdimens"
+          }
+        ],
+        "formFactors": [
+          "phone",
+          "tablet",
+          "desktop"
+        ],
+        "design": {
+          "baseScreen": {
+            "id": "web-mobile",
+            "width": 390,
+            "height": 844,
+            "unit": "css-px",
+            "confirmed": true
+          }
+        }
+      },
+      "input": "I don't want to configure a whole strategy. I just want the card padding on our website to follow 16 × (width ÷ 360)^0.8, never more than 1.6× on big screens. How do I write that?",
+      "expect": {
+        "decision": "simplest form: one typed line with webdimens/custom, e.g. scalingFormula(({ base, width, pow, min }) => base * min(pow(width / 360, 0.8), 1.6)) or customScaleStrategy(({ width, pow, min }) => min(pow(width / 360, 0.8), 1.6)) used as cdp(16, s) / s.css(16); no defineScalingStrategy with a full config, no (base, screen) lambda; text form only if it must live in JSON"
+      },
+      "assert": {
+        "must_match": [
+          "scalingFormula\\(|customScaleStrategy\\(",
+          "pow\\("
+        ],
+        "must_not_match": [
+          "defineScalingStrategy\\(\\s*\\{[^}]*reference",
+          "\\(base,\\s*screen\\)",
+          "screen\\.widthDp"
+        ],
+        "must_ask": false
+      }
     }
   ]
 }

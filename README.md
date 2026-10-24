@@ -124,7 +124,7 @@ A project can define its own scaling strategies in one JSON file, using the form
 "customStrategies": { "file": "design/appdimens-strategies.json", "ids": ["brand"] }
 ```
 
-Agents then use `cdp` / `csp` with those ids only. The kit validates the file, converts design values (`normalize --strategy custom:brand`) and explains the numbers per screen (`custom explain`).
+Agents then use `cdp` / `csp` with those ids only. When the user just wants to write the math, the skills recommend the simplest form first: one typed code line with autocomplete on Android, web and React Native (`scalingFormula { base * pow(sw / 360f, 0.8f) }`, `CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }`), or the same formula as text for JSON (`{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}`). The kit validates the file, converts design values (`normalize --strategy custom:brand`) and explains the numbers per screen (`custom explain`).
 
 ## The kit CLI
 
@@ -143,6 +143,8 @@ npx appdimens-skills kit validate --intent intents.json                        #
 npx appdimens-skills kit custom check design/appdimens-strategies.json          # custom strategies: schema + engine (extends, formulas…)
 npx appdimens-skills kit custom explain brand --devices medium-phone,medium-tablet --values 16,24
 npx appdimens-skills kit normalize --device medium-phone --strategy custom:brand 16 24   # base values for cdp(brand)
+npx appdimens-skills kit custom explain --formula "base * pow(sw / 360, 0.8)" --devices medium-phone,medium-tablet   # the simplest form: just the formula
+npx appdimens-skills kit normalize --device medium-phone --formula "base * (sw / 360)" 16 24   # base values for cdp(16, "base * …")
 ```
 
 Every strategy is supported (`--strategy scaled|auto|percent|power|fluid|interpolated|logarithmic|diagonal|perimeter|fit|fill|density|custom:<id>`, `--axis s|h|w`, `--aspect`, `--space w|h|sw`), with the token printed in the project's syntax (`--syntax web|rn|…`). `lint` — and the Claude Code hook, on the lines each edit wrote — flags fixed literals that should be tokens (with a suggestion converted from the configured base screen, never the same number re-labelled), strategy tokens without their import/module, obsolete APIs, XML resources that don't exist, JS-only web tokens in CSS, `*Px` in React Native `fontSize` and mixed .NET families. Deliberately fixed values carry a reason: `// ad:fixed hairline`.

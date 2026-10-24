@@ -3,7 +3,7 @@
 // are the ones every AppDimens platform produces (shared 540-case parity fixture).
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { BUILT_IN_SPECS, PRESET_SPECS, DEFAULT_CONFIG, configFromSpec, parseStrategiesDocument, resolveScaling, screenSnapshot } from './custom-engine.mjs';
+import { BUILT_IN_SPECS, PRESET_SPECS, DEFAULT_CONFIG, FORMULA_VARIABLES, ScalingExpression, configFromSpec, isValueDependent, parseStrategiesDocument, resolveScaling, screenSnapshot } from './custom-engine.mjs';
 import { loadSchema, validate } from './schema.mjs';
 
 const KNOWN = { ...BUILT_IN_SPECS, ...PRESET_SPECS };
@@ -58,6 +58,23 @@ export function checkStrategies(input) {
     return { configs: new Map(), errors: [{ path: '/', message: e.message }] };
   }
 }
+
+/** Id under which `--formula "<text>"` is resolved (see formulaConfigs). */
+export const FORMULA_ID = 'formula';
+
+/**
+ * The simplest custom strategy, as on every platform's `scalingFormula("…")`: the default config
+ * plus the per-value text formula (the formula IS the value; `base` = the value passed).
+ * Returns a Map { formula → config } usable wherever project configs are; parse errors throw
+ * with the parser's own message ("unknown variable 'sww'" with the position).
+ */
+export function formulaConfigs(text) {
+  const cfg = Object.freeze({ ...DEFAULT_CONFIG, formula: ScalingExpression.parse(String(text), FORMULA_VARIABLES) });
+  return new Map([[FORMULA_ID, cfg]]);
+}
+
+/** True when results depend on the value itself (value bounds, transform, a formula not shaped `base * (…)`). */
+export { isValueDependent };
 
 /** Reads `file` (relative paths against `baseDir`). Returns checkStrategies(…) plus { file }. */
 export function loadStrategiesFile(file, baseDir = process.cwd()) {
@@ -116,8 +133,11 @@ export function resolveCustom(strategy, screen, configs) {
   return resolveScaling(strategyConfig(strategy, configs), snapshotOf(screen));
 }
 
-/** Factor of `custom:<id>` on `screen` (text = × effective font-scale policy). */
+/**
+ * What one dp of `custom:<id>` becomes on `screen` (text = × effective font-scale policy): the
+ * factor, or `E` of a proportional formula `base * E` (whose value is `base × E`, not `base × factor`).
+ */
 export function customFactor(strategy, screen, configs, { text = false } = {}) {
   const r = resolveCustom(strategy, screen, configs);
-  return text ? r.factor * r.effectiveFontScale() : r.factor;
+  return text ? r.valueFactor * r.effectiveFontScale() : r.valueFactor;
 }

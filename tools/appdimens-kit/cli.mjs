@@ -8,7 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, findDevice, looksLikePhysicalPx, parseSize } from './lib/devices.mjs';
 import { scanBaseHints, summarizeHints } from './lib/basehints.mjs';
-import { isCustom, loadStrategiesFile, projectStrategies, resolveCustom } from './lib/custom.mjs';
+import { FORMULA_ID, formulaConfigs, isCustom, isValueDependent, loadStrategiesFile, projectStrategies, resolveCustom } from './lib/custom.mjs';
 
 const USAGE = `appdimens-kit
 
@@ -34,6 +34,8 @@ const USAGE = `appdimens-kit
       --strategy  scaled (default) auto percent power fluid interpolated logarithmic
                   diagonal perimeter fit fill density · custom:<id> (a project strategy:
                   customStrategies.file of appdimens.config.json, or --custom <file>)
+      --formula   "<text>" instead of --strategy: the simplest custom strategy, the formula is
+                  the value (e.g. "base * pow(sw / 360, 0.8)"); must be shaped base * (…) here
       --class     device class of the base screen for custom rules (phone tablet desktop tv
                   watch car vr; default: from the catalog entry / size)
       --axis      s (sdp/ssp, smallest side, default) · h (hdp/hsp) · w (wdp/wsp) — single-axis strategies only
@@ -59,7 +61,9 @@ const USAGE = `appdimens-kit
       Checks a custom strategies JSON (schemas/custom-strategy.schema.json + the engine:
       extends, cycles, free-form expressions, bounds). Default: customStrategies.file.
   custom explain <id> [--custom <file>] --devices <id|WxH>,… [--class <c>] [--values 16,24]
-      Factor, matched rules and resolved values of one strategy on several screens — the same
+  custom explain --formula "<text>" --devices <id|WxH>,… [--values 16,24]
+      Factor, matched rules and resolved values of one strategy (or of a text formula, the
+      simplest form: cdp(16, "base * pow(sw / 360, 0.8)")) on several screens — the same
       numbers every AppDimens platform produces.
 
   validate [appdimens.config.json] [--intent <file.json>…] [--json]
@@ -114,6 +118,13 @@ function classOf(d) {
 
 /** Custom strategies for --strategy custom:<id>: --custom <file>, else the project's customStrategies. */
 function customStrategiesFor(flags) {
+  if (flags.formula !== undefined) {
+    try {
+      return formulaConfigs(flags.formula);
+    } catch (e) {
+      fail(`--formula: ${e.message}`);
+    }
+  }
   let loaded;
   if (flags.custom) loaded = loadStrategiesFile(flags.custom);
   else {
@@ -169,8 +180,13 @@ if (command === 'devices') {
 
 if (command === 'normalize') {
   const screen = screenFrom(flags);
-  const strategy = resolveStrategy(flags.strategy || flags.policy || 'scaled');
+  if (flags.formula !== undefined && flags.strategy) fail('normalize: pass --formula or --strategy, not both.');
+  const strategy = flags.formula !== undefined ? `custom:${FORMULA_ID}` : resolveStrategy(flags.strategy || flags.policy || 'scaled');
   const custom = isCustom(strategy) ? customStrategiesFor(flags) : undefined;
+  if (flags.formula !== undefined && isValueDependent(custom.get(FORMULA_ID)))
+    fail(`normalize --formula: "${flags.formula}" depends on the value itself, so it has no single factor to divide by.
+` +
+      'Write it as base * (…) with no base / scaled / factor inside the parentheses (e.g. "base * (sw / 360)"), or use custom explain --formula.');
   if (custom && (flags.xml || flags.space || flags.aspect)) fail('normalize: custom strategies own their axis and aspect ratio; --xml, --space and --aspect do not apply.');
   if (flags.class) screen.device = flags.class;
   const axis = flags.axis || 's';
@@ -226,7 +242,10 @@ if (command === 'normalize') {
   const xmlName = (b) => `@dimen/_${b < 0 ? `minus${fmt(-b)}` : fmt(b)}${kind}`;
   const platform = flags.syntax || projectConfig(process.cwd())?.targets?.[0]?.platform;
   const syntax = /^(web|css)$/.test(platform) ? 'web' : /^(rn|react-native)$/.test(platform) ? 'rn' : 'dot';
-  const tok = (b) => custom
+  const quoted = flags.formula !== undefined ? (syntax === 'dot' ? JSON.stringify(flags.formula) : `'${String(flags.formula).replace(/'/g, "\\'")}'`) : '';
+  const tok = (b) => flags.formula !== undefined
+    ? (syntax === 'dot' ? `${fmt(b)}.${unit}(${quoted})` : `${unit}(${fmt(b)}, ${quoted})`)
+    : custom
     ? (syntax === 'web' ? `${fmt(b)}${unit}-${customId}` : syntax === 'rn' ? `${unit}(${fmt(b)}, ${customId})` : `${fmt(b)}.${unit}(${customId})`)
     : (syntax === 'web' ? `${fmt(b)}${unit}` : syntax === 'rn' ? `${unit}(${fmt(b)})` : `${fmt(b)}.${unit}`);
 
@@ -254,7 +273,7 @@ if (command === 'normalize') {
   }
   out(`base screen ${screen.name ? `${screen.name} ` : ''}${fmt(result.baseDevice.width)}×${fmt(result.baseDevice.height)}` +
     `${density !== 1 ? ` (resolution ÷ density ${density})` : ''}${runtimeHeight ? ' (runtime height)' : ''}` +
-    ` · ${strategy}${flags.aspect ? ' + a' : ''}${custom ? ` (${screen.device ?? 'size-based'} class)` : ` reads ${result.axis === 'screen' ? 'the whole screen' : `axis ${axis} = ${fmt(result.axisLength)}`}`}` +
+    ` · ${flags.formula !== undefined ? `formula ${flags.formula}` : strategy}${flags.aspect ? ' + a' : ''}${custom ? ` (${screen.device ?? 'size-based'} class)` : ` reads ${result.axis === 'screen' ? 'the whole screen' : `axis ${axis} = ${fmt(result.axisLength)}`}`}` +
     `${xml ? ` · XML bucket ${result.xmlBucket}` : ''} · factor ${result.factor.toFixed(4)} · rounding ${rounding}`);
   out('');
   out('| on base screen | AppDimens base | dimen | resolves to on base screen |');
@@ -332,21 +351,23 @@ if (command === 'custom') {
         id,
         axis: c.axis,
         curve: c.curve.type === 'expression' ? `expression(${c.curve.expression.source})` : c.curve.type,
+        ...(c.formula ? { formula: c.formula.source } : {}),
         rules: c.rules.map((r, i) => r.name ?? `#${i}`),
-        valueDependent: c.minValue !== undefined || c.maxValue !== undefined || !!c.formula || c.rules.some((r) => r.patch.minValue !== undefined || r.patch.maxValue !== undefined || r.patch.formula),
+        // A `base * (…)` formula is screen-only (one multiply), like a curve.
+        valueDependent: isValueDependent(c),
       })),
     };
     if (flags.json) out(JSON.stringify(report, null, 2));
     else if (report.errors.length) out(`✖ ${report.file}: ${report.errors.length} error(s)\n${report.errors.map((e) => `  ${e.path}: ${e.message}`).join('\n')}`);
     else {
       out(`✔ ${report.file}: ${report.strategies.length} strateg${report.strategies.length === 1 ? 'y' : 'ies'}${report.defaultId ? ` (default: ${report.defaultId})` : ''}`);
-      for (const st of report.strategies) out(`  ${st.id.padEnd(16)} ${st.axis.padEnd(14)} ${st.curve}${st.rules.length ? ` · rules ${st.rules.join(', ')}` : ''}${st.valueDependent ? ' · value-dependent (cached lane)' : ''}`);
+      for (const st of report.strategies) out(`  ${st.id.padEnd(16)} ${st.axis.padEnd(14)} ${st.curve}${st.formula ? ` · formula ${st.formula}` : ''}${st.rules.length ? ` · rules ${st.rules.join(', ')}` : ''}${st.valueDependent ? ' · value-dependent (cached lane)' : ''}`);
     }
     process.exit(report.errors.length ? 1 : 0);
   }
   if (sub === 'explain') {
-    const id = more[0];
-    if (!id || !flags.devices) fail('custom explain: <id> and --devices <id|WxH>,… are required.');
+    const id = flags.formula !== undefined ? FORMULA_ID : more[0];
+    if (!id || !flags.devices) fail('custom explain: <id> (or --formula "<text>") and --devices <id|WxH>,… are required.');
     const configs = customStrategiesFor(flags);
     const values = String(flags.values ?? '16').split(',').map(Number).filter((n) => !Number.isNaN(n));
     const rows = String(flags.devices).split(',').map((q) => {
@@ -359,7 +380,7 @@ if (command === 'custom') {
       } catch (e) {
         fail(`custom explain: ${e.message}`);
       }
-      return { screen: d.name ?? q, width: d.width, height: d.height, device: screen.device, factor: r.factor, rules: [...r.appliedRules], values: values.map((v) => ({ base: v, dp: r.scale(v), spDp: r.scaleSpDp(v) })), explain: r.explain(id) };
+      return { screen: d.name ?? q, width: d.width, height: d.height, device: screen.device, factor: r.valueFactor, rules: [...r.appliedRules], values: values.map((v) => ({ base: v, dp: r.scale(v), spDp: r.scaleSpDp(v) })), explain: r.explain(id) };
     });
     if (flags.json) out(JSON.stringify(rows, null, 2));
     else {

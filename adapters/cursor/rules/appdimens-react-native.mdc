@@ -74,6 +74,18 @@ Fold/flip, car, watch and desk modes come from the app via `<AppDimensProvider u
 
 Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
 
+**User just wants to write the math (no project JSON):** one typed line, autocompleted, same names as the text language. Prefer it to a full `defineCustomStrategy`:
+
+```tsx
+import {cdp, csp, customScaleStrategy, scalingFormula} from 'appdimens-react-native/custom';
+const product = customScaleStrategy(({width, clamp}) => clamp(width / 360, 0.85, 1.8)); // factor: once per window
+const hud = scalingFormula(({base, sw, pow}) => base * pow(sw / 360, 0.8));           // final value (base = the value passed)
+<View style={{padding: cdp(16, product)}}><Text style={{fontSize: csp(18, hud)}}>Hi</Text></View>
+cdp(16, 'base * pow(sw / 360, 0.8)');   // text, only when it must live in JSON / remote config
+```
+
+Scope: `base` (formula only) `sw width height shortSide longSide diagonal perimeter aspectRatio ratio density fontScale device`, booleans `phone tablet desktop tv watch car vr landscape portrait multiWindow`, `pow sqrt ln log10 exp abs round min max clamp lerp smoothstep`. Declare strategies once at module level, not inside components.
+
 ```tsx
 import {loadCustomStrategies, requireCustomStrategy, cdp, csp, useCustomStrategy, CustomStrategyProvider} from 'appdimens-react-native/custom';
 

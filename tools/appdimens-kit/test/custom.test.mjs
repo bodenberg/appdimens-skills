@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkStrategies, customFactor, schemaErrors } from '../lib/custom.mjs';
+import { checkStrategies, customFactor, formulaConfigs, isValueDependent, schemaErrors } from '../lib/custom.mjs';
 import { normalize } from '../lib/factors.mjs';
 import { customStrategyErrors } from '../lib/config.mjs';
 import { lintFiles } from '../lib/lint.mjs';
@@ -79,4 +79,36 @@ test('CLI: validate, custom check / explain, normalize --strategy custom:<id>', 
   const norm = run(['normalize', '--device', 'medium-phone', '--strategy', 'custom:brand', '--syntax', 'web', '16']);
   assert.match(norm.stdout, /14\.5cdp-brand/);
   assert.notEqual(run(['custom', 'check', fx('Screen.kt')]).status, 0);
+});
+
+test('--formula: the simplest custom strategy (the formula is the value)', () => {
+  const configs = formulaConfigs('base * pow(sw / 360, 0.8)');
+  const f = customFactor('custom:formula', { width: 411, height: 914 }, configs);
+  assert.equal(f, Math.pow(411 / 360, 0.8)); // E of base * E, not the curve factor
+  assert.equal(isValueDependent(configs.get('formula')), false);
+  assert.equal(isValueDependent(formulaConfigs('base + 2').get('formula')), true);
+  assert.equal(isValueDependent(formulaConfigs('base * sw / 360').get('formula')), true); // (base * sw) / 360
+  assert.throws(() => formulaConfigs('base * sww'), /unknown variable 'sww'/);
+  // Fast path is bit-identical to the per-value path.
+  const fast = resolveScaling(configs.get('formula'), screenSnapshot({ widthDp: 800, heightDp: 1280 }));
+  const slow = resolveScaling(formulaConfigs('base * pow(sw / 360, 0.8) + 0').get('formula'), screenSnapshot({ widthDp: 800, heightDp: 1280 }));
+  for (const v of [1, 16, -8, 0.5, 13.37]) assert.ok(Object.is(fast.scale(v), slow.scale(v)));
+
+  const web = run(['normalize', '--frame', '411', '--height', '914', '--formula', 'base * (sw / 360)', '--syntax', 'web', '16']);
+  assert.equal(web.status, 0, web.stderr);
+  assert.match(web.stdout, /cdp\(14, 'base \* \(sw \/ 360\)'\)/);
+  const kt = run(['normalize', '--frame', '411', '--height', '914', '--formula', 'base * (sw / 360)', '--syntax', 'kotlin', '16']);
+  assert.match(kt.stdout, /14\.cdp\("base \* \(sw \/ 360\)"\)/);
+  const dependent = run(['normalize', '--frame', '411', '--height', '914', '--formula', 'base + 2', '16']);
+  assert.equal(dependent.status, 2);
+  assert.match(dependent.stderr, /depends on the value itself/);
+  const typo = run(['normalize', '--frame', '411', '--formula', 'base * sww', '16']);
+  assert.match(typo.stderr, /unknown variable 'sww'/);
+  const explain = run(['custom', 'explain', '--formula', 'base + 2', '--devices', '411x914', '--values', '16', '--json']);
+  assert.equal(explain.status, 0, explain.stderr);
+  assert.equal(JSON.parse(explain.stdout)[0].values[0].dp, 18);
+  const check = run(['custom', 'check', 'appdimens-strategies.json', '--json']);
+  const formula = JSON.parse(check.stdout).strategies.find((s) => s.id === 'exprFormula');
+  assert.equal(formula.formula, 'max(scaled, base) + (tv ? 4 : 0)');
+  assert.equal(formula.valueDependent, true);
 });

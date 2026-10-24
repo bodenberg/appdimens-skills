@@ -66,6 +66,8 @@ Decide intent first with `appdimens-layout-intent`. Units are **points**: a Figm
 
 Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
 
+Simplest strategy, when the user just wants to write the math: one strategy holding only a text formula, `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` (`base` = the value passed; the result is the scaled value; shaped `base * (…)` it costs one multiply). Check it with `appdimens-kit custom explain --formula "base * pow(sw / 360, 0.8)" --devices …`.
+
 ```swift
 .product(name: "AppDimensCustom", package: "appdimens-ios")
 import AppDimensCustom

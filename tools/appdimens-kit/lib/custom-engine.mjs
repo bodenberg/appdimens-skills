@@ -63,6 +63,23 @@ var ScalingExpression = class _ScalingExpression {
   evaluate(vars) {
     return evalNode(this.root, vars);
   }
+  /**
+   * Non-null when the whole formula is `base`, `base * E` or `E * base` and `E` reads no value
+   * variable (`base`, `scaled`, `factor`). Such a formula is a pure screen factor: strategies
+   * evaluate `E` once per window and `base * E` costs one multiply (same result, bit for bit).
+   * @internal
+   */
+  get baseCoefficient() {
+    if (this.coefficient === void 0) {
+      const r = this.root;
+      let e = null;
+      if (isBase(r)) e = { k: "num", v: 1 };
+      else if (r.k === "bin" && r.op === "*" && isBase(r.a) && !reads(r.b, VALUE_VARIABLES)) e = r.b;
+      else if (r.k === "bin" && r.op === "*" && isBase(r.b) && !reads(r.a, VALUE_VARIABLES)) e = r.a;
+      this.coefficient = e ? new _ScalingExpression(this.source, e) : null;
+    }
+    return this.coefficient;
+  }
   toString() {
     return this.source;
   }
@@ -131,6 +148,24 @@ function expressionVariables(screen, ratio, axisDp, refDp, reference, base = NaN
         return NaN;
     }
   };
+}
+var VALUE_VARIABLES = /* @__PURE__ */ new Set(["base", "scaled", "factor"]);
+var isBase = (n) => n.k === "var" && n.name === "base";
+function reads(n, names) {
+  switch (n.k) {
+    case "num":
+      return false;
+    case "var":
+      return names.has(n.name);
+    case "un":
+      return reads(n.a, names);
+    case "bin":
+      return reads(n.a, names) || reads(n.b, names);
+    case "tern":
+      return reads(n.c, names) || reads(n.a, names) || reads(n.b, names);
+    case "call":
+      return n.args.some((a) => reads(a, names));
+  }
 }
 function evalNode(n, v) {
   switch (n.k) {
@@ -402,6 +437,64 @@ function screenSnapshot(init) {
     device: init.device ?? (sw >= TABLET_MIN_SMALLEST_WIDTH_DP ? "tablet" : "phone")
   });
 }
+var SCOPE_MATH = Object.freeze({
+  pow: Math.pow,
+  sqrt: Math.sqrt,
+  ln: Math.log,
+  log10: Math.log10,
+  exp: Math.exp,
+  abs: Math.abs,
+  round: (x) => Math.floor(x + 0.5),
+  min: Math.min,
+  max: Math.max,
+  clamp: (x, min, max) => Math.max(min, Math.min(max, x)),
+  lerp: (a, b, t) => a + (b - a) * t,
+  smoothstep: (edge0, edge1, x) => {
+    const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+    return t * t * (3 - 2 * t);
+  }
+});
+var scopes = /* @__PURE__ */ new WeakMap();
+function screenScope(screen) {
+  let s = scopes.get(screen);
+  if (!s) {
+    const short = Math.min(screen.widthDp, screen.heightDp);
+    const long = Math.max(screen.widthDp, screen.heightDp);
+    const d = screen.device;
+    s = Object.freeze({
+      screen,
+      sw: screen.smallestWidthDp,
+      width: screen.widthDp,
+      height: screen.heightDp,
+      shortSide: short,
+      longSide: long,
+      diagonal: Math.sqrt(short * short + long * long),
+      perimeter: short + long,
+      aspectRatio: short > 0 ? long / short : 1,
+      density: screen.density,
+      fontScale: screen.fontScale,
+      ratio: screen.smallestWidthDp / 300,
+      // default reference smallest side, as in `sdp`
+      device: d,
+      landscape: screen.isLandscape,
+      portrait: !screen.isLandscape,
+      multiWindow: screen.isMultiWindow,
+      phone: d === "phone",
+      tablet: d === "tablet",
+      desktop: d === "desktop",
+      tv: d === "tv",
+      watch: d === "watch",
+      car: d === "car",
+      vr: d === "vr",
+      ...SCOPE_MATH
+    });
+    scopes.set(screen, s);
+  }
+  return s;
+}
+function formulaScope(screen, base) {
+  return Object.create(screenScope(screen), { base: { value: base, enumerable: true } });
+}
 var DEFAULT_CONFIG = Object.freeze({
   reference: Object.freeze({ width: 300, height: 533 }),
   axis: "smallestWidth",
@@ -422,8 +515,11 @@ function applyPatch(config, patch) {
   else if (patch.transform !== void 0) delete out.formula;
   return out;
 }
+function isProportionalFormula(formula) {
+  return formula !== void 0 && formula.baseCoefficient !== null;
+}
 function isValueDependent(config) {
-  const dependent = (p) => p.minValue !== void 0 || p.maxValue !== void 0 || p.transform !== void 0 || p.formula !== void 0;
+  const dependent = (p) => p.minValue !== void 0 || p.maxValue !== void 0 || p.transform !== void 0 || p.formula !== void 0 && !isProportionalFormula(p.formula);
   return dependent(config) || config.rules.some((r) => dependent(r.patch));
 }
 function validateConfig(config) {
@@ -535,9 +631,20 @@ var ResolvedScaling = class {
     this.referenceDp = referenceDp;
     this.curveFactor = curveFactor;
     this.aspectRatioMultiplier = aspectRatioMultiplier;
+    const e = config.formula?.baseCoefficient;
+    this.proportional = !!e;
+    this.formulaCoefficient = e ? e.evaluate(expressionVariables(screen, referenceDp > 0 ? axisDp / referenceDp : 1, axisDp, referenceDp, config.reference)) : NaN;
+  }
+  /**
+   * What one dp becomes when the strategy does not depend on the value: `factor`, or `E` of a
+   * proportional formula (`base * E`). Published as `--cdp-<id>`.
+   */
+  get valueFactor() {
+    return this.proportional ? this.formulaCoefficient : this.factor;
   }
   /** `base` dp → scaled dp. */
   scale(base) {
+    if (this.proportional) return base * this.formulaCoefficient;
     let out = base * this.factor;
     const { minValue: min, maxValue: max } = this.config;
     if ((min !== void 0 || max !== void 0) && out !== 0) {
@@ -580,6 +687,8 @@ var ResolvedScaling = class {
       out += ` clamp[${c.minFactor !== void 0 ? fmt(c.minFactor) : "-"}, ${c.maxFactor !== void 0 ? fmt(c.maxFactor) : "-"}]`;
     }
     out += ` => factor ${fmt(this.factor)}`;
+    if (c.formula) out += ` then Formula(${c.formula.source})`;
+    else if (c.transform) out += " then transform";
     if (this.appliedRules.length) out += ` rules=[${this.appliedRules.join(", ")}]`;
     return out;
   }
@@ -971,6 +1080,8 @@ export {
   configToSpec,
   evaluateCurve,
   expressionVariables,
+  formulaScope,
+  isProportionalFormula,
   isValueDependent,
   parseStrategiesDocument,
   readAxis,
@@ -978,6 +1089,7 @@ export {
   readPatch,
   readReference,
   resolveScaling,
+  screenScope,
   screenSnapshot,
   validateConfig
 };

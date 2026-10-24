@@ -71,6 +71,17 @@ Values are **px**: `view.setPadding(px, px, px, px)`, `textView.setTextSize(Type
 
 Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
 
+**User just wants to write the math (no project JSON):** one typed line of Kotlin, autocompleted, same names as the text language. Prefer it to a full `scalingStrategy { }`:
+
+```kotlin
+val Product = CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }   // factor: once per window
+val Hud = scalingFormula { base * pow(sw / 360f, 0.8f) }                      // final value (base = the value passed)
+Modifier.padding(16.cdp(Product)); Text(fontSize = 18.csp(Hud))
+16.cdp("base * pow(sw / 360, 0.8)")                                         // text, only for JSON / remote config
+```
+
+Scope: `base` (formula only) `sw width height shortSide longSide diagonal perimeter aspectRatio ratio density fontScale device screen`, Booleans `phone tablet desktop tv watch car vr landscape portrait multiWindow`, `pow sqrt ln log10 exp abs round min max clamp lerp smoothstep`. Declare strategies once as top-level `val`s, not inside composables.
+
 ```kotlin
 implementation("io.github.bodenberg:appdimens-dynamic-custom")
 import com.appdimens.dynamic.custom.*            // ScalingStrategies, scalingStrategy { }, CustomPresets
