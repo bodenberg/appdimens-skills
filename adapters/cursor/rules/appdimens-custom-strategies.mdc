@@ -15,7 +15,8 @@ Base screen and intent still come first (`appdimens-layout-intent`); this skill 
 ```
 ratio  = axis(window) / axis(reference)                       // default: sw / 300
 factor = clamp( curve(ratio) × multiplier × AR , min, max )   // once per window
-value  = formula( clampValue( base × factor ) )               // per value, only if needed
+scaled = clampValue( base × factor )   // the configured result
+value  = formula ? formula(base, scaled, factor) : scaled   // a formula replaces the result (it gets the original base)
 ```
 
 ## 1. Decide the form
