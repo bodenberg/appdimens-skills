@@ -69,6 +69,8 @@ Rules: one strategy per screen; every non-scaled strategy needs its module/packa
 
 ## Project-defined strategies (`custom:<id>`)
 
+Writing, choosing the form of, or sharing a custom strategy: follow `appdimens-custom-strategies` (decision flow, per-platform syntax, rules, kit checks). The summary below is what every workflow must respect.
+
 Some projects define their own strategies (reference frame, axis, curve or free-form formula, bounds, font-scale policy, rules per device class) in one JSON file: [`schemas/custom-strategy.schema.json`](../../../schemas/custom-strategy.schema.json), declared as `customStrategies.file` in `appdimens.config.json`. Every AppDimens platform reads the same file and produces the same numbers.
 
 - **Use only declared ids** (`customStrategies.ids`, or every id in the file). Never invent an id, and never edit the file to fit one screen; ask first.

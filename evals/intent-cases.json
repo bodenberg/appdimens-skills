@@ -1044,6 +1044,47 @@
         ],
         "must_ask": false
       }
+    },
+    {
+      "id": "custom-dotnet-desktop-rule",
+      "mode": "create",
+      "config": {
+        "targets": [
+          {
+            "platform": "dotnet-desktop",
+            "library": "appdimens-net"
+          }
+        ],
+        "formFactors": [
+          "desktop"
+        ],
+        "design": {
+          "baseScreen": {
+            "id": "desktop-1280",
+            "width": 1280,
+            "height": 800,
+            "unit": "dp",
+            "confirmed": true
+          },
+          "normalization": "match-base"
+        }
+      },
+      "input": "In our WPF app I want my own scaling: grow with (width ÷ 360)^0.8, but on big screens (tablet-sized and up) use a gentler logarithmic curve, and never go above 1.6×. I tried a tablet-only rule and it never kicks in on Windows. Write it.",
+      "expect": {
+        "decision": "AppDimens.Net.Custom full configuration declared once (static readonly): ScalingStrategy.Define with b.Curve = ScalingCurve.Power(0.8f), b.Clamp(max: 1.6f) and the large-screen rule targeting DeviceClass.Desktop too (or b.OnScreen(…, minSmallestWidth: 600), or CustomDimens.DeviceClassResolver), because on Windows the device class is desktop; used as 16.Cdp(strategy); verified with ExplainCurrent() / appdimens-kit custom explain"
+      },
+      "assert": {
+        "must_match": [
+          "ScalingStrategy\\.Define\\(|CustomScaleStrategy\\.Create\\(",
+          "DeviceClass\\.Desktop|minSmallestWidth|DeviceClassResolver",
+          "\\.Cdp\\("
+        ],
+        "must_not_match": [
+          "\\{ad:Cdp",
+          "Bodenberg\\.AppDimens\\.(Maui\\.)?Sdps"
+        ],
+        "must_ask": false
+      }
     }
   ]
 }

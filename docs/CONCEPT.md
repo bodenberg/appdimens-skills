@@ -47,11 +47,12 @@ Todas as estratégias são suportadas quando o usuário escolhe ou o layout pede
 | Implementar ou **criar o projeto** a partir do **Claude Design** | HTML/React/CSS das telas | `appdimens-claude-design` | viewport ou moldura do protótipo, `max-width` e `meta viewport` (sem a status bar falsa) |
 | **Aplicar em telas existentes** | código atual | `appdimens-code-edit` | `@Preview(device=…)`, `.previewDevice`, `designSize`, `guidelineBaseWidth`, viewports de teste (`cli detect`) |
 | **Criar telas novas** | briefing | `appdimens-new-screen` | declarada pela IA (config ou padrão da plataforma) e confirmada |
+| **Estratégia própria** (fórmula, regras por dispositivo, JSON compartilhado) | pedido do usuário ou `customStrategies` | `appdimens-custom-strategies` | a mesma do fluxo que a usa |
 
 ## O pacote
 
 - **Skill central** `appdimens-layout-intent`, com referências de tela base, modelo de intenção, tabela de decisão e roteador de plataformas.
-- **4 skills de fluxo**, uma para cada linha da tabela acima.
+- **5 skills de fluxo**, uma para cada linha da tabela acima (`appdimens-custom-strategies` é transversal: escolhe a forma da estratégia própria — linha tipada, fórmula em texto, configuração completa ou JSON — e traz a tabela de sintaxe de cada plataforma).
 - **9 skills de plataforma**, cobrindo as 11 bibliotecas: dynamic, sdps/ssps, kmp, ios, flutter, react-native, web, net-binding e games.
 - **CLI `appdimens-kit`**:
   - `detect`: plataformas e evidências da tela base no código;

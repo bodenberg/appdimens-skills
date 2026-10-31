@@ -22,7 +22,7 @@ The installer detects the agentic clients and IDEs on your machine and the AppDi
 ```text
 ? Install for            › This project / My user (all projects)
 ? Which agents / IDEs?   ◼ Claude Code  installed   ◻ OpenAI Codex   ◼ Cursor  used in project   …
-? Which skills?          ■ layout-intent (core)  ◼ design-to-code  ◼ claude-design  ◼ code-edit  ◼ new-screen
+? Which skills?          ■ layout-intent (core)  ◼ design-to-code  ◼ claude-design  ◼ code-edit  ◼ new-screen  ◼ custom-strategies
                          ◼ react-native  detected in project   ◻ android   ◻ apple   ◻ flutter   ◻ web   …
 ? Add the Claude Code validation hook?   › Yes
 ? Create appdimens.config.json now?      › Yes
@@ -79,6 +79,7 @@ Agents that share a folder (`.agents/skills`) get one copy. The CLI, schemas and
 | `claude-design` | Implement — or create the project — from Claude Design screens (HTML/React/CSS) |
 | `code-edit` | Apply AppDimens to existing screens, keeping their look on the screen they were built for |
 | `new-screen` | Create new screens directly with AppDimens from a declared base screen |
+| `custom-strategies` | The project's own scaling strategy on every platform: which form (typed one-liner, text formula, full config, shared JSON), each platform's exact `cdp` / `csp` API, the rules, and kit verification |
 | 9 platform skills | One per AppDimens library (below) |
 
 ### Library coverage
@@ -95,7 +96,7 @@ Agents that share a folder (`.agents/skills`) get one copy. The CLI, schemas and
 | [appdimens-net-binding](https://github.com/bodenberg/appdimens-net-binding) (MAUI, WPF, WinForms, WinUI, .NET for Android) | 3.6.1 | `dotnet` |
 | [appdimens-games](https://github.com/bodenberg/appdimens-games) (Android games, NDK, Vulkan, Unity) | 3.2.0 | `games` |
 
-117 concrete claims of these skills (install lines, versions, packages, imports, setup calls, token and API names) are checked against the library sources with `scripts/verify-upstream.mjs`. The skills own **base screen and intent**; each library's own skill stays the authority on API details.
+130 concrete claims of these skills (install lines, versions, packages, imports, setup calls, token and API names) are checked against the library sources with `scripts/verify-upstream.mjs`. The skills own **base screen and intent**; each library's own skill stays the authority on API details.
 
 ## The project contract
 
@@ -124,7 +125,7 @@ A project can define its own scaling strategies in one JSON file, using the form
 "customStrategies": { "file": "design/appdimens-strategies.json", "ids": ["brand"] }
 ```
 
-Agents then use `cdp` / `csp` with those ids only. When the user just wants to write the math, the skills recommend the simplest form first: one typed code line with autocomplete on every platform (`scalingFormula { base * pow(sw / 360f, 0.8f) }`, `CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }`), or the same formula as text for JSON (`{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}`). The kit validates the file, converts design values (`normalize --strategy custom:brand`) and explains the numbers per screen (`custom explain`).
+Agents then use `cdp` / `csp` with those ids only. When the user just wants to write the math, the skills recommend the simplest form first: one typed code line with autocomplete on every platform (`scalingFormula { base * pow(sw / 360f, 0.8f) }`, `CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }`), or the same formula as text for JSON (`{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}`). The kit validates the file, converts design values (`normalize --strategy custom:brand`) and explains the numbers per screen (`custom explain`). The dedicated skill [`appdimens-custom-strategies`](skills/appdimens-custom-strategies/SKILL.md) holds the decision flow, the per-platform syntax table and the rules.
 
 ## The kit CLI
 
@@ -163,7 +164,7 @@ Nothing in this plugin uses the network, reads credentials, or sends data anywhe
 ## Quality
 
 - `npm test` — lint rules, scale math (checked against the published AppDimens numbers), hook contract, installer (project/global install, idempotency, uninstall).
-- `evals/intent-cases.json` + `evals/score.mjs` — 18 golden cases with machine-checkable asserts.
+- `evals/intent-cases.json` + `evals/score.mjs` — 23 golden cases with machine-checkable asserts.
 - `evals/visual/` — blind agents implement a Figma frame, a Claude Design prototype and an existing responsive page; screenshots on the base screen match within 0.2–1.3 % in size (the naive "same number" conversion is 25–37 % off).
 - `docs/REVIEW.md` — three-reviewer audit, debate and the decisions taken.
 

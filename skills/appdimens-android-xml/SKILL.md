@@ -70,6 +70,8 @@ Mixed Compose + XML apps: keep `dimens.xml` as the single source and read it fro
 
 ## Custom strategies
 
+Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
+
 XML resources are pre-computed for the **scaled** strategy only: `@dimen/_16sdp` cannot follow a project-defined strategy (`custom:<id>`). Keep XML on scaled. Screens that need the custom strategy set values from code with `appdimens-dynamic-custom` (`16.cdp(context, Brand)` → px), or move to Compose.
 
 ## Lint (what `appdimens-kit lint` flags here)

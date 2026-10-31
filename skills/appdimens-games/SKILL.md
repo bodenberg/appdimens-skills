@@ -48,6 +48,8 @@ World layer: `WorldScale.fitPx/fillPx` equal the factors of `ViewportMode.FIT_AL
 
 ## Custom strategies (`appdimens-games-custom`, unreleased)
 
+Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
+
 Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
 
 Simplest strategy, when the user just wants to write the math: one typed line, autocompleted, typos fail to compile:

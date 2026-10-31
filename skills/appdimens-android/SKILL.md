@@ -69,6 +69,8 @@ Values are **px**: `view.setPadding(px, px, px, px)`, `textView.setTextSize(Type
 
 ## Custom strategies (`appdimens-dynamic-custom`, unreleased)
 
+Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
+
 Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
 
 **User just wants to write the math (no project JSON):** one typed line of Kotlin, autocompleted, same names as the text language. Prefer it to a full `scalingStrategy { }`:
