@@ -42,7 +42,7 @@ Detect from the repository, never from the design: `node <package>/tools/appdime
 
 ## Step 2 — project contract (`appdimens.config.json`)
 
-Root of the repo; schema `schemas/appdimens.config.schema.json`. It stores decisions made **once**: targets, `formFactors`, default strategies, the **base screen** and normalization rule, allowed breakpoints, token file locations. Missing → propose one with what you detected, ask only for the rest, write it after confirmation.
+Root of the repo; schema `schemas/appdimens.config.schema.json`. It stores decisions made **once**: targets, `formFactors`, default strategies, the **base screen** and normalization rule, allowed breakpoints, token file locations, and optionally the project's own scaling strategies (`customStrategies.file`, format `schemas/custom-strategy.schema.json`; used as `strategy.layout: "custom:<id>"`). Missing → propose one with what you detected, ask only for the rest, write it after confirmation.
 
 After writing or editing it, run `node <package>/tools/appdimens-kit/cli.mjs validate` (exit 0 = valid). An invalid contract is never used: `lint`, `detect`, `normalize` and the hook stop with exit 2 and list each failing field (`/design/baseScreen/width: must be number`). Fix the file. Don't work around it, and never guess what an invalid field meant. Intent sheets you save as JSON can be checked with `validate --intent <file>`.
 

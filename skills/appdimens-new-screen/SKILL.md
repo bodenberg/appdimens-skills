@@ -10,7 +10,7 @@ Follow `appdimens-layout-intent` (steps 1–7). Without a design, **you** are th
 ## 1. Decide the base screen and the strategy (once per project)
 
 - Base screen: `appdimens.config.json → design.baseScreen`; else the platform default (`../appdimens-layout-intent/references/base-screen.md` §5: Android Medium Phone 411×914 dp, Apple iPhone 15/16 393×852 pt, web 390×844…) stated as "assumed, unconfirmed" — no question needed; offer to record it.
-- Strategy: from `formFactors` (phone only → `scaled`; tablets/TV/desktop → `auto`) or the user's choice (`power`, `fluid`, `logarithmic`…). Text uses the same strategy's `sp` kind unless the config says otherwise.
+- Strategy: from `formFactors` (phone only → `scaled`; tablets/TV/desktop → `auto`) or the user's choice (`power`, `fluid`, `logarithmic`…). A project strategy (`strategy.layout: "custom:<id>"`) wins: use its `cdp`/`csp` tokens and `normalize --strategy custom:<id>`. If the user wants a growth law no built-in curve gives (per-device rules, a formula), propose a `customStrategies` JSON (free-form `"type": "expression"` / `"formula"`) and check it with `cli.mjs custom check` before using it. Text uses the same strategy's `sp` kind unless the config says otherwise.
 - Normalization: if the project already has a theme in AppDimens base values, **reuse it**. Otherwise:
   - `match-base` (default): think in sizes on the base screen (padding 16 dp on a Medium Phone) and convert with `normalize` → `11.5.sdp`;
   - `design-at-300`: define a clean scale directly at the 300 reference (`4, 8, 12, 16…` as `sdp`), knowing it renders ×1.37 on a 411 phone. Defensible for new products whose tokens are shared with web or other apps.

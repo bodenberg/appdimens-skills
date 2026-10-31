@@ -36,7 +36,10 @@ Tie-breakers:
 | text, no font scale | `16.sem` | — | `sem(16)` | `fs:16sem` | — | `{sem:16}` | `16.Sem()` |
 | auto spacing | `16.asdp` | `16.asdp(ctx)` | `asdp(16)` from `/auto` | `p:16asdp` | — (XML is scaled only) | — (use AppDimens.Net) | `16.ASdp()` |
 | fluid text | `16.fssp` | `16.fssp(ctx)` | `fssp(16)` from `/fluid` | `fs:16fssp` | — | — | — (strategies are dp-only; text uses `Ssp`) |
+| custom strategy *(unreleased modules)* | `16.cdp(Brand)` · text `16.csp(Brand)` (Flutter: `16.cdpWith(brand)`) | `16.cdp(ctx, Brand)` → px · C# `CustomKernels.Cdp(16f, hud)` | `cdp(16, brand)` from `/custom` | `padding: 16cdp-brand` (PostCSS) / `brand.css(16)` / `cdp(16, 'brand')` | — (XML is scaled only) | — (use AppDimens.Net) | `16.Cdp(brand)` |
 | % of width | `50.spaceW` | `50.spaceW(ctx)` | `spaceW(50)` from `/percent` | `spaceW(50)` | — | — | `50.SpaceWDp(ctx)` |
+
+Custom strategies: the full per-platform syntax (one-liners, full config, JSON loading, units) is in `appdimens-custom-strategies`.
 
 ## One-time setup per platform
 

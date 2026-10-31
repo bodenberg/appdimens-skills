@@ -47,20 +47,26 @@ Todas as estratégias são suportadas quando o usuário escolhe ou o layout pede
 | Implementar ou **criar o projeto** a partir do **Claude Design** | HTML/React/CSS das telas | `appdimens-claude-design` | viewport ou moldura do protótipo, `max-width` e `meta viewport` (sem a status bar falsa) |
 | **Aplicar em telas existentes** | código atual | `appdimens-code-edit` | `@Preview(device=…)`, `.previewDevice`, `designSize`, `guidelineBaseWidth`, viewports de teste (`cli detect`) |
 | **Criar telas novas** | briefing | `appdimens-new-screen` | declarada pela IA (config ou padrão da plataforma) e confirmada |
+| **Estratégia própria** (fórmula, regras por dispositivo, JSON compartilhado) | pedido do usuário ou `customStrategies` | `appdimens-custom-strategies` | a mesma do fluxo que a usa |
 
 ## O pacote
 
 - **Skill central** `appdimens-layout-intent`, com referências de tela base, modelo de intenção, tabela de decisão e roteador de plataformas.
-- **4 skills de fluxo**, uma para cada linha da tabela acima.
+- **5 skills de fluxo**, uma para cada linha da tabela acima (`appdimens-custom-strategies` é transversal: escolhe a forma da estratégia própria — linha tipada, fórmula em texto, configuração completa ou JSON — e traz a tabela de sintaxe de cada plataforma).
 - **9 skills de plataforma**, cobrindo as 11 bibliotecas: dynamic, sdps/ssps, kmp, ios, flutter, react-native, web, net-binding e games.
 - **CLI `appdimens-kit`**:
   - `detect`: plataformas e evidências da tela base no código;
   - `devices`: catálogo de telas;
-  - `normalize`: todas as estratégias, eixo, densidade, sufixo `a`, `spaceW`;
+  - `normalize`: todas as estratégias, eixo, densidade, sufixo `a`, `spaceW` e estratégias do projeto (`custom:<id>`);
+  - `custom check` / `custom explain`: valida o JSON de estratégias próprias (`schemas/custom-strategy.schema.json`, incluindo fórmulas livres) e mostra fator, regras e valores em cada tela, com o mesmo motor de todas as plataformas; `custom explain --formula "base * …"` e `normalize --formula "base * (…)"` fazem o mesmo só com a fórmula, a forma mais simples;
   - `lint`: validação do código;
   - `validate`: confere o `appdimens.config.json` com o schema e com os pares plataforma ↔ biblioteca (e, com `--intent`, as fichas de intenção). Se o contrato for inválido, `lint`, `detect`, `normalize` e o hook param com exit 2 e apontam cada campo errado; um contrato inválido nunca é usado.
 - **Instalador npm** (`npx appdimens-skills`) para Claude Code, Codex, Gemini CLI, OpenClaw, Hermes, Cursor, Copilot e Windsurf, mais o **hook** do Claude Code e o plugin.
 - **Evals**: casos-ouro para medir as IAs e um teste visual com agentes cegos (`evals/visual/`).
+
+## Estratégias próprias do projeto
+
+Quando nenhuma curva embutida atende, o projeto define as suas num único JSON (`customStrategies` no `appdimens.config.json`). O arquivo traz frame de referência, eixo, curva ou **fórmula livre em texto**, limites, política de fonte e regras por tipo de dispositivo. Todas as bibliotecas AppDimens leem o mesmo arquivo e chegam aos mesmos números. Os agentes só usam os ids declarados: diferenças por dispositivo viram `rules` no JSON, nunca `if` no código. Quando o usuário só quer escrever a conta, os skills recomendam primeiro a forma mais simples: uma linha de código tipada com autocomplete (em todas as plataformas, por exemplo Android: `scalingFormula { base * pow(sw / 360f, 0.8f) }`, `CustomScaleStrategy { … }`), ou a mesma fórmula em texto para JSON (`{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}`).
 
 ## Uma fonte, vários agentes
 

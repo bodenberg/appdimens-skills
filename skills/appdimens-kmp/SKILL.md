@@ -29,6 +29,24 @@ commonMain.dependencies {
 | fit-text | `com.appdimens.kmp.compose.resize.*` | `autoResizeTextSp(…)` in `BoxWithConstraints` |
 | non-Compose code | `com.appdimens.kmp.code.*` | needs an `AppDimensContext` |
 
+## Custom strategies (`appdimens-kmp-custom`, unreleased)
+
+Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+Simplest strategy, when the user just wants to write the math: one typed line, autocompleted, typos fail to compile:
+
+```kotlin
+val Product = CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }   // factor: once per window
+val Hud = scalingFormula { base * pow(sw / 360f, 0.8f) }                      // final value (base = the value passed)
+Modifier.padding(16.cdp(Product))
+```
+
+Scope names match the text language: `base` (formula only) `sw width height shortSide longSide diagonal perimeter aspectRatio ratio density fontScale device`, flags `phone tablet desktop tv watch car vr landscape portrait multiWindow`, math `pow sqrt ln log10 exp abs round min max clamp lerp smoothstep`. Inline text: `16.cdp("base * (sw / 360)")`. For JSON or remote config, the same formula as text: `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` (shaped `base * (…)` it costs one multiply). Check numbers with `appdimens-kit custom explain --formula "<text>" --devices …`.
+
+`implementation("io.github.bodenberg:appdimens-kmp-custom")` in `commonMain`. Compose: `import com.appdimens.kmp.compose.custom.*` → `16.cdp(Brand)`, `14.csp(Brand)`, `ProvideScalingStrategy(Brand) { … }`. Code API: `16.cdp(appContext, Brand)` → px. Load the JSON once with `ScalingStrategies.loadJson(text)` (read it from your resources), then `ScalingStrategies.getOrThrow("brand")`. The device class comes from the UI mode, and desktop targets map to `desktop`.
+
 ## Platform notes
 
 - Compose: no setup for plain tokens; `AppDimensProvider { }` for facilitators (`sdpMode`, `sdpScreen`).

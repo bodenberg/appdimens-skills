@@ -55,6 +55,32 @@ Wrap once: `runApp(AppDimensApp(child: MaterialApp(...)))`, or `AppDimensScopeBi
 
 Typography: put sizes in `ThemeData.textTheme` built inside the provider (`TextStyle(fontSize: 16.ssp)`), so the theme is rebuilt when the snapshot changes.
 
+## Custom strategies (`appdimens_custom`, unreleased)
+
+Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+Simplest strategy, when the user just wants to write the math: one typed closure, autocompleted:
+
+```dart
+final product = customScaleStrategy((s) => s.clamp(s.width / 360, 0.85, 1.8)); // factor: once per window
+final hud = scalingFormulaOf((s) => s.base * s.pow(s.sw / 360, 0.8));         // final value (base = the value passed)
+SizedBox(width: 48.cdpWith(product));
+```
+
+Scope names match the text language: `base` (formula only) `sw width height shortSide longSide diagonal perimeter aspectRatio ratio density fontScale device`, flags `phone tablet desktop tv watch car vr landscape portrait multiWindow`, math `pow sqrt ln log10 exp abs round min max clamp lerp smoothstep`. Inline text: `16.cdpFormula('base * (sw / 360)')`, `context.cdpFormula(16, '…')`. For JSON or remote config, the same formula as text: `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` (shaped `base * (…)` it costs one multiply). Check numbers with `appdimens-kit custom explain --formula "<text>" --devices …`.
+
+```dart
+// pubspec: appdimens_custom (or appdimens_bom)
+import 'package:appdimens_custom/appdimens_custom.dart';
+
+ScalingStrategies.loadJson(await rootBundle.loadString('assets/appdimens-strategies.json'));
+final brand = ScalingStrategies.getOrThrow('brand');
+Padding(padding: EdgeInsets.all(16.cdpWith(brand)), child: Text('Hi', style: TextStyle(fontSize: 14.cspWith(brand))));
+ScalingStrategyScope(strategy: brand, child: …)   // then context.cdp(16) / context.csp(14)
+```
+
 ## Lint (what `appdimens-kit lint` flags here)
 
 - `EdgeInsets.all(16)`, `EdgeInsets.symmetric(horizontal: 16)`, `SizedBox(height: 16)`, `BorderRadius.circular(12)`, `fontSize: 16` numeric literals > 2 → tokens.

@@ -87,7 +87,8 @@
                 "fill",
                 "density",
                 "resize",
-                "units"
+                "units",
+                "custom"
               ]
             },
             "description": "Strategy modules/packages installed for this target."
@@ -122,42 +123,89 @@
       "additionalProperties": false,
       "properties": {
         "layout": {
-          "enum": [
-            "scaled",
-            "auto",
-            "percent",
-            "power",
-            "fluid",
-            "interpolated",
-            "logarithmic",
-            "diagonal",
-            "perimeter",
-            "fit",
-            "fill",
-            "density",
-            "adaptive",
-            "bounded"
+          "oneOf": [
+            {
+              "enum": [
+                "scaled",
+                "auto",
+                "percent",
+                "power",
+                "fluid",
+                "interpolated",
+                "logarithmic",
+                "diagonal",
+                "perimeter",
+                "fit",
+                "fill",
+                "density",
+                "adaptive",
+                "bounded"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^custom:[A-Za-z][A-Za-z0-9_.-]*$",
+              "description": "A strategy id from customStrategies, e.g. custom:brand."
+            }
           ],
-          "description": "Default policy for spacing, radii, icons, control sizes."
+          "description": "Default policy for spacing, radii, icons, control sizes. custom:<id> uses a strategy from customStrategies."
         },
         "text": {
-          "enum": [
-            "scaled",
-            "auto",
-            "percent",
-            "power",
-            "fluid",
-            "interpolated",
-            "logarithmic",
-            "diagonal",
-            "perimeter",
-            "fit",
-            "fill",
-            "density",
-            "adaptive",
-            "bounded"
+          "oneOf": [
+            {
+              "enum": [
+                "scaled",
+                "auto",
+                "percent",
+                "power",
+                "fluid",
+                "interpolated",
+                "logarithmic",
+                "diagonal",
+                "perimeter",
+                "fit",
+                "fill",
+                "density",
+                "adaptive",
+                "bounded"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^custom:[A-Za-z][A-Za-z0-9_.-]*$",
+              "description": "A strategy id from customStrategies, e.g. custom:brand."
+            }
           ],
-          "description": "Default policy for typography (sp kind)."
+          "description": "Default policy for typography (sp kind). custom:<id> uses a strategy from customStrategies."
+        }
+      }
+    },
+    "customStrategies": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Project-defined scaling strategies (format: schemas/custom-strategy.schema.json). Agents reuse these ids (cdp / csp / custom:<id>) and never invent new ones silently.",
+      "required": [
+        "file"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Path, relative to this config, of the strategies JSON every target loads (e.g. design/appdimens-strategies.json).",
+          "examples": [
+            "design/appdimens-strategies.json"
+          ]
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          },
+          "description": "Ids agents may use; when omitted, every id in the file."
+        },
+        "default": {
+          "type": "string",
+          "description": "Id behind a bare 16.cdp (overrides the file's default)."
         }
       }
     },

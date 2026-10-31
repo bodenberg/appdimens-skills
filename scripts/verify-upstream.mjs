@@ -145,6 +145,20 @@ const C = [
   ['games', 'C# MathKernels / Screen.Update / World.ViewportRect', 'appdimens-games', '(class MathKernels|ViewportRect\\()'],
   ['games', 'C++ namespace appdimens::games', 'appdimens-games', 'namespace appdimens::games|namespace games'],
   ['games', 'GamesCompat (deprecated 2.x)', 'appdimens-games', 'GamesCompat'],
+  // ---------- appdimens-custom-strategies (every custom module)
+  ['custom', 'Kotlin CustomScaleStrategy / scalingFormula one-liners', 'appdimens-dynamic', 'fun CustomScaleStrategy\\(|fun scalingFormula\\('],
+  ['custom', 'Kotlin scalingStrategy DSL + loadAsset', 'appdimens-dynamic', 'fun ScalingStrategies\\.loadAsset\\('],
+  ['custom', 'KMP code cdp(context: AppDimensContext, strategy)', 'appdimens-kmp', 'fun Number\\.cdp\\(context: AppDimensContext'],
+  ['custom', 'Games Kotlin cdpi / cspDp', 'appdimens-games', 'fun Number\\.(cdpi|cspDp)\\('],
+  ['custom', 'Unity C# CustomGames + CustomKernels + Cdpi', 'appdimens-games', 'static class (CustomGames|CustomKernels)|float Cdpi\\(this float'],
+  ['custom', '.NET CustomScaleStrategy.Create / ScalingStrategy.Formula(Func<FormulaScope', 'appdimens-net-binding', 'static ScalingStrategy (Create\\(Func<ScreenScope|Formula\\(Func<FormulaScope)'],
+  ['custom', '.NET CspDp / CustomDimens.Use / LoadFile', 'appdimens-net-binding', 'float CspDp\\(this|IDisposable Use\\(ScalingStrategy|LoadFile\\(string path\\)'],
+  ['custom', 'Swift CustomScaleStrategy / scalingFormula / CustomDimension', 'appdimens-ios', 'public func (CustomScaleStrategy|scalingFormula)\\(|struct CustomDimension'],
+  ['custom', 'Swift ScalingStrategies.load(resource:) / require / ScalingStrategyError', 'appdimens-ios', 'func load\\(resource|func require\\(|struct ScalingStrategyError'],
+  ['custom', 'Flutter customScaleStrategy / scalingFormulaOf / cdpWith / cdpFormula', 'appdimens-flutter', 'ScalingStrategy (customScaleStrategy|scalingFormulaOf)\\(|double (cdpWith|cdpFormula)\\('],
+  ['custom', 'Web customScaleStrategy / scalingFormula / requireScalingStrategy / loadScalingStrategies', 'appdimens-web', 'export function (customScaleStrategy|scalingFormula|requireScalingStrategy|loadScalingStrategies)\\('],
+  ['custom', 'RN defineCustomStrategy / requireCustomStrategy / useCustomStrategy / setDefaultCustomStrategy', 'appdimens-react-native', 'export function (defineCustomStrategy|requireCustomStrategy|useCustomStrategy|setDefaultCustomStrategy)\\('],
+  ['custom', 'Apple non-finite factor falls back to 1', 'appdimens-ios', 'non-finite factor falls back to 1'],
 ];
 
 let fail = 0;
