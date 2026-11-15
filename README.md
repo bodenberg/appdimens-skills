@@ -101,7 +101,7 @@ Agents that share a folder (`.agents/skills`) get one copy. The CLI, schemas and
 | [appdimens-py](https://github.com/bodenberg/appdimens-py) (Tkinter, Qt for Python, Kivy, pygame, Blender) | 3.2.0 | `python` |
 | [appdimens-games](https://github.com/bodenberg/appdimens-games) (Unity, Unreal, Godot, C/C++, .NET, Android; GL/Vulkan/D3D/Metal; FSR/DLSS/XeSS) | 3.3.0 | `games` |
 
-149 concrete claims of these skills (install lines, versions, packages, imports, setup calls, token and API names) are checked against the library sources with `scripts/verify-upstream.mjs`. The skills own **base screen and intent**; each library's own skill stays the authority on API details.
+151 concrete claims of these skills (install lines, versions, packages, imports, setup calls, token and API names) are checked against the library sources with `scripts/verify-upstream.mjs`. The skills own **base screen and intent**; each library's own skill stays the authority on API details.
 
 ## The project contract
 
