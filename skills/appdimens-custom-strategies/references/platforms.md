@@ -41,7 +41,7 @@ import com.appdimens.games.compose.custom.*     // Compose HUD: 64.cdp(s), 18.cs
 ```
 
 ```csharp
-// copy csharp/AppDimensGames/AppDimensGamesCustom.cs + AppDimensGamesCustom.Engine.cs
+// copy dotnet/dropin/AppDimensGames/AppDimensGamesCustom.cs + AppDimensGamesCustom.Engine.cs
 using AppDimensGames.Custom;
 var hud = CustomGames.Formula(s => s.Base * s.Pow(s.Sw / 360f, 0.8f));
 float px = 64f.Cdp(hud);                      // CustomKernels.Cdp(64f, hud); CdpPx, Cdpi (resize-invariant), Csp (final size)
