@@ -6,6 +6,7 @@ import { extname, join } from 'node:path';
 import { nearestFile } from './project.mjs';
 import { fileURLToPath } from 'node:url';
 import { PREFIX, normalize, resolveStrategy } from './factors.mjs';
+import { isCustom, projectStrategies } from './custom.mjs';
 
 const CLI = fileURLToPath(new URL('../cli.mjs', import.meta.url));
 
@@ -85,6 +86,24 @@ const syntax = {
   xaml: (b, t, text) => `{${text ? 'ssp' : 'sdp'}:${b}} (MAUI) · {sdps:${text ? 'Ssp' : 'Sdp'} ${b}} (WPF) · {ad:${text ? 'Ssp' : 'Sdp'} ${b}} (AppDimens.Net)`,
 };
 
+/** cdp / csp syntax per language for a project strategy id. */
+const customSyntax = {
+  kotlin: (b, id, text) => `${b}.${text ? 'csp' : 'cdp'}(${id})`,
+  swift: (b, id, text) => `${b}.${text ? 'csp' : 'cdp'}(${id})`,
+  dart: (b, id, text) => `${b}.${text ? 'cspWith' : 'cdpWith'}(${id})`,
+  'react-native': (b, id, text) => `${text ? 'csp' : 'cdp'}(${b}, ${id})`,
+  css: (b, id, text) => `${b}${text ? 'csp' : 'cdp'}-${id}`,
+  'web-markup': (b, id, text) => `${b}${text ? 'csp' : 'cdp'}-${id}`,
+  'web-js': (b, id, text) => `${text ? 'csp' : 'cdp'}(${b}, '${id}')`,
+};
+
+const strategiesCache = new Map();
+function customConfigs(ctx) {
+  const key = ctx.configPath ?? '';
+  if (!strategiesCache.has(key)) strategiesCache.set(key, projectStrategies(ctx.config, ctx.configPath)?.configs ?? null);
+  return strategiesCache.get(key);
+}
+
 const fmtNum = (n) => (Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2))));
 
 /**
@@ -94,7 +113,23 @@ const fmtNum = (n) => (Number.isInteger(n) ? String(n) : String(Number(n.toFixed
  */
 function suggestion(lang, n, text, ctx) {
   const xml = lang === 'android-xml' || lang === 'xaml';
-  const strategy = xml ? 'scaled' : resolveStrategy(text ? ctx.config?.strategy?.text || ctx.config?.strategy?.layout || defaultStrategy(ctx.config) : ctx.config?.strategy?.layout || defaultStrategy(ctx.config));
+  let strategy = xml ? 'scaled' : resolveStrategy(text ? ctx.config?.strategy?.text || ctx.config?.strategy?.layout || defaultStrategy(ctx.config) : ctx.config?.strategy?.layout || defaultStrategy(ctx.config));
+  if (isCustom(strategy)) {
+    const id = strategy.slice('custom:'.length);
+    const configs = customConfigs(ctx);
+    const bs = ctx.base;
+    if (bs && configs && customSyntax[lang]) {
+      try {
+        const rounding = text ? 0.01 : ctx.config?.design?.rounding ?? 0.5;
+        const r = normalize([Number(n) / (text ? bs.fontScale || 1 : 1)], { frame: bs.width, height: bs.height, runtimeHeight: bs.runtimeHeight, strategy, rounding, custom: configs });
+        return `${customSyntax[lang](fmtNum(r.rows[0].base), id, text)} (${n} on the base screen ${bs.width}×${bs.height}, custom strategy "${id}")`;
+      } catch {
+        /* fall through to the command */
+      }
+    }
+    if (customSyntax[lang]) return `a ${text ? 'csp' : 'cdp'} value of the "${id}" strategy converted from the base screen: node "${CLI}" normalize --device <base screen> --strategy ${strategy}${text ? ' --text' : ''} ${n}`;
+    strategy = 'scaled';
+  }
   const kind = text ? 'ssp' : 'sdp';
   const unit = `${PREFIX[strategy] ?? ''}${kind}`;
   const bs = ctx.base;
@@ -370,12 +405,16 @@ function strategyUnits(text, lang) {
     while ((m = re.exec(text))) add(PREFIXES.find(([p]) => p === m[1])[1], m.index);
     const space = /\.space(W|H|Sw)\b/g;
     while ((m = space.exec(text))) add('percent', m.index);
+    const custom = /\.c(dp|sp)(Px|Dp|Units|With|i|a)?\b/g;
+    while ((m = custom.exec(text))) add('custom', m.index);
   } else if (lang === 'react-native') {
     re = new RegExp(`(?<![\\w.])(${PREFIX_ALT})(s|h|w)(dp|sp|em)[A-Za-z]*\\s*\\(`, 'g');
     let m;
     while ((m = re.exec(text))) add(PREFIXES.find(([p]) => p === m[1])[1], m.index);
     const space = /(?<![\w.])space(W|H|Sw)\w*\s*\(/g;
     while ((m = space.exec(text))) add('percent', m.index);
+    const custom = /(?<![\w.])c(dp|sp)(Px)?\s*\(|\.(cdp|csp)(Px)?\b/g;
+    while ((m = custom.exec(text))) add('custom', m.index);
   }
   return used;
 }
@@ -427,7 +466,7 @@ export function lintText(text, { file, config = null, project = null } = {}) {
   const lang = languageOf(file, text, project);
   if (!lang) return { lang: null, findings: [] };
   const threshold = config?.lint?.fixedThreshold ?? 2;
-  const ctx = { threshold, config, base: baseScreenOf(config, lang) };
+  const ctx = { threshold, config, configPath: project?.configPath ?? null, base: baseScreenOf(config, lang) };
   const findings = [];
   const lines = text.split(/\r?\n/);
   const state = { inStyle: false, isCss: lang === 'css' };

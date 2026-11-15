@@ -61,10 +61,25 @@ The defaults above are a starting point. When the user or the config picks anoth
 | `density` | pixel-density alignment (games, AR) | `--strategy density --dpi <dpi>` |
 | `percent` | literal share of the window | `--space w|h|sw` → `50.spaceW` |
 | `a` suffix | very tall/wide screens need correction | add `--aspect` |
+| `custom:<id>` | the project defines its own growth law (`customStrategies` in `appdimens.config.json`) | `normalize --strategy custom:<id>` (the strategy owns its axis, aspect ratio and font-scale policy) |
 | **resize** | text/box must fit a container | not normalized: `min`/`max` are final sizes from the design intent |
 | **units** | real-world size (mm/cm/in) | not normalized: physical; accuracy depends on reported dpi |
 
 Rules: one strategy per screen; every non-scaled strategy needs its module/package/import (except web, where tokens self-register); the `hdp`/`wdp` variants of the single-axis strategies (scaled, auto, percent, power, fluid, interpolated, logarithmic) read that axis of the base screen (`--axis h|w`); diagonal, perimeter, fit, fill and density read the whole screen, so their `hdp`/`wdp` variants equal `sdp`.
+
+## Project-defined strategies (`custom:<id>`)
+
+Writing, choosing the form of, or sharing a custom strategy: follow `appdimens-custom-strategies` (decision flow, per-platform syntax, rules, kit checks). The summary below is what every workflow must respect.
+
+Some projects define their own strategies (reference frame, axis, curve or free-form formula, bounds, font-scale policy, rules per device class) in one JSON file: [`schemas/custom-strategy.schema.json`](../../../schemas/custom-strategy.schema.json), declared as `customStrategies.file` in `appdimens.config.json`. Every AppDimens platform reads the same file and produces the same numbers.
+
+- **Use only declared ids** (`customStrategies.ids`, or every id in the file). Never invent an id, and never edit the file to fit one screen; ask first.
+- The token is `cdp` / `csp` with the strategy (`16.cdp(Brand)`, `cdp(16, brand)`, `16cdp-brand`, `16.Cdp(brand)`). `strategy.layout: "custom:<id>"` makes it the default `L`/`T`.
+- The property rules above still apply: fixed stays fixed, text uses `csp`, counts switch at breakpoints, media keeps its ratio.
+- Device and screen differences belong in the strategy's `rules`, not in call-site `if`s. If a rule is missing, propose the JSON change to the user.
+- Base values come from `normalize --strategy custom:<id>`. Check the strategy on the target screens with `appdimens-kit custom explain <id> --devices <base>,<tablet>,…`.
+- **Simplest form, when the user just wants to write the math:** on every platform, one typed code line whose scope has the same names as the text language (autocompleted, typos fail to compile): a factor (`CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }`, `customScaleStrategy(({ width, clamp }) => clamp(width / 360, 0.85, 1.8))`) or a final value (`scalingFormula { base * pow(sw / 360f, 0.8f) }`, `scalingFormula(({ base, sw, pow }) => base * pow(sw / 360, 0.8))`). When the formula must be shared through JSON or remote config, write it as text: `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` or inline `16.cdp("…")` / `cdp(16, '…')`. Text shaped `base * (…)` (no `base` inside the parentheses) costs one multiply per value. Check the numbers with `appdimens-kit custom explain --formula "<text>" --devices …` and convert design values with `normalize --formula "<text>"`.
+- When no built-in curve fits, a strategy can carry a free-form formula as text: `"curve": {"type": "expression", "expression": "pow(ratio, 0.8) * (tablet ? 0.9 : 1)"}` (factor) or `"formula": "max(scaled, base)"` (per value). Prefer these over code lambdas, because they work in JSON and on every platform. `appdimens-kit custom check` validates them.
 
 ## From design value to base value
 

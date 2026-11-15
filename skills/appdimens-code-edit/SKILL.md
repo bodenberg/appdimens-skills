@@ -36,7 +36,8 @@ It reports preview devices (`@Preview(device = …)`, `widthDp`, `.previewDevice
 | `sizeIn(min = 48.dp)`, `minHeight: 44`, `minimumInteractiveComponentSize()` | fixed minimum — keep; scale the visual size separately |
 | Material/Cupertino/Fluent component defaults | `platform` — don't override |
 | `values-sw600dp/dimens.xml`, `if (isTablet)`, size-class branches | existing overrides: after migrating, the strategy grows too → run `cli.mjs compare` per value: `delete-override` (would scale twice) or `keep-as-adapt` (facilitator / builder / qualifier with the printed base) |
-| literal spacing/radius/icon/control sizes | designed sizes → layout strategy |
+| literal spacing/radius/icon/control sizes | designed sizes → layout strategy (`custom:<id>` → `cdp`/`csp` when the config sets one) |
+| several `if (isTv)` / `if (isWatch)` / size-class multipliers on the same values | the project wants its own growth law → propose a `customStrategies` JSON with `rules` per device class (or a free-form `expression`), check it with `cli.mjs custom check` / `custom explain`, then replace the branches with `cdp` |
 | literal font sizes | text → `sp` kind |
 | `autoSizeText`, `AutoSizeText`, `adjustsFontSizeToFitWidth` | `fit-text` → AppDimens **resize** |
 | mm/inch conversions | **units** |

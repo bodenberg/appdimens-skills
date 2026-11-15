@@ -28,7 +28,7 @@ const GLOBS = {
   'appdimens-games': '**/*.gd,**/*.uproject,**/*.uplugin',
 };
 
-const ORDER = ['appdimens-layout-intent', 'appdimens-design-to-code', 'appdimens-claude-design', 'appdimens-code-edit', 'appdimens-new-screen'];
+const ORDER = ['appdimens-layout-intent', 'appdimens-design-to-code', 'appdimens-claude-design', 'appdimens-code-edit', 'appdimens-new-screen', 'appdimens-custom-strategies'];
 
 function parseSkillDir(dir) {
   const skill = parseSkill(readFileSync(join(skillsDir, dir, 'SKILL.md'), 'utf8'), dir);
