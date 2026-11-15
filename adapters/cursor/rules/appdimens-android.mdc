@@ -70,7 +70,7 @@ Theme first: put tokens in one object (`object Spacing { val md get() = 16.sdp }
 
 Values are **px**: `view.setPadding(px, px, px, px)`, `textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, DimenSsp.ssp(ctx, 16))`. Don't pass a px value to an API that expects dp. XML layouts belong to `appdimens-android-xml`.
 
-## Custom strategies (`appdimens-dynamic-custom`, unreleased)
+## Custom strategies (`appdimens-dynamic-custom`)
 
 Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
 

@@ -52,7 +52,7 @@ Wrap once: `runApp(AppDimensApp(child: MaterialApp(...)))`, or `AppDimensScopeBi
 
 Typography: put sizes in `ThemeData.textTheme` built inside the provider (`TextStyle(fontSize: 16.ssp)`), so the theme is rebuilt when the snapshot changes.
 
-## Custom strategies (`appdimens_custom`, unreleased)
+## Custom strategies (`appdimens_custom`)
 
 Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
 

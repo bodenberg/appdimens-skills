@@ -5,7 +5,7 @@ description: Write, review or share a project's OWN AppDimens scaling strategy i
 
 # AppDimens — custom scaling strategies (every platform)
 
-A custom strategy is the project's own growth law for `cdp` (dimensions) and `csp` (text). Every platform ships the same engine: the **text language and the JSON format are identical**, and a shared 540-case fixture keeps the numbers the same on Android, KMP, Games + Unity, Apple, Flutter, React Native, Web and .NET. The modules are **unreleased** (on each library's `main`/feature branch): say so when you add the dependency.
+A custom strategy is the project's own growth law for `cdp` (dimensions) and `csp` (text). Every platform ships the same engine: the **text language and the JSON format are identical**, and a shared 540-case fixture keeps the numbers the same on Android, KMP, Games + Unity, Apple, Flutter, React Native, Web and .NET. The modules are in production on each library's `main`; add the dependency.
 
 Base screen and intent still come first (`appdimens-layout-intent`); this skill only decides **how the strategy is written**. The platform skill (`appdimens-android`, `appdimens-dotnet`, …) owns install and setup.
 

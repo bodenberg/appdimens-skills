@@ -68,7 +68,7 @@ The smallest side of a desktop browser is often 800–1000, so `sdp` grows 2.7�
 | touch target | visual size as a token + hit area via padding or a `::before` overlay reaching `44px` (`/* ad:fixed touch-min */`; WCAG 2.2 AA minimum 24px) — never clamp the visual |
 | `adapt` | conditions `@sw600` `@w840` `@landscape` `@tv` in classes/`data-dimen`/`@dimen`; structural changes with regular media/container queries |
 
-## Custom strategies (`webdimens/custom`, unreleased)
+## Custom strategies (`webdimens/custom`)
 
 Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
 

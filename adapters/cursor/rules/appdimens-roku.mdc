@@ -27,7 +27,7 @@ sub init()
     ad = AppDimens()                      ' one per BrightScript context (components, Tasks)
     safe = ad.safeRect("title")
     card.translation = [safe.x, safe.y]
-    card.width = ad.sdp(720)
+    card.width = sdp(720)                 ' global tokens, like sdp(16) on the Web (or ad.sdp(720))
     font.size = ad.fontSize(32)
 end sub
 ```
@@ -36,7 +36,7 @@ end sub
 
 | Intent | Token |
 |---|---|
-| cards, rows, padding, focus rings | `ad.sdp(v)` |
+| cards, rows, padding, focus rings | `sdp(v)` (global) · `ad.sdp(v)` |
 | posters / tiles that keep a grid on any space | `ad.asdp(v)` |
 | titles and labels | `ad.fontSize(v)` (integer) |
 | long descriptions | `ad.fontSize(v, "logarithmic")` · `ad.logssp(v)` |
@@ -51,5 +51,5 @@ end sub
 - Reference mode values are already coordinates: no `Px` tokens there. Mode `"tv"`: `ad.px(ad.sdp(v))`.
 - Don't put the instance in node fields; call `AppDimens()` in each `init()`.
 - Custom strategies only when `customStrategies` is declared: `AppDimens_LoadStrategies(text)`,
-  `ad = AppDimens_Custom()`, `ad.cdp(16, "id")` — see `appdimens-custom-strategies`.
+  then `cdp(16, "id")` / `csp(14, "id")` (globals) or `"16cdp-id"` in `ad.dimen` — see `appdimens-custom-strategies`.
 - Verify with `npm test` (brs-engine) and `npx bsc` in appdimens-roku, and on FHD + HD devices.

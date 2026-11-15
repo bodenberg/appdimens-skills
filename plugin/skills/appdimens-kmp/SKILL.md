@@ -29,7 +29,7 @@ commonMain.dependencies {
 | fit-text | `com.appdimens.kmp.compose.resize.*` | `autoResizeTextSp(…)` in `BoxWithConstraints` |
 | non-Compose code | `com.appdimens.kmp.code.*` | needs an `AppDimensContext` |
 
-## Custom strategies (`appdimens-kmp-custom`, unreleased)
+## Custom strategies (`appdimens-kmp-custom`)
 
 Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
 

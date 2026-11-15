@@ -101,7 +101,7 @@ Agents that share a folder (`.agents/skills`) get one copy. The CLI, schemas and
 | [appdimens-py](https://github.com/bodenberg/appdimens-py) (Tkinter, Qt for Python, Kivy, pygame, Blender) | 3.2.0 | `python` |
 | [appdimens-games](https://github.com/bodenberg/appdimens-games) (Unity, Unreal, Godot, C/C++, .NET, Android; GL/Vulkan/D3D/Metal; FSR/DLSS/XeSS) | 3.3.0 | `games` |
 
-151 concrete claims of these skills (install lines, versions, packages, imports, setup calls, token and API names) are checked against the library sources with `scripts/verify-upstream.mjs`. The skills own **base screen and intent**; each library's own skill stays the authority on API details.
+152 concrete claims of these skills (install lines, versions, packages, imports, setup calls, token and API names) are checked against the library sources with `scripts/verify-upstream.mjs`. The skills own **base screen and intent**; each library's own skill stays the authority on API details.
 
 ## The project contract
 
@@ -121,7 +121,7 @@ Agents that share a folder (`.agents/skills`) get one copy. The CLI, schemas and
 }
 ```
 
-### Project-defined strategies (unreleased AppDimens modules)
+### Project-defined strategies (custom modules)
 
 A project can define its own scaling strategies in one JSON file, using the format in [`schemas/custom-strategy.schema.json`](schemas/custom-strategy.schema.json). A strategy sets the reference frame, axis, curve, bounds, font-scale policy and rules per device class. When no built-in curve fits, it can use **free-form formulas** written as text (`"type": "expression"`, `"formula"`). Every AppDimens custom module reads that file and produces the same numbers: Android, KMP, Games + Unity, Apple, Flutter, React Native, Web and .NET. Declare it once:
 

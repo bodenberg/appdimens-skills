@@ -148,6 +148,7 @@ const C = [
   ['roku', 'AppDimens() / AppDimens_Create', 'appdimens-roku', 'function AppDimens_Create\\('],
   ['roku', 'safeRect / fontSize methods', 'appdimens-roku', 'function AppDimens__M(SafeRect|FontSize)\\('],
   ['roku', 'custom AppDimens_LoadStrategies / ad.cdp', 'appdimens-roku', 'function AppDimens_LoadStrategies\\('],
+  ['roku', 'global tokens sdp(720) and custom cdp(16, id)', 'appdimens-roku', '^function (sdp|cdp)\\(v as float'],
   ['custom', 'Python cdp / scaling_formula / load_scaling_strategies', 'appdimens-py', 'def (cdp|scaling_formula|load_scaling_strategies)\\('],
   ['custom', 'C appdimens_custom.h adc_load_json / adc_dp / adc_formula', 'appdimens-gtk', '^(int adc_load_json|float adc_dp|adc_strategy \\*adc_formula)\\('],
   ['python', 'pip package appdimens 3.2.0', 'appdimens-py', 'version = "3\\.2\\.0"', true, ['--include=pyproject.toml']],
