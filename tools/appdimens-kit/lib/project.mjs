@@ -145,6 +145,7 @@ export function detectTargets(dir) {
       }
       if (isDir) {
         if (name.endsWith('.xcodeproj')) found.push({ platform: 'apple', library: 'appdimens-ios', evidence: p });
+        else if (name === 'ProjectSettings' && existsSync(join(p, 'ProjectVersion.txt'))) found.push({ platform: 'games', library: 'appdimens-games (Unity package)', evidence: p });
         else if (name === 'layout' && d.endsWith('res')) found.push({ platform: 'android-xml', library: 'appdimens-sdps + appdimens-ssps', evidence: p });
         else walk(p, depth + 1);
         continue;
@@ -161,6 +162,20 @@ export function detectTargets(dir) {
             library: 'appdimens-dynamic',
             evidence: p,
           });
+      } else if (name.endsWith('.uproject')) found.push({ platform: 'games', library: 'appdimens-games (Unreal plugin)', evidence: p });
+      else if (name === 'project.godot') found.push({ platform: 'games', library: 'appdimens-games (Godot addon)', evidence: p });
+      else if (name === 'blender_manifest.toml' || (name === '__init__.py' && /\bbl_info\s*=/.test(text()))) found.push({ platform: 'python', library: 'appdimens-py (Blender add-on)', evidence: p });
+      else if (name === 'pyproject.toml' || name === 'requirements.txt' || name === 'setup.py') {
+        if (/\b(tkinter|PySide[26]|PyQt[56]|kivy|pygame|pyglet|arcade|wxPython|dearpygui|panda3d|ursina|appdimens)\b/i.test(text())) found.push({ platform: 'python', library: 'appdimens-py', evidence: p });
+      } else if (name === 'manifest' && /^\s*(major_version|ui_resolutions)\s*=/m.test(text()))
+        found.push({ platform: 'roku', library: 'appdimens-roku', evidence: p });
+      else if (name === 'lv_conf.h' || (name === 'idf_component.yml' && /lvgl\/lvgl/.test(text())) || (name === 'platformio.ini' && /lvgl/.test(text())))
+        found.push({ platform: 'lvgl', library: 'appdimens-lvgl', evidence: p });
+      else if (name === 'meson.build' || name === 'CMakeLists.txt' || name.endsWith('.pro')) {
+        const t = text();
+        if (/find_package\s*\(\s*Qt[56]|QT\s*\+?=\s*.*(core|gui|quick|widgets)|qt_add_executable|qt_standard_project_setup/i.test(t)) found.push({ platform: 'qt', library: 'appdimens-qt', evidence: p });
+        else if (/dependency\s*\(\s*'(gtk4|gtk\+-3\.0|libadwaita-1)'|pkg_check_modules\s*\([^)]*\b(gtk4|gtk\+-3\.0)\b/.test(t)) found.push({ platform: 'gtk', library: 'appdimens-gtk', evidence: p });
+        else if (/\blvgl\b/.test(t) && name === 'CMakeLists.txt') found.push({ platform: 'lvgl', library: 'appdimens-lvgl', evidence: p });
       } else if (name === 'Package.swift') found.push({ platform: 'apple', library: 'appdimens-ios', evidence: p });
       else if (name === 'pubspec.yaml' && /^\s*flutter\s*:/m.test(text())) found.push({ platform: 'flutter', library: 'appdimens_flutter', evidence: p });
       else if (name === 'package.json') {

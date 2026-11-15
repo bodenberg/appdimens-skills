@@ -1,0 +1,98 @@
+---
+name: appdimens-apple
+description: Implement layout intent on Apple platforms (iOS, iPadOS, macOS, tvOS, watchOS, visionOS) with appdimens-ios — SwiftUI (16.sdp, .font(.system(size: 16.ssp)), .appDimens()) and UIKit/AppKit (AppDimens.startAutomaticUpdates(), UIFont.ssp). Use when writing or editing Swift UI code in an AppDimens project, adding the Swift package, choosing a product (AppDimensDynamic vs individual strategies), or mapping a design to VStack/HStack/LazyVGrid.
+---
+
+# Apple — `appdimens-ios` 3.2.0
+
+Decide intent first with `appdimens-layout-intent`. Units are **points**: a Figma/Sketch frame at 1× is already in points; a screenshot must be divided by its scale (@2x/@3x). Upstream skill: `bodenberg/appdimens-ios/skills/appdimens-ios/SKILL.md`.
+
+## Install
+
+```swift
+// Package.swift
+.package(url: "https://github.com/bodenberg/appdimens-ios", from: "3.2.0"),
+// target:
+.product(name: "AppDimensDynamic", package: "appdimens-ios")   // core + Strategies + Auto + Resize + Units + Metal
+// other strategies are separate products: AppDimensFluid, AppDimensPercent, AppDimensPower,
+// AppDimensLogarithmic, AppDimensInterpolated, AppDimensDiagonal, AppDimensPerimeter,
+// AppDimensFit, AppDimensFill, AppDimensDensity — add the product and `import` it where its tokens are used
+```
+
+`AppDimensDynamic` covers `sdp`/`ssp`/`asdp`/resize/units. `fsdp`, `psdp`/`spaceW`, `pwsdp`, `logsdp`, `isdp`, `dgsdp`, `prsdp`, `ftsdp`, `flsdp`, `dsdp` need their own product + import. Inspect `Sources/` for real declarations; never invent a suffix.
+
+## Setup
+
+- **SwiftUI:** install once at the window root: `WindowGroup { ContentView().appDimens() }`. Never build a configuration from a child view's bounds.
+- **Multi-window apps or iOS < 17:** resolve per window with `@Environment(\.appDimensConfiguration) var dimens` + `16.sdp(dimens)`, or `@ScaledDimension(16)` / `@ScaledDimension(text: 18)`.
+- **UIKit / AppKit:** `AppDimens.startAutomaticUpdates()` once (e.g. in `SceneDelegate`); `16.sdp(in: view)` resolves against a specific window.
+
+## Tokens
+
+| Policy | Token |
+|---|---|
+| scaled | `16.sdp` `48.hdp` `100.wdp` · text `16.ssp` (Dynamic Type-aware), `16.sem` (ignores it) |
+| adaptive | `16.asdp` `16.assp` |
+| bounded | `16.fsdp` `16.fssp` |
+| fraction | `50.spaceW` |
+| others | `pwsdp` `logsdp` `ftsdp` `flsdp` `dgsdp` `prsdp` `isdp` `dsdp`; units `5.mm` |
+| UIKit fonts | `UIFont.ssp(17, weight: .semibold)` (`NSFont.ssp` on AppKit) |
+| fit-text | `AppDimensResize` → `DimensResize`, `ResizeBound` |
+
+## Intent → SwiftUI
+
+| Intent | SwiftUI |
+|---|---|
+| `screen` + `scroll-v` | `ScrollView { VStack(spacing: 16.sdp) { … } .padding(16.sdp) }` |
+| `stack-v` / `stack-h` / `overlay` | `VStack(spacing:)` / `HStack(spacing:)` / `ZStack(alignment:)` or `.overlay(alignment: .topTrailing)` |
+| `list` | `List` (system styling) or `LazyVStack(spacing: 8.sdp)` inside `ScrollView` |
+| `grid` | `LazyVGrid(columns: [GridItem(.adaptive(minimum: 160.sdp), spacing: 12.sdp)])` |
+| `carousel` | `ScrollView(.horizontal) { LazyHStack(spacing: 12.sdp) }` + `.scrollTargetBehavior(.viewAligned)` (iOS 17+) |
+| `card` | container + `.padding(16.sdp)` + `.background(.background, in: RoundedRectangle(cornerRadius: 12.sdp))` |
+| `button` / `input` / `nav` | native `Button`, `TextField`, `NavigationStack`, `TabView`; scale content, not bars |
+| `sizing: fill` / `hug` | `.frame(maxWidth: .infinity)` · default |
+| `sizing: ratio` | `.aspectRatio(4/3, contentMode: .fit)` |
+| `sizing: clamp` | `.frame(minWidth: 280, maxWidth: 600)` `// ad:fixed clamp` |
+| `truncate` | `.lineLimit(2).truncationMode(.tail)` |
+| `divider` | `Divider()` (system hairline) |
+| touch target | visual size as a token (`.frame(width: 33.5.asdp, height: 33.5.asdp)` for 44 on a 393 base) + hit area: `.contentShape(Rectangle())` with an outer `.frame(minWidth: 44, minHeight: 44)` — never clamp the visual |
+| `adapt` | `@Environment(\.horizontalSizeClass)` for structure; `16.scaledDp()` builder / facilitators for values at qualifiers (see upstream docs) |
+
+## Intent → UIKit
+
+`UIStackView(spacing: 16.sdp)`, `UICollectionViewCompositionalLayout` for list/grid/carousel (`.fractionalWidth`, `.estimated(…)` with sdp insets), Auto Layout anchors with `constant: 16.sdp`, `heightAnchor.constraint(greaterThanOrEqualToConstant: 44)` for touch minimums. `layer.cornerRadius = 12.sdp`.
+
+## Custom strategies (`AppDimensCustom`, unreleased)
+
+Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+Simplest strategy, when the user just wants to write the math: one typed closure, autocompleted:
+
+```swift
+let product = CustomScaleStrategy { s in s.clamp(s.width / 360, 0.85, 1.8) }   // factor: once per window
+let hud = scalingFormula { $0.base * $0.pow($0.sw / 360, 0.8) }                 // final value (base = the value passed)
+```
+
+Scope names match the text language: `base` (formula only) `sw width height shortSide longSide diagonal perimeter aspectRatio ratio density fontScale device`, flags `phone tablet desktop tv watch car vr landscape portrait multiWindow`, math `pow sqrt ln log10 exp abs round min max clamp lerp smoothstep`. A non-finite factor falls back to 1 on Apple. Inline text throws on a bad formula: `try 16.cdp("base * (sw / 360)")`. For JSON or remote config, the same formula as text: `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` (shaped `base * (…)` it costs one multiply). Check numbers with `appdimens-kit custom explain --formula "<text>" --devices …`.
+
+```swift
+.product(name: "AppDimensCustom", package: "appdimens-ios")
+import AppDimensCustom
+
+try ScalingStrategies.load(resource: "appdimens-strategies")   // once, at launch
+let brand = try ScalingStrategies.require("brand")
+Text("Hi").font(.system(size: 14.csp(brand))).padding(16.cdp(brand))   // csp = final point size
+ContentView().scalingStrategy(brand)                                     // scope; @CustomDimension(16) inside
+```
+
+## Lint (what `appdimens-kit lint` flags here)
+
+- `.padding(16)`, `spacing: 16`, `cornerRadius: 12`, `.frame(width: 120…)` numeric literals > 2 → tokens.
+- `.font(.system(size: 16))` → `16.ssp`.
+- Obsolete `AppDimens.shared…toPoints()`, `AppDimens.fixed(…)`.
+
+## Verify
+
+`swift build` / Xcode build; previews pinned on the **base screen first** with `.appDimensConfiguration(DimensConfiguration(screenWidth: 393, screenHeight: 852, displayScale: 3), updatesAmbient: true)` (without `updatesAmbient: true` the zero-argument `16.sdp` keeps reading the ambient store; or resolve with `16.sdp(dimens)`), then 300×533, the design width (390) and iPad (820) when tablets are in scope; large Dynamic Type sizes.

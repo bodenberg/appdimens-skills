@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- **Roku:** new `appdimens-roku` skill (BrightScript / SceneGraph: coordinate space from `ui_resolutions`, reference / tv modes, `ad.sdp`, `ad.fontSize`, `ad.safeRect`, custom strategies); `detect` recognises Roku channels (`manifest` with `major_version=` / `ui_resolutions=`); schema target `roku` / library `appdimens-roku`; Cursor/Copilot/Windsurf glob `*.brs`.
+- **Custom strategies on the new ports:** Python (`appdimens.custom`), C/C++ (`appdimens_custom.h` in GTK, Qt, LVGL, native games and Unreal) and Roku (`AppDimensCustom.brs`) in `appdimens-custom-strategies` and each platform skill.
+- **Platform router:** rows for Qt, GTK, LVGL, Roku, Python/Blender and the Unity/Unreal/Godot evidence files.
+- **Claude plugin directory:** `plugin/` (built by `scripts/build-plugin.mjs`, checked in CI) is the folder to submit — manifest, icon, skills, README and LICENSE only, no hooks or executables. The npm CLI moved from `bin/` to `cli/` (claude.ai does not install plugins with a `bin/` directory), no file carries an executable bit, and the changelog no longer names a bundled image path.
+
 ## Unreleased
 
 - **New skill `appdimens-custom-strategies`** (workflow group, installed with `--skills detected`): one place for custom strategies on every platform — which form to pick (typed one-liner, text formula, full config, shared JSON), the shared text language and JSON essentials, a per-platform syntax table verified against each library's source (Android/KMP/Games Kotlin, Unity C#, .NET, Swift, Flutter, Web, React Native), the rules (declare once, purity, fast path, value bounds ≥ 0, strict atomic JSON) and kit verification (`custom check`, `custom explain --formula`, `normalize --formula`). References: `references/platforms.md`, `references/language-and-json.md`. Linked from every platform skill's custom section, the decision table and the platform router; new eval case `custom-dotnet-desktop-rule`.
@@ -10,9 +17,17 @@
   - **Skills:** a *Project-defined strategies* section in the decision table, a custom row in the platform router, a *Custom strategies* section in every platform skill (Android XML: scaled only), and notes in the new-screen, code-edit, design-to-code and Claude Design workflows. There are 4 new eval cases (`custom-strategy-declared`, `custom-no-invented-id`, `custom-free-formula`, `custom-write-the-math`).
   - **Simplest form first:** the skills recommend writing the math as one typed code line with autocomplete when the user just wants a formula (Android/KMP/Games `scalingFormula { base * pow(sw / 360f, 0.8f) }` / `CustomScaleStrategy { … }`, Apple `CustomScaleStrategy { s in … }`, Flutter `customScaleStrategy((s) => …)`, .NET/Unity `CustomScaleStrategy.Create(s => …)`, web and React Native `scalingFormula(({ base, sw, pow }) => …)` / `customScaleStrategy(({ width, clamp }) => …)`), and the text formula (`{"id": "hud", "formula": "base * …"}`, `16.cdp("…")`) for JSON and remote config. Kit: `custom explain --formula "<text>"` and `normalize --formula "<text>"` (formulas shaped `base * (…)`; the token is printed as `cdp(16, '…')` / `16.cdp("…")`); `custom check` shows each strategy's `formula` and treats `base * (…)` formulas as screen-only; the bundled engine is resynced from webdimens (proportional-formula fast path, typed scopes).
 
+## 0.2.0
+
+- **New platform skills:** `appdimens-qt` (Qt 5/6 Widgets + QML), `appdimens-gtk` (GTK 3/4 and the portable C99 core), `appdimens-lvgl` (LVGL 8/9 on MCUs and embedded Linux) and `appdimens-python` (Tkinter, Qt for Python, Kivy, pygame, pyglet, wx, Dear PyGui, Panda3D, Blender).
+- **`appdimens-games` rewritten for 3.3.0:** Unity, Unreal Engine 5, Godot 4, custom C/C++ and .NET engines plus Android; viewports, per-API projections (OpenGL, Vulkan, D3D11/12, Metal, WebGPU), FOV policies, FSR/DLSS/XeSS/MetalFX/TSR render size, safe areas, Steam Deck/Proton, LOD.
+- **Detection:** `detect` and the installer recognise Qt (CMake `find_package(Qt5/6)`, qmake `.pro`), GTK (Meson/CMake `gtk4`/`gtk+-3.0`), LVGL (`lv_conf.h`, ESP-IDF `idf_component.yml`, PlatformIO), Python GUI/game projects and Blender add-ons, Unity (`ProjectSettings/ProjectVersion.txt`), Unreal (`*.uproject`) and Godot (`project.godot`).
+- **Schema:** `appdimens.config.json` targets accept the platforms `qt`, `gtk`, `lvgl`, `python` and the libraries `appdimens-qt`, `appdimens-gtk`, `appdimens-lvgl`, `appdimens-py`.
+- Cursor/Copilot/Windsurf globs for `*.qml`, `*.py`, `*.gd`, `*.uproject`, `*.uplugin`.
+
 ## 0.1.2
 
-- **Listing icon** for the Claude directory (`.claude-plugin/icon.png`).
+- **Listing icon** for the Claude directory.
 - **Lint rule ids renamed**: `px-token-in-css` is now `px-unit-in-css` and `js-only-token` is now `js-only-unit`. The kit's code and CLI output say "unit", "dimen" or "theme scale" instead of "token", which also means an access token. `normalize --theme` prints the same values under the header `theme scale`.
 - **README: Privacy and network** section. The plugin makes no network calls and reads no credentials or environment variables.
 - The visual eval screenshots are no longer committed; `compare.mjs` and `summary.mjs` regenerate them.

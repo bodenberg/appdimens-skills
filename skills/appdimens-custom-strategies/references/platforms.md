@@ -141,3 +141,49 @@ const hud = scalingFormula(({base, sw, pow}) => base * pow(sw / 360, 0.8));
 
 - Android XML resources (`@dimen/_16sdp`, `appdimens-sdps` / `-ssps`): scaled only. Set custom values from code (`16.cdp(context, Brand)` → px) or move the screen to Compose.
 - SDPS .NET packages (`Bodenberg.AppDimens.*Sdps*`): no custom strategies; use the AppDimens.Net family.
+
+## Python — `appdimens.custom` (Tkinter, Qt for Python, Kivy, pygame, Blender …)
+
+```python
+from appdimens import custom as c
+c.load_scaling_strategies(open("custom-strategies.json").read())   # ids + "default"
+c.cdp(16, "brand"); c.csp(14, "readableText"); c.cdp_px(24, "brand")
+hud = c.scaling_formula("base * pow(sw / 360, 0.8)")              # or a lambda f: f.base * f.pow(...)
+product = c.custom_scale_strategy(lambda s: s.clamp(s.width / 360, 0.85, 1.8))
+```
+
+- Default / scope: `c.set_default_scaling_strategy("brand")`; values use the current `appdimens` scope, or `target=` a `ScreenSnapshot` / `Metrics`.
+- Debug: `strategy.explain(target)`. Errors: `ValueError` with the JSON path (atomic load).
+- Docs: `appdimens-py/docs/CUSTOM.md`.
+
+## C / C++ — `appdimens_custom.h` (GTK, Qt, LVGL, native games, Unreal)
+
+```c
+#define ADC_IMPLEMENTATION            /* one .c/.cpp */
+#include "appdimens/appdimens_custom.h"   /* LVGL: "appdimens_custom.h" */
+char err[256];
+adc_load_json(json, err, sizeof err);                          /* 1 = ok */
+float pad = adc_dp(adc_get("brand"), metrics, 16);             /* adc_sp, adc_px, adc_factor */
+adc_strategy *hud = adc_formula("base * pow(sw / 360, 0.8)", err, sizeof err);
+adc_register(adc_custom_factor("product", product_fn, NULL));
+```
+
+- `metrics`: GTK `appdimens_scope_get_metrics(scope)` · Qt `&scope->metrics()` · LVGL `lv_appdimens_get_metrics()` · games `adg_acquire()` (REFERENCE mode: values are final px).
+- Threads: `adc_dp`/`adc_sp` memoize per strategy (one UI/game thread); elsewhere `adc_resolve` into your own `adc_resolved` + `adc_scale`.
+- Debug: `adc_explain(s, &screen, buf, n)`. Errors: `0` + message in `err`. Not in `AD_FIXED_POINT` builds.
+- Docs: `docs/CUSTOM.md` in appdimens-gtk / -qt / -lvgl, `appdimens-games/DOCUMENTATION/CUSTOM-NATIVE.md`.
+
+## Roku — `AppDimensCustom.brs` (BrightScript / SceneGraph)
+
+```brightscript
+err = AppDimens_LoadStrategies(ReadAsciiFile("pkg:/config/custom-strategies.json"))   ' "" = ok
+ad = AppDimens_Custom()
+pad = ad.cdp(16, "brand") : txt = ad.csp(14, "readableText")
+hud = ad.cdp(64, "base * pow(sw / 360, 0.8)")
+AppDimens_CustomFactor("product", function(s)
+    return s.width / 360.0
+end function)
+```
+
+- Device class `tv`; reference mode returns coordinates (like `sdp`). The registry is per BrightScript context: load in each component (keep the JSON text on `m.global`).
+- Docs: `appdimens-roku/docs/CUSTOM.md`.

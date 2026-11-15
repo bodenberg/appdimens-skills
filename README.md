@@ -94,9 +94,14 @@ Agents that share a folder (`.agents/skills`) get one copy. The CLI, schemas and
 | [appdimens-react-native](https://github.com/bodenberg/appdimens-react-native) | 3.2.0 | `react-native` |
 | [appdimens-web](https://github.com/bodenberg/appdimens-web) (`webdimens`) | 3.2.1 | `web` |
 | [appdimens-net-binding](https://github.com/bodenberg/appdimens-net-binding) (MAUI, WPF, WinForms, WinUI, .NET for Android) | 3.6.1 | `dotnet` |
-| [appdimens-games](https://github.com/bodenberg/appdimens-games) (Android games, NDK, Vulkan, Unity) | 3.2.0 | `games` |
+| [appdimens-qt](https://github.com/bodenberg/appdimens-qt) (Qt 5/6 Widgets, QML) | 3.2.0 | `qt` |
+| [appdimens-gtk](https://github.com/bodenberg/appdimens-gtk) (GTK 3/4, C/C++ core) | 3.2.0 | `gtk` |
+| [appdimens-lvgl](https://github.com/bodenberg/appdimens-lvgl) (LVGL 8/9, MCUs) | 3.2.0 | `lvgl` |
+| [appdimens-roku](https://github.com/bodenberg/appdimens-roku) (Roku BrightScript / SceneGraph) | 3.2.0 | `roku` |
+| [appdimens-py](https://github.com/bodenberg/appdimens-py) (Tkinter, Qt for Python, Kivy, pygame, Blender) | 3.2.0 | `python` |
+| [appdimens-games](https://github.com/bodenberg/appdimens-games) (Unity, Unreal, Godot, C/C++, .NET, Android; GL/Vulkan/D3D/Metal; FSR/DLSS/XeSS) | 3.3.0 | `games` |
 
-130 concrete claims of these skills (install lines, versions, packages, imports, setup calls, token and API names) are checked against the library sources with `scripts/verify-upstream.mjs`. The skills own **base screen and intent**; each library's own skill stays the authority on API details.
+149 concrete claims of these skills (install lines, versions, packages, imports, setup calls, token and API names) are checked against the library sources with `scripts/verify-upstream.mjs`. The skills own **base screen and intent**; each library's own skill stays the authority on API details.
 
 ## The project contract
 

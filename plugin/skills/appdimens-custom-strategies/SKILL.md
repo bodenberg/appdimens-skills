@@ -1,0 +1,85 @@
+---
+name: appdimens-custom-strategies
+description: Write, review or share a project's OWN AppDimens scaling strategy instead of a built-in (sdp, asdp, fsdp…) on any platform — Android/Compose, KMP, Games + Unity C#, .NET, iOS/macOS Swift, Flutter, Web, React Native. Trigger when the user wants their own scaling formula or growth law ("16 × (width ÷ 360)^0.8", "never above 1.6×"), per-device rules (tablet, TV, watch, desktop, landscape, split screen), a shared strategies JSON or design token for several apps/platforms, remote config or A/B tests on scaling, or names cdp/csp, Cdp/Csp, CustomScaleStrategy, scalingFormula, scalingFormulaOf, customScaleStrategy, scalingStrategy, defineScalingStrategy, defineCustomStrategy, ScalingStrategy.Define/Formula, ScalingStrategies, customStrategies or custom:<id>. It picks the simplest form (typed one-liner, text formula, full config, JSON), writes it with each platform's exact API, and verifies it with the kit.
+---
+
+# AppDimens — custom scaling strategies (every platform)
+
+A custom strategy is the project's own growth law for `cdp` (dimensions) and `csp` (text). Every platform ships the same engine: the **text language and the JSON format are identical**, and a shared 540-case fixture keeps the numbers the same on Android, KMP, Games + Unity, Apple, Flutter, React Native, Web and .NET. The modules are **unreleased** (on each library's `main`/feature branch): say so when you add the dependency.
+
+Base screen and intent still come first (`appdimens-layout-intent`); this skill only decides **how the strategy is written**. The platform skill (`appdimens-android`, `appdimens-dotnet`, …) owns install and setup.
+
+```
+ratio  = axis(window) / axis(reference)                       // default: sw / 300
+factor = clamp( curve(ratio) × multiplier × AR , min, max )   // once per window
+scaled = clampValue( base × factor )   // the configured result
+value  = formula ? formula(base, scaled, factor) : scaled   // a formula replaces the result (it gets the original base)
+```
+
+## 1. Decide the form
+
+1. **Does a built-in pass visual QA?** (`sdp`, `asdp`, `fsdp`, `pwsdp`…) Keep it. Custom is for when none fits.
+2. **The project already declares strategies** (`customStrategies` in `appdimens.config.json`): use the declared ids only (`custom:<id>`, `16.cdp(Brand)`, `cdp(16, 'brand')`). Never invent an id or edit the file for one screen; propose the JSON change and ask.
+3. **The user describes math, no JSON needed** → a typed one-liner:
+   - result multiplies every value → **factor**: `CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }` (once per window, one multiply per value);
+   - result is the final value from `base` → **formula**: `scalingFormula { base * pow(sw / 360f, 0.8f) }` (cached per value). If it is `base × screen-term`, prefer the factor form.
+4. **The formula must live outside code** (JSON, design tokens, remote config, A/B test, another platform) → the **text** form: `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}`, `scalingFormula("…")`, inline `16.cdp("…")`.
+5. **Per-device / per-range / orientation behavior, factor or value bounds, a font-scale cap, another reference frame** → the **full configuration** (builder/DSL or JSON), with `rules` instead of call-site `if`s; start from a built-in or preset (`extends`).
+6. **Several apps or platforms share it** → one strategies JSON (schema `schemas/custom-strategy.schema.json`), loaded once at startup, declared in `appdimens.config.json`:
+
+```json
+"strategy": { "layout": "custom:brand", "text": "custom:brand" },
+"customStrategies": { "file": "design/appdimens-strategies.json", "ids": ["brand"] }
+```
+
+## 2. Platform syntax
+
+Names verified against each library's source. Code lambdas use the same names as the text language (camelCase; PascalCase in C#).
+
+| Platform (module) | Factor one-liner | Formula one-liner · text | Full config | Use (units) | Load JSON · lookup |
+|---|---|---|---|---|---|
+| Android Compose / Views (`appdimens-dynamic-custom`) | `CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }` | `scalingFormula { base * pow(sw / 360f, 0.8f) }` · `scalingFormula("…")` | `scalingStrategy("brand") { curve = power(0.8f); on(DeviceClass.TABLET) { … } }` | Compose `16.cdp(s)` Dp, `14.csp(s)` TextUnit, `cdpPx`; Views `16.cdp(context, s)` **px**, `cdpDp`, `cspUnits` | `ScalingStrategies.loadAsset(context, path)` / `loadJson(text)` · `getOrThrow("brand")` |
+| KMP (`appdimens-kmp-custom`) | same as Android | same as Android | same DSL | Compose `16.cdp(s)`; code `16.cdp(appContext, s)` **px** | `ScalingStrategies.loadJson(text)` · `getOrThrow` |
+| Games Kotlin (`appdimens-games-custom`) | same as Android | same as Android | same DSL | `64.cdp(s)` **px** (live `GameScreen`), `cdpDp`, `cdpi` (resize-invariant), `csp`; Compose HUD `64.cdp(s)` | `loadJson` / `loadAsset` · `getOrThrow` |
+| Games Unity / Godot C# (`AppDimensGamesCustom.cs` + `.Engine.cs`, ns `AppDimensGames.Custom`) | `CustomGames.CustomScaleStrategy(s => s.Clamp(s.Width / 360f, 0.85f, 1.8f))` | `CustomGames.Formula(s => s.Base * s.Pow(s.Sw / 360f, 0.8f))` · `CustomGames.Formula("…")` | `ScalingStrategy.Define("brand", b => { … })` | `64f.Cdp(s)`, `CdpPx`, `Cdpi`, `Csp` (final size) · `CustomKernels.Cdp(64f, s)` | `ScalingStrategies.LoadJson(text)` · `Require` |
+| .NET (`AppDimens.Net.Custom`, AppDimens.Net family only) | `CustomScaleStrategy.Create(s => s.Clamp(s.Width / 360f, 0.85f, 1.8f))` | `ScalingStrategy.Formula(s => s.Base * s.Pow(s.Sw / 360f, 0.8f))` · `ScalingStrategy.Formula("…")`, `16.Cdp("…")` | `ScalingStrategy.Define("brand", b => { b.Curve = ScalingCurve.Power(0.8f); b.On(DeviceClass.Tablet, r => …); })` | `16.Cdp(s)` dp, `CdpPx` px, `Csp` sp units, `CspDp` / `CspPx` final size; explicit `IAppDimensContext` overloads | `ScalingStrategies.LoadJson(text)` / `CustomExtensions.LoadFile(path)` · `Require` |
+| Apple Swift (`AppDimensCustom`) | `CustomScaleStrategy { s in s.clamp(s.width / 360, 0.85, 1.8) }` | `scalingFormula { $0.base * $0.pow($0.sw / 360, 0.8) }` · `try scalingFormula("…")`, `try 16.cdp("…")` | `try ScalingStrategy.define("brand", curve: .power(0.8), minFactor: 0.85, maxFactor: 1.6, rules: […])` | `16.cdp(s)` / `14.csp(s)` CGFloat (csp = final point size), `.scalingStrategy(s)`, `@CustomDimension(16)` | `try ScalingStrategies.load(resource:)` / `load(json:)` · `try ScalingStrategies.require("brand")` |
+| Flutter (`appdimens_custom`) | `customScaleStrategy((s) => s.clamp(s.width / 360, 0.85, 1.8))` | `scalingFormulaOf((s) => s.base * s.pow(s.sw / 360, 0.8))` · `scalingFormula('…')`, `16.cdpFormula('…')` | `ScalingStrategy.define('brand', curve: ScalingCurve.power(0.8), rules: [ScalingRule.on({…}, ScalingPatch(…))])` | `16.cdpWith(s)`, `14.cspWith(s)`, `cdpPxWith`; `ScalingStrategyScope` + `context.cdp(16)` | `ScalingStrategies.loadJson(text)` · `getOrThrow` |
+| Web (`webdimens/custom`) | `customScaleStrategy(({ width, clamp }) => clamp(width / 360, 0.85, 1.8))` | `scalingFormula(({ base, sw, pow }) => base * pow(sw / 360, 0.8))` · `scalingFormula('…')`, `cdp(16, '…')` | `defineScalingStrategy({ id: 'brand', curve: { type: 'power', exponent: 0.8 }, rules: […] })` | `cdp(16, s)` CSS px, `csp`, `s.css(16)` / `cdpCss` → `calc(16 * var(--cdp-brand))`, CSS `16cdp-brand` | `loadScalingStrategies(json)` · `requireScalingStrategy('brand')` |
+| React Native (`appdimens-react-native/custom`) | `customScaleStrategy(({width, clamp}) => clamp(width / 360, 0.85, 1.8))` | `scalingFormula(({base, sw, pow}) => base * pow(sw / 360, 0.8))` · `cdp(16, '…')` | `defineCustomStrategy({...})` | `cdp(16, s)`, `csp` (for `fontSize`; never a `Px` value there), `useCustomStrategy(s)`, `CustomStrategyProvider` | `loadCustomStrategies(json)` · `requireCustomStrategy('brand')` |
+
+Android XML resources (`@dimen/_16sdp`) cannot follow a custom strategy; SDPS .NET packages have none either. Per-platform details, debug helpers and error types: [references/platforms.md](references/platforms.md).
+
+## 3. The shared text language and JSON (essentials)
+
+- **Variables:** `sw width height shortSide longSide diagonal perimeter aspectRatio density fontScale` (dp), flags `phone tablet desktop tv watch car vr landscape portrait multiWindow` (1/0 in text, booleans in code), `ratio` (= `sw / 300` by default, so `base * ratio` = `sdp`); curves add `axis ref refWidth refHeight`; formulas add `base` (the value passed), `scaled` (`base × factor` after value bounds) and `factor`.
+- **Functions:** `min max` (variadic) `clamp(x, lo, hi)` `pow sqrt exp ln/log log10 log2 abs sign floor ceil round` (half up) `lerp step smoothstep`; operators `+ - * / % ^ == != < <= > >= && || ! ?:`, constants `pi e true false`.
+- **Fast path:** a formula shaped `base * E` (E reads no `base`/`scaled`/`factor`) costs one multiply. `base * sw / 360` is `(base * sw) / 360` and misses it — write `base * (sw / 360)`.
+- **Where text goes:** `"formula": "…"` (final value) or `"curve": {"type": "expression", "expression": "…"}` (factor).
+- **Document:** `{"version": 1, "default": "brand", "strategies": [{"id": "brand", "extends": "power", "reference": {"width": 360, "height": 640}, "axis": "smallestWidth", "curve": {…}, "clamp": {"min": 0.85, "max": 1.6}, "valueClamp": {…}, "aspectRatio": true, "fontScale": {"max": 1.3}, "ignoreMultiWindow": false, "formula": "…", "rules": [{"name": "large", "when": {"device": ["tablet", "desktop"]}, "set": {…}}]}]}`.
+- **Rules:** a `when` matches when every key matches (`device`, `orientation`, `smallestWidth`/`width`/`height`/`aspectRatio` as `{"min", "max"}` with `min <= v < max`, `multiWindow`); all matching rules apply in order, later wins; `set` takes any field except `id`, `extends`, `rules`.
+
+Full language, curve table and the validation messages: [references/language-and-json.md](references/language-and-json.md).
+
+## 4. Rules to follow
+
+- **Declare once.** A strategy is a top-level `val` / `static readonly` field / module-level `const` / `final`, or comes from the JSON. Never build `CustomScaleStrategy { }`, `scalingFormula { }`, `customScaleStrategy(…)`, `ScalingStrategy.Formula(s => …)` inside a composable, `build()`, render function or resize handler: each call is a new strategy and a new cache id (65 536 per process). Inline text (`16.cdp("…")`) is shared per text and is fine.
+- **Purity.** Lambdas read only the scope: no state, settings, time or I/O (the factor is memoized per window, values are cached). A different state is a different strategy or a rule. Watch for shadowing in Kotlin: a local `val tv` hides the scope flag `tv`.
+- **Fast path.** Prefer a factor (one-liner factor, curve, rules, bounds, aspect ratio) over a per-value formula; text formulas shaped `base * (…)`; `clampValue` / `valueClamp` only for real absolute limits.
+- **Value bounds ≥ 0.** `valueClamp` / `clampValue` bound the magnitude (a negative offset mirrors a positive one, 0 stays 0); negative bounds are rejected. Crossed factor bounds are rejected when declared; crossed bounds produced by rules let the max win.
+- **JSON strictness.** Loading is strict and atomic: wrong types (`"true"` for a boolean, `"when": "tablet"`, `"width": 600` instead of `{"min": 600}`), unknown curve types or variables, duplicate ids, `extends` cycles, an unknown `default` → error with the JSON path, and **nothing** is registered. Code lambdas cannot be exported to JSON; use text when the user mentions JSON, remote config, A/B tests or other platforms.
+- **Text uses `csp`** with the strategy's font-scale policy (`follow` default, `ignore`, `{"max": 1.3}`); never put a px value where the toolkit expects sp/pt/fontSize.
+- **Device class differs per platform:** Android/KMP from the UI mode and `sw ≥ 600`; .NET desktop OSes are `desktop` (override `CustomDimens.DeviceClassResolver`); web: a fine pointer means `desktop`; React Native: `Platform.isTV` → `tv`, macOS/Windows → `desktop`; otherwise `sw ≥ 600` is a tablet everywhere. A tablet-only rule may never fire on desktop: include `desktop` or use a size rule.
+- **Platform quirks:** Apple falls back to factor 1 on a non-finite factor (others throw); Dart has no overloading (`cdpWith`, `cdpFormula`, `scalingFormulaOf`); Views, KMP code and Games Kotlin `cdp(...)` return **px**.
+
+## 5. Verify with the kit
+
+```bash
+npx appdimens-skills kit custom check design/appdimens-strategies.json                   # schema + engine: types, extends, cycles, formulas, bounds
+npx appdimens-skills kit custom explain brand --devices medium-phone,medium-tablet --values 16,24
+npx appdimens-skills kit custom explain --formula "base * pow(sw / 360, 0.8)" --devices medium-phone,medium-tablet --values 16
+npx appdimens-skills kit normalize --device medium-phone --strategy custom:brand 16 24    # design values → base values for cdp(brand)
+npx appdimens-skills kit normalize --device medium-phone --formula "base * (sw / 360)" 16 24
+```
+
+`normalize --formula` needs a `base * (…)` formula (it divides by one factor). In the app, print the breakdown: `explainCurrent()` (Compose), `explain(context)` (Views/KMP), `ExplainCurrent()` (.NET), `explain()` (Swift, Flutter, web, RN), `CustomKernels.Explain(s)` (Unity). After the edit, run `appdimens-kit lint` on the changed files.

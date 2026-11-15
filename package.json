@@ -1,6 +1,6 @@
 {
   "name": "appdimens-skills",
-  "version": "0.1.2",
+  "version": "0.3.0",
   "description": "Skills for AI coding agents (Claude Code, Codex, Gemini CLI, OpenClaw, Hermes, Cursor, Copilot, Windsurf) that implement layouts with AppDimens: base screen, layout intent, every AppDimens library, and a validation CLI.",
   "keywords": [
     "appdimens",
@@ -18,7 +18,17 @@
     "sdp",
     "ssp",
     "figma",
-    "design-to-code"
+    "design-to-code",
+    "qt",
+    "gtk",
+    "lvgl",
+    "python",
+    "blender",
+    "unity",
+    "unreal",
+    "godot",
+    "roku",
+    "brightscript"
   ],
   "homepage": "https://github.com/bodenberg/appdimens-skills#readme",
   "repository": {
@@ -35,11 +45,11 @@
     "node": ">=18"
   },
   "bin": {
-    "appdimens-skills": "bin/appdimens-skills.mjs",
+    "appdimens-skills": "cli/appdimens-skills.mjs",
     "appdimens-kit": "tools/appdimens-kit/cli.mjs"
   },
   "files": [
-    "bin/",
+    "cli/",
     "installer/*.mjs",
     "skills/",
     "schemas/",
@@ -57,8 +67,9 @@
   "scripts": {
     "test": "node --test tools/appdimens-kit/test/*.test.mjs installer/test/*.test.mjs",
     "build:adapters": "node scripts/build-adapters.mjs",
-    "check": "node scripts/build-adapters.mjs --check && node --test tools/appdimens-kit/test/*.test.mjs installer/test/*.test.mjs",
-    "prepublishOnly": "npm run check"
+    "check": "node scripts/build-adapters.mjs --check && node scripts/build-plugin.mjs --check && node --test tools/appdimens-kit/test/*.test.mjs installer/test/*.test.mjs",
+    "prepublishOnly": "npm run check",
+    "build:plugin": "node scripts/build-plugin.mjs"
   },
   "publishConfig": {
     "access": "public"

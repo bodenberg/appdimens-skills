@@ -1,6 +1,6 @@
 # Platform router — which AppDimens library, which skill
 
-Versions current as of AppDimens 3.2.0 (Web `webdimens` 3.2.1, .NET 3.6.1). Each library README is the final word on its install line.
+Versions current as of AppDimens 3.2.0 (Web `webdimens` 3.2.1, .NET 3.6.1, Games 3.3.0). Each library README is the final word on its install line.
 
 ## Detect from the repository
 
@@ -17,7 +17,12 @@ Versions current as of AppDimens 3.2.0 (Web `webdimens` 3.2.1, .NET 3.6.1). Each
 | `*.csproj` with `<UseMaui>true</UseMaui>` | `dotnet-maui` | `Bodenberg.AppDimens.Maui.Sdps` or `AppDimens.Net.Maui` + `AppDimens.Net.Sdk` | `appdimens-dotnet` |
 | `*.csproj` with `<UseWPF>` / `<UseWindowsForms>` / WindowsAppSDK | `dotnet-desktop` | `Bodenberg.AppDimens.Sdps.Wpf/.WinForms/.WinUI` or `AppDimens.Net.Wpf/.WinForms/.WinUI` | `appdimens-dotnet` |
 | `*.csproj` targeting `net*-android` | `dotnet-android` | `Bodenberg.AppDimens.Sdps` / `.Ssps` / `.Dynamic` | `appdimens-dotnet` |
-| Game loop / `SurfaceView` / `GLSurfaceView` / NDK `CMakeLists.txt` / Vulkan / Unity C# | `games` | `appdimens-games` (+ `appdimens-games-native`) | `appdimens-games` |
+| Game loop / `SurfaceView` / `GLSurfaceView` / NDK `CMakeLists.txt` / Vulkan; Unity (`ProjectSettings/ProjectVersion.txt`), Unreal (`*.uproject`), Godot (`project.godot`) | `games` | `appdimens-games` (+ `appdimens-games-native`) | `appdimens-games` |
+| CMake `find_package(Qt5/Qt6)`, qmake `.pro`, `*.qml` | `qt` | `appdimens-qt` | `appdimens-qt` |
+| Meson/CMake with `gtk4` / `gtk+-3.0` / `libadwaita-1` | `gtk` | `appdimens-gtk` (+ C99 core `appdimens.h`) | `appdimens-gtk` |
+| `lv_conf.h`, ESP-IDF `idf_component.yml` / PlatformIO with `lvgl` | `lvgl` | `appdimens-lvgl` | `appdimens-lvgl` |
+| Roku `manifest` (`major_version=`, `ui_resolutions=`), `source/*.brs`, SceneGraph `components/*.xml` | `roku` | `appdimens-roku` | `appdimens-roku` |
+| `pyproject.toml` / `requirements.txt` with Tkinter, PySide/PyQt, Kivy, pygame, pyglet, wx, Dear PyGui, Panda3D; Blender `bl_info` / `blender_manifest.toml` | `python` | `appdimens` (PyPI, repo `appdimens-py`) | `appdimens-python` |
 
 Tie-breakers:
 - Android Compose + XML in the same app is common: Compose screens → `appdimens-dynamic`, XML layouts → `appdimens-sdps`/`ssps`. Both libraries share the same numbers.

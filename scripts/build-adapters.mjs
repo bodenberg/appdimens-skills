@@ -23,6 +23,10 @@ const GLOBS = {
   'appdimens-react-native': '', // .tsx/.jsx also match web apps: rely on the description
   'appdimens-web': '**/*.css,**/*.scss,**/*.html,**/*.vue,**/*.svelte,**/*.astro',
   'appdimens-dotnet': '**/*.xaml', // .cs also matches Unity games
+  'appdimens-qt': '**/*.qml',
+  'appdimens-roku': '**/*.brs,**/*.bs',
+  'appdimens-python': '**/*.py',
+  'appdimens-games': '**/*.gd,**/*.uproject,**/*.uplugin',
 };
 
 const ORDER = ['appdimens-layout-intent', 'appdimens-design-to-code', 'appdimens-claude-design', 'appdimens-code-edit', 'appdimens-new-screen', 'appdimens-custom-strategies'];
