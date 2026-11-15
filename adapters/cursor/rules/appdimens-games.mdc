@@ -11,15 +11,21 @@ alwaysApply: false
 Decide intent first with `appdimens-layout-intent`; in games the role axis gains `hud` and `world`. Base screen = the
 **reference resolution** the HUD is authored at (default 1920×1080). Upstream skill: `bodenberg/appdimens-games/skills/SKILL.md`.
 
+## Repository layout (appdimens-games)
+
+One folder per platform: `android/` (Gradle: Kotlin, Compose, Java, NDK — `cd android && ./gradlew …`),
+`native/` (C/C++ SDK for every OS), `engines/{unity,unreal,godot}`, `dotnet/` (.NET package + C# drop-in),
+`tools/` (formula oracle, engine sync), `DOCUMENTATION/`.
+
 ## Pick the binding
 
 | Engine / stack | Wire-up |
 |---|---|
-| Unity 2019.4+ (all platforms) | UPM `…/appdimens-games.git?path=/bindings/unity/com.bodenberg.appdimens.games`; `AppDimensScreen` is automatic; add `AppDimensCanvasScaler` to Canvases, `AppDimensSafeArea` to the HUD root, `AppDimensCamera` to cameras |
-| Unreal Engine 5 | plugin `bindings/unreal/AppDimens`; *User Interface ▸ DPI Scale Rule = Custom → AppDimensDPIScalingRule*; Blueprint `Sdp/Asdp/Ftsdp`, `HorizontalFovForAspect`, `ApplyUpscalerPreset` |
-| Godot 4 | addon `bindings/godot/addons/appdimens` (autoload `AppDimens`): `AppDimens.asdp(v)`, `apply_ui_scale()`, `AppDimensGames.configure_3d_scaling(...)` |
+| Unity 2019.4+ (all platforms) | UPM `…/appdimens-games.git?path=/engines/unity/com.bodenberg.appdimens.games`; `AppDimensScreen` is automatic; add `AppDimensCanvasScaler` to Canvases, `AppDimensSafeArea` to the HUD root, `AppDimensCamera` to cameras |
+| Unreal Engine 5 | plugin `engines/unreal/AppDimens`; *User Interface ▸ DPI Scale Rule = Custom → AppDimensDPIScalingRule*; Blueprint `Sdp/Asdp/Ftsdp`, `HorizontalFovForAspect`, `ApplyUpscalerPreset` |
+| Godot 4 | addon `engines/godot/addons/appdimens` (autoload `AppDimens`): `AppDimens.asdp(v)`, `apply_ui_scale()`, `AppDimensGames.configure_3d_scaling(...)` |
 | C / C++ engines (SDL, GLFW, raylib, bgfx, Vulkan/D3D/Metal renderers) | `native/include/appdimens/games.h`: `adg_surface_default` + `adg_metrics_from_surface` on swapchain resize; C ABI `adg_publish_px` + `adg_live_*` across threads |
-| .NET (MonoGame, FNA, Stride, Godot .NET) | `bindings/csharp/AppDimens.Games`: `GameDimens.Publish(new Surface(w, h))`, `Live.Current.Asdp(v)` |
+| .NET (MonoGame, FNA, Stride, Godot .NET) | `dotnet/AppDimens.Games`: `GameDimens.Publish(new Surface(w, h))`, `Live.Current.Asdp(v)` |
 | Android (Compose/Kotlin/Java/NDK) | `implementation(platform("io.github.bodenberg:appdimens-games-bom:3.3.0"))` + `appdimens-games`; `GameScreen.updateFromContext(context)` on resize; code returns px (`48.sdp(context)`) |
 
 ## Element → policy (REFERENCE mode: values are px at the reference; plain tokens return final px)
