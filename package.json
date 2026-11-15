@@ -1,6 +1,6 @@
 {
   "name": "appdimens-skills",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Skills for AI coding agents (Claude Code, Codex, Gemini CLI, OpenClaw, Hermes, Cursor, Copilot, Windsurf) that implement layouts with AppDimens: base screen, layout intent, every AppDimens library, and a validation CLI.",
   "keywords": [
     "appdimens",
@@ -18,7 +18,15 @@
     "sdp",
     "ssp",
     "figma",
-    "design-to-code"
+    "design-to-code",
+    "qt",
+    "gtk",
+    "lvgl",
+    "python",
+    "blender",
+    "unity",
+    "unreal",
+    "godot"
   ],
   "homepage": "https://github.com/bodenberg/appdimens-skills#readme",
   "repository": {

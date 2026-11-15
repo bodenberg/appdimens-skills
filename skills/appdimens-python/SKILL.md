@@ -1,0 +1,32 @@
+---
+name: appdimens-python
+description: Implement layout intent in Python apps and tools with appdimens (PyPI) — Tkinter, PySide/PyQt, Kivy, pygame, pyglet/arcade, wxPython, Dear PyGui, Panda3D/Ursina and Blender add-ons/render text — using ad.sdp(16), ad.ssp(14), ad.dimen("16sdp"), Dimens scopes and the toolkit adapters. Use when sizing Python GUI/game UI or Blender UI/overlays/text objects.
+---
+
+# Python — `appdimens` 3.2.0 (repo `appdimens-py`)
+
+Decide intent first with `appdimens-layout-intent`. Upstream skill: `bodenberg/appdimens-py/skills/appdimens-py/SKILL.md`.
+
+## Install / wire-up
+
+`pip install appdimens` (pure Python 3.7+, no dependencies). Build snapshots with an adapter from `appdimens.integrations`:
+Tk `bind_tk(root, scope)` · Qt `metrics_from_qt(widget)` in `resizeEvent` · Kivy `bind_kivy(scope)` · pygame
+`metrics_from_pygame(surface)` on `VIDEORESIZE` · pyglet `metrics_from_pyglet(window)` · wx `metrics_from_wx(frame)` ·
+anything else `metrics_from_pixels(w_px, h_px, density)`.
+
+## Tokens
+
+`scope.sdp(16)`, `scope.ssp(14)`, `scope.asdp(16)` (desktop/TV), `scope.ftsdp(24)` (never overflow), any family token as an
+attribute (`scope.hdpLw`, `scope.sdpPxia`), strings `scope("16asdp")`. Toolkits that take **physical pixels** (pygame, Pillow,
+`blf`, wx on Windows, Tk fonts with negative sizes) use the `Px` forms: `sdpPx`, `sspPx`.
+
+## Blender
+
+Install the zip built by `scripts/build_blender_addon.py`. UI/overlays: `region_dimens(context.region)` (follows Resolution
+Scale + monitor DPI) → `blf_size(0, d.sspPx(13))`. Render-relative text: `render_dimens(scene).asdp(0.12)`; use `ftsdp` when
+the delivery aspect changes (16:9 ↔ 9:16). The **Fit Text to Render** operator rescales selected text objects.
+
+## Rules
+
+- One `Dimens` scope per window; re-layout in `scope.add_listener(cb)`.
+- Keep resolvers in loops: `f = scope.fn("asdp")` then `f(v)`.

@@ -16,6 +16,10 @@ export const LIBRARIES_OF_PLATFORM = {
   'dotnet-maui': ['appdimens-net-sdps', 'appdimens-net'],
   'dotnet-desktop': ['appdimens-net-sdps', 'appdimens-net'],
   'dotnet-android': ['appdimens-net-sdps', 'appdimens-net-android'],
+  qt: ['appdimens-qt'],
+  gtk: ['appdimens-gtk'],
+  lvgl: ['appdimens-lvgl'],
+  python: ['appdimens-py'],
   games: ['appdimens-games'],
 };
 

@@ -34,6 +34,10 @@ const PLATFORM_OF_TARGET = {
   'dotnet-maui': 'appdimens-dotnet',
   'dotnet-desktop': 'appdimens-dotnet',
   'dotnet-android': 'appdimens-dotnet',
+  qt: 'appdimens-qt',
+  gtk: 'appdimens-gtk',
+  lvgl: 'appdimens-lvgl',
+  python: 'appdimens-python',
   games: 'appdimens-games',
 };
 const LIBRARY_OF_TARGET = {
@@ -48,6 +52,10 @@ const LIBRARY_OF_TARGET = {
   'dotnet-maui': 'appdimens-net-sdps',
   'dotnet-desktop': 'appdimens-net',
   'dotnet-android': 'appdimens-net-android',
+  qt: 'appdimens-qt',
+  gtk: 'appdimens-gtk',
+  lvgl: 'appdimens-lvgl',
+  python: 'appdimens-py',
   games: 'appdimens-games',
 };
 const SUMMARY = {
@@ -64,7 +72,11 @@ const SUMMARY = {
   'appdimens-react-native': 'React Native / Expo — appdimens-react-native',
   'appdimens-web': 'HTML/CSS, React, Vue, Svelte, Angular — webdimens',
   'appdimens-dotnet': 'MAUI, WPF, WinForms, WinUI, .NET for Android — appdimens-net-binding',
-  'appdimens-games': 'Android games, NDK, Vulkan, Unity — appdimens-games',
+  'appdimens-qt': 'Qt 5/6 Widgets and QML — appdimens-qt',
+  'appdimens-gtk': 'GTK 3/4 and C/C++ toolkits — appdimens-gtk',
+  'appdimens-lvgl': 'LVGL 8/9 on MCUs and embedded Linux — appdimens-lvgl',
+  'appdimens-python': 'Tkinter, Qt for Python, Kivy, pygame, Blender — appdimens (PyPI)',
+  'appdimens-games': 'Unity, Unreal, Godot, C/C++, .NET and Android games — appdimens-games',
 };
 // Cursor / Windsurf / Copilot auto-attach globs for platform skills.
 const GLOBS = {
@@ -75,6 +87,9 @@ const GLOBS = {
   'appdimens-flutter': '**/*.dart',
   'appdimens-web': '**/*.{css,scss,html,vue,svelte,astro}',
   'appdimens-dotnet': '**/*.xaml',
+  'appdimens-qt': '**/*.qml',
+  'appdimens-python': '**/*.py',
+  'appdimens-games': '**/*.{gd,uproject,uplugin}',
 };
 
 export function catalog() {

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+- **New platform skills:** `appdimens-qt` (Qt 5/6 Widgets + QML), `appdimens-gtk` (GTK 3/4 and the portable C99 core), `appdimens-lvgl` (LVGL 8/9 on MCUs and embedded Linux) and `appdimens-python` (Tkinter, Qt for Python, Kivy, pygame, pyglet, wx, Dear PyGui, Panda3D, Blender).
+- **`appdimens-games` rewritten for 3.3.0:** Unity, Unreal Engine 5, Godot 4, custom C/C++ and .NET engines plus Android; viewports, per-API projections (OpenGL, Vulkan, D3D11/12, Metal, WebGPU), FOV policies, FSR/DLSS/XeSS/MetalFX/TSR render size, safe areas, Steam Deck/Proton, LOD.
+- **Detection:** `detect` and the installer recognise Qt (CMake `find_package(Qt5/6)`, qmake `.pro`), GTK (Meson/CMake `gtk4`/`gtk+-3.0`), LVGL (`lv_conf.h`, ESP-IDF `idf_component.yml`, PlatformIO), Python GUI/game projects and Blender add-ons, Unity (`ProjectSettings/ProjectVersion.txt`), Unreal (`*.uproject`) and Godot (`project.godot`).
+- **Schema:** `appdimens.config.json` targets accept the platforms `qt`, `gtk`, `lvgl`, `python` and the libraries `appdimens-qt`, `appdimens-gtk`, `appdimens-lvgl`, `appdimens-py`.
+- Cursor/Copilot/Windsurf globs for `*.qml`, `*.py`, `*.gd`, `*.uproject`, `*.uplugin`.
+
 ## 0.1.2
 
 - **Listing icon** for the Claude directory (`.claude-plugin/icon.png`).

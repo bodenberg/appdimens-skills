@@ -296,3 +296,30 @@ test('an invalid config stops lint, normalize, detect and the hook', () => {
   assert.equal(relinted.status, 0);
   assert.match(relinted.stdout, /1 warning/);
 });
+
+test('detectTargets finds Qt, GTK, LVGL, Python/Blender, Unity, Unreal and Godot projects', async () => {
+  const { detectTargets } = await import('../lib/project.mjs');
+  const { mkdtempSync, mkdirSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const make = (files) => {
+    const d = mkdtempSync(join(tmpdir(), 'adk-'));
+    for (const [rel, body] of Object.entries(files)) {
+      mkdirSync(join(d, rel, '..'), { recursive: true });
+      writeFileSync(join(d, rel), body);
+    }
+    return d;
+  };
+  const platformsOf = (files) => detectTargets(make(files)).map((t) => `${t.platform}:${t.library}`);
+  assert.deepEqual(platformsOf({ 'CMakeLists.txt': 'find_package(Qt6 REQUIRED COMPONENTS Quick)' }), ['qt:appdimens-qt']);
+  assert.deepEqual(platformsOf({ 'app.pro': 'QT += core gui widgets' }), ['qt:appdimens-qt']);
+  assert.deepEqual(platformsOf({ 'meson.build': "gtk = dependency('gtk4')" }), ['gtk:appdimens-gtk']);
+  assert.deepEqual(platformsOf({ 'main/idf_component.yml': 'dependencies:\n  lvgl/lvgl: "^9.2"' }), ['lvgl:appdimens-lvgl']);
+  assert.deepEqual(platformsOf({ 'lv_conf.h': '#define LV_COLOR_DEPTH 16' }), ['lvgl:appdimens-lvgl']);
+  assert.deepEqual(platformsOf({ 'requirements.txt': 'pygame-ce==2.5\n' }), ['python:appdimens-py']);
+  assert.deepEqual(platformsOf({ 'requirements.txt': 'requests==2.32\n' }), []);
+  assert.deepEqual(platformsOf({ 'requirements.txt': 'pygame==2.6\n' }), ['python:appdimens-py']);
+  assert.deepEqual(platformsOf({ 'my_addon/__init__.py': 'bl_info = {"name": "x"}' }), ['python:appdimens-py (Blender add-on)']);
+  assert.deepEqual(platformsOf({ 'ProjectSettings/ProjectVersion.txt': 'm_EditorVersion: 6000.0.30f1' }), ['games:appdimens-games (Unity package)']);
+  assert.deepEqual(platformsOf({ 'Shooter.uproject': '{}' }), ['games:appdimens-games (Unreal plugin)']);
+  assert.deepEqual(platformsOf({ 'project.godot': 'config_version=5' }), ['games:appdimens-games (Godot addon)']);
+});

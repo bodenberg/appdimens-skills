@@ -36,6 +36,10 @@
               "dotnet-maui",
               "dotnet-desktop",
               "dotnet-android",
+              "qt",
+              "gtk",
+              "lvgl",
+              "python",
               "games"
             ]
           },
@@ -52,6 +56,10 @@
               "appdimens-net-sdps",
               "appdimens-net",
               "appdimens-net-android",
+              "appdimens-qt",
+              "appdimens-gtk",
+              "appdimens-lvgl",
+              "appdimens-py",
               "appdimens-games"
             ]
           },
