@@ -18,6 +18,7 @@ Run a case with any agent in a scratch project, then score it:
 
 ```bash
 mkdir -p /tmp/case && echo '<case config>' > /tmp/case/appdimens.config.json
+# cases with "files" (e.g. a customStrategies JSON): write each entry next to the config too
 npx appdimens-skills install --dir /tmp/case --agents codex,claude-code --skills all --yes
 claude -p "<case input>" --output-format text > out.txt        # or: codex exec "<case input>" > out.txt
 node evals/score.mjs <case-id> out.txt [--asked yes|no]       # exit 0 only on a perfect score

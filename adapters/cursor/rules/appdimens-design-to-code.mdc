@@ -48,6 +48,7 @@ Axes and heuristics in `.appdimens/skills/appdimens-layout-intent/references/int
 
 - Strategy per property: decision table (defaults from `formFactors`, or the user's choice: power, fluid, logarithmic, fit, fill…).
 - Text that must fit a box → **resize** (min/max are final sizes, not normalized). Physical sizes → **units**.
+- Project strategy (`strategy.layout: "custom:<id>"` in the config) → its `cdp`/`csp` tokens, converted with `normalize --strategy custom:<id>`. Device-specific frames (TV, watch) are checked with `cli.mjs custom explain <id> --devices <base>,<frame>` against the strategy's rules. Never add a call-site `if`; propose a rule in the strategies JSON.
 - Convert with the CLI, per axis:
 
 ```bash

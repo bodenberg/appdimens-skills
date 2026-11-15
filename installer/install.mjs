@@ -21,6 +21,7 @@ const GROUPS = {
   'appdimens-claude-design': 'workflow',
   'appdimens-code-edit': 'workflow',
   'appdimens-new-screen': 'workflow',
+  'appdimens-custom-strategies': 'workflow',
 };
 const PLATFORM_OF_TARGET = {
   'android-compose': 'appdimens-android',
@@ -56,6 +57,7 @@ const SUMMARY = {
   'appdimens-claude-design': 'implement or create the project from Claude Design screens',
   'appdimens-code-edit': 'apply AppDimens to existing screens',
   'appdimens-new-screen': 'create new screens directly with AppDimens',
+  'appdimens-custom-strategies': 'own scaling strategies on every platform: formulas, rules, shared JSON (cdp/csp)',
   'appdimens-android': 'Jetpack Compose / Views — appdimens-dynamic',
   'appdimens-android-xml': 'XML @dimen — appdimens-sdps + appdimens-ssps',
   'appdimens-kmp': 'Kotlin / Compose Multiplatform — appdimens-kmp',

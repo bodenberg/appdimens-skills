@@ -22,7 +22,7 @@ The installer detects the agentic clients and IDEs on your machine and the AppDi
 ```text
 ? Install for            › This project / My user (all projects)
 ? Which agents / IDEs?   ◼ Claude Code  installed   ◻ OpenAI Codex   ◼ Cursor  used in project   …
-? Which skills?          ■ layout-intent (core)  ◼ design-to-code  ◼ claude-design  ◼ code-edit  ◼ new-screen
+? Which skills?          ■ layout-intent (core)  ◼ design-to-code  ◼ claude-design  ◼ code-edit  ◼ new-screen  ◼ custom-strategies
                          ◼ react-native  detected in project   ◻ android   ◻ apple   ◻ flutter   ◻ web   …
 ? Add the Claude Code validation hook?   › Yes
 ? Create appdimens.config.json now?      › Yes
@@ -79,6 +79,7 @@ Agents that share a folder (`.agents/skills`) get one copy. The CLI, schemas and
 | `claude-design` | Implement — or create the project — from Claude Design screens (HTML/React/CSS) |
 | `code-edit` | Apply AppDimens to existing screens, keeping their look on the screen they were built for |
 | `new-screen` | Create new screens directly with AppDimens from a declared base screen |
+| `custom-strategies` | The project's own scaling strategy on every platform: which form (typed one-liner, text formula, full config, shared JSON), each platform's exact `cdp` / `csp` API, the rules, and kit verification |
 | 9 platform skills | One per AppDimens library (below) |
 
 ### Library coverage
@@ -95,7 +96,7 @@ Agents that share a folder (`.agents/skills`) get one copy. The CLI, schemas and
 | [appdimens-net-binding](https://github.com/bodenberg/appdimens-net-binding) (MAUI, WPF, WinForms, WinUI, .NET for Android) | 3.6.1 | `dotnet` |
 | [appdimens-games](https://github.com/bodenberg/appdimens-games) (Android games, NDK, Vulkan, Unity) | 3.2.0 | `games` |
 
-117 concrete claims of these skills (install lines, versions, packages, imports, setup calls, token and API names) are checked against the library sources with `scripts/verify-upstream.mjs`. The skills own **base screen and intent**; each library's own skill stays the authority on API details.
+130 concrete claims of these skills (install lines, versions, packages, imports, setup calls, token and API names) are checked against the library sources with `scripts/verify-upstream.mjs`. The skills own **base screen and intent**; each library's own skill stays the authority on API details.
 
 ## The project contract
 
@@ -115,6 +116,17 @@ Agents that share a folder (`.agents/skills`) get one copy. The CLI, schemas and
 }
 ```
 
+### Project-defined strategies (unreleased AppDimens modules)
+
+A project can define its own scaling strategies in one JSON file, using the format in [`schemas/custom-strategy.schema.json`](schemas/custom-strategy.schema.json). A strategy sets the reference frame, axis, curve, bounds, font-scale policy and rules per device class. When no built-in curve fits, it can use **free-form formulas** written as text (`"type": "expression"`, `"formula"`). Every AppDimens custom module reads that file and produces the same numbers: Android, KMP, Games + Unity, Apple, Flutter, React Native, Web and .NET. Declare it once:
+
+```json
+"strategy": { "layout": "custom:brand", "text": "custom:brand" },
+"customStrategies": { "file": "design/appdimens-strategies.json", "ids": ["brand"] }
+```
+
+Agents then use `cdp` / `csp` with those ids only. When the user just wants to write the math, the skills recommend the simplest form first: one typed code line with autocomplete on every platform (`scalingFormula { base * pow(sw / 360f, 0.8f) }`, `CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }`), or the same formula as text for JSON (`{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}`). The kit validates the file, converts design values (`normalize --strategy custom:brand`) and explains the numbers per screen (`custom explain`). The dedicated skill [`appdimens-custom-strategies`](skills/appdimens-custom-strategies/SKILL.md) holds the decision flow, the per-platform syntax table and the rules.
+
 ## The kit CLI
 
 ```bash
@@ -129,11 +141,16 @@ npx appdimens-skills kit compare --device medium-phone --tablet medium-tablet --
 npx appdimens-skills kit lint src/                                             # validate the code
 npx appdimens-skills kit validate                                              # appdimens.config.json against its schema
 npx appdimens-skills kit validate --intent intents.json                        # layout-intent sheets against theirs
+npx appdimens-skills kit custom check design/appdimens-strategies.json          # custom strategies: schema + engine (extends, formulas…)
+npx appdimens-skills kit custom explain brand --devices medium-phone,medium-tablet --values 16,24
+npx appdimens-skills kit normalize --device medium-phone --strategy custom:brand 16 24   # base values for cdp(brand)
+npx appdimens-skills kit custom explain --formula "base * pow(sw / 360, 0.8)" --devices medium-phone,medium-tablet   # the simplest form: just the formula
+npx appdimens-skills kit normalize --device medium-phone --formula "base * (sw / 360)" 16 24   # base values for cdp(16, "base * …")
 ```
 
-Every strategy is supported (`--strategy scaled|auto|percent|power|fluid|interpolated|logarithmic|diagonal|perimeter|fit|fill|density`, `--axis s|h|w`, `--aspect`, `--space w|h|sw`), with the token printed in the project's syntax (`--syntax web|rn|…`). `lint` — and the Claude Code hook, on the lines each edit wrote — flags fixed literals that should be tokens (with a suggestion converted from the configured base screen, never the same number re-labelled), strategy tokens without their import/module, obsolete APIs, XML resources that don't exist, JS-only web tokens in CSS, `*Px` in React Native `fontSize` and mixed .NET families. Deliberately fixed values carry a reason: `// ad:fixed hairline`.
+Every strategy is supported (`--strategy scaled|auto|percent|power|fluid|interpolated|logarithmic|diagonal|perimeter|fit|fill|density|custom:<id>`, `--axis s|h|w`, `--aspect`, `--space w|h|sw`), with the token printed in the project's syntax (`--syntax web|rn|…`). `lint` — and the Claude Code hook, on the lines each edit wrote — flags fixed literals that should be tokens (with a suggestion converted from the configured base screen, never the same number re-labelled), strategy tokens without their import/module, obsolete APIs, XML resources that don't exist, JS-only web tokens in CSS, `*Px` in React Native `fontSize` and mixed .NET families. Deliberately fixed values carry a reason: `// ad:fixed hairline`.
 
-The contract is validated before it is used. `appdimens.config.json` is checked against `schemas/appdimens.config.schema.json` and for platform ↔ library pairs. If it fails, `lint`, `detect`, `normalize` and the hook stop with exit 2 and name each field (`/design/baseScreen/width: must be number, got string`, `unknown property "widht" (did you mean "width"?)`). `validate` prints the same list and exits 1.
+The contract is validated before it is used. `appdimens.config.json` is checked against `schemas/appdimens.config.schema.json`, for platform ↔ library pairs, and (with `customStrategies`) against the strategies file: it must load, and the declared ids and every `custom:<id>` must exist. If it fails, `lint`, `detect`, `normalize` and the hook stop with exit 2 and name each field (`/design/baseScreen/width: must be number, got string`, `unknown property "widht" (did you mean "width"?)`). `validate` prints the same list and exits 1.
 
 ## Privacy and network
 
@@ -147,7 +164,7 @@ Nothing in this plugin uses the network, reads credentials, or sends data anywhe
 ## Quality
 
 - `npm test` — lint rules, scale math (checked against the published AppDimens numbers), hook contract, installer (project/global install, idempotency, uninstall).
-- `evals/intent-cases.json` + `evals/score.mjs` — 18 golden cases with machine-checkable asserts.
+- `evals/intent-cases.json` + `evals/score.mjs` — 23 golden cases with machine-checkable asserts.
 - `evals/visual/` — blind agents implement a Figma frame, a Claude Design prototype and an existing responsive page; screenshots on the base screen match within 0.2–1.3 % in size (the naive "same number" conversion is 25–37 % off).
 - `docs/REVIEW.md` — three-reviewer audit, debate and the decisions taken.
 
@@ -164,7 +181,7 @@ node scripts/verify-upstream.mjs <clones> # skill claims vs the AppDimens librar
 
 ## 🇧🇷 Resumo em português
 
-Um **pacote de skills** que ensina agentes de IA a, antes de escrever código, **(1) identificar a tela base** em que os valores foram escolhidos (dimensões, resolução, densidade/pontos, orientação, proporção, escala de fonte) e **(2) interpretar a intenção do layout** (lista, grade, carrossel, card; preenche, abraça, rola ou é fixo). Só então o agente escolhe a **biblioteca AppDimens certa** (todas são cobertas, inclusive .NET e Games), a estratégia (scaled, auto, fluid, power… além de resize e units) e o valor base, calculado pela CLI para manter a aparência na tela base.
+Um **pacote de skills** que ensina agentes de IA a, antes de escrever código, **(1) identificar a tela base** em que os valores foram escolhidos (dimensões, resolução, densidade/pontos, orientação, proporção, escala de fonte) e **(2) interpretar a intenção do layout** (lista, grade, carrossel, card; preenche, abraça, rola ou é fixo). Só então o agente escolhe a **biblioteca AppDimens certa** (todas são cobertas, inclusive .NET e Games), a estratégia (scaled, auto, fluid, power… além de resize e units, ou uma **estratégia própria do projeto**, `custom:<id>`, definida em JSON com fórmulas livres) e o valor base, calculado pela CLI para manter a aparência na tela base.
 
 **Instalação:** `npx appdimens-skills`. O instalador detecta os clientes e IDEs agênticos instalados na máquina (Claude Code, Codex, Gemini CLI, OpenClaw, Hermes, Cursor, Copilot, Windsurf) e as plataformas do projeto, e você escolhe os agentes, as skills opcionais, o escopo (projeto ou usuário), o hook de validação e a criação do `appdimens.config.json`. Para automação: `--agents`, `--skills`, `--global` e `--yes`. Para remover: `npx appdimens-skills uninstall`.
 

@@ -57,7 +57,7 @@ CSS px at 1× are logical units (dp/pt). Then:
 
 | CSS | Means | Becomes |
 |---|---|---|
-| `16px` (spacing, radius, size) | value on the base viewport | `normalize --frame <w> --height <h> --strategy <s> 16` |
+| `16px` (spacing, radius, size) | value on the base viewport | `normalize --frame <w> --height <h> --strategy <s> 16` (`--strategy custom:<id>` when the project defines its own) |
 | `font-size: 1rem` / `16px` | text (1rem = 16px unless the root font-size changes) | `--text` → `…ssp` |
 | `50vw`, `40vh`, `100dvh` | literal share of the window | percent: `50.spaceW`, `40.spaceH` (or fill). **Inside a phone-frame wrapper** vw/vh refer to the browser window, not the frame: recompute them against the wrapper's content size (minus fake bars) before converting. |
 | `clamp(14px, 4vw, 20px)` | a value that grows with the viewport between bounds | resolve it at the base viewport (4vw × 390 = 15.6px) and normalize that value with the project strategy (`fluid`/`fssp` is a different, fixed curve: 0.8–1.2× over 320–768); the min/max bounds become `adapt` values **only if the design has a frame at that size**; otherwise drop them (the strategy already governs growth) and list them under "needs review" — never invent a breakpoint for them |

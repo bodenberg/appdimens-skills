@@ -58,6 +58,35 @@ Every XAML prefix needs its `xmlns` (put them in one merged `AppDimensImports.xa
 | touch target | visual size as a token + `MinimumHeightRequest="48"` on the tappable container `<!-- ad:fixed touch-min -->` | visual token + `MinHeight="40"` (Fluent) on the control |
 | `adapt` | `{scaled:14, Tablet=18, Desktop=20}`, `{sdpQualifier:16, Qualified=20, QualifierType=SmallWidth, Threshold=600}` (SDPS), `VisualStateManager` adaptive triggers | `VisualStateManager` + `AdaptiveTrigger MinWindowWidth` |
 
+## Custom strategies (`AppDimens.Net.Custom`, unreleased — AppDimens.Net family only)
+
+Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+Simplest strategy, when the user just wants to write the math: one typed lambda, autocompleted (PascalCase scope members):
+
+```csharp
+var product = CustomScaleStrategy.Create(s => s.Clamp(s.Width / 360f, 0.85f, 1.8f)); // factor: once per window
+var hud = ScalingStrategy.Formula(s => s.Base * s.Pow(s.Sw / 360f, 0.8f));            // final value (Base = the value passed)
+var dp = 16f.Cdp(product);
+```
+
+Scope: `Base` (formula only) `Sw Width Height ShortSide LongSide Diagonal Perimeter AspectRatio Ratio Density FontScale Device`, flags `Phone Tablet Desktop Tv Watch Car Vr Landscape Portrait MultiWindow`, math `Pow Sqrt Ln Log10 Exp Abs Round Min Max Clamp Lerp Smoothstep`. Inline text: `16f.Cdp("base * (sw / 360)")`. For JSON or remote config, the same formula as text: `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` (shaped `base * (…)` it costs one multiply). Check numbers with `appdimens-kit custom explain --formula "<text>" --devices …`.
+
+```csharp
+// dotnet add package AppDimens.Net.Custom   (included in AppDimens.Net.Sdk)
+using AppDimens.Net.Custom;
+
+ScalingStrategies.LoadJson(File.ReadAllText("appdimens-strategies.json"));   // once
+var brand = ScalingStrategies.Require("brand");
+float pad = 16.Cdp(brand);     // dp; CdpPx → px
+float title = 20.Csp(brand);   // sp units like Ssp (CspDp = final size)
+using (CustomDimens.Use(brand)) { BuildPage(); }   // scope; or ScalingStrategies.Default = brand
+```
+
+The SDPS family has no custom strategies. On Windows, macOS and Linux the device class is `desktop`; override it with `CustomDimens.DeviceClassResolver`.
+
 ## Lint (what `appdimens-kit lint` flags here)
 
 - XAML `Padding|Margin|Spacing|FontSize|WidthRequest|HeightRequest|CornerRadius|Width|Height="16"` numeric literals > 2 → markup extensions.

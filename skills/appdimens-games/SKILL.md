@@ -46,6 +46,24 @@ World layer: `WorldScale.fitPx/fillPx` equal the factors of `ViewportMode.FIT_AL
 - JNI: `com.appdimens.games.jni.NativeBridge`.
 - Unity/C#: `AppDimensGames.Screen.Update(wDp, hDp, dpi)`, `MathKernels.Scaled/Auto/Fit/Fill/ToPx`, `World.ViewportRect(mode, w, h, dw, dh)`.
 
+## Custom strategies (`appdimens-games-custom`, unreleased)
+
+Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+Simplest strategy, when the user just wants to write the math: one typed line, autocompleted, typos fail to compile:
+
+```kotlin
+val Product = CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }   // factor: once per window
+val Hud = scalingFormula { base * pow(sw / 360f, 0.8f) }                      // final value (base = the value passed)
+val px = 64.cdp(Product)
+```
+
+Unity/C#: `CustomGames.CustomScaleStrategy(s => s.Clamp(s.Width / 360f, 0.85f, 1.8f))`, `CustomGames.Formula(s => s.Base * s.Pow(s.Sw / 360f, 0.8f))` (PascalCase members), `64f.Cdp("base * (sw / 360)")`. Scope names match the text language: `base` (formula only) `sw width height shortSide longSide diagonal perimeter aspectRatio ratio density fontScale device`, flags `phone tablet desktop tv watch car vr landscape portrait multiWindow`, math `pow sqrt ln log10 exp abs round min max clamp lerp smoothstep`. For JSON or remote config, the same formula as text: `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` (shaped `base * (…)` it costs one multiply). Check numbers with `appdimens-kit custom explain --formula "<text>" --devices …`.
+
+Kotlin: `64f.cdp(Hud)` → px from the live `GameScreen` (`cdpDp`, `cdpi` = resize-invariant, `csp`). Compose HUD: `import com.appdimens.games.compose.custom.*` → `64.cdp(Hud)`, `18.csp(Hud)`. C# (Unity/Godot): add `AppDimensGamesCustom.cs` + `AppDimensGamesCustom.Engine.cs`, then `CustomKernels.Cdp(64f, hud)` and `CustomKernels.Csp(18f, hud)` (final size). `CustomPresets.GAME_HUD` / `GameHud` is the usual parent. HUD only: world and gameplay sizes stay on `GameWorld` / fit / fill.
+
 ## Never
 
 - Invent stems; they are identical to `appdimens-dynamic`.
