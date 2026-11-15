@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+
+- **Qt and games: family token calls.** `appdimens-qt` uses the token applied to a value — QML `AppDimens.sdp(16)` (reactive), C++ `ad->sdp(16)`, `AppDimens::sdp(16)`, `16_sdp`; the factor form `16 * AppDimens.sdp` is gone. `appdimens-games`: C# `64f.ASdp()` (AppDimens.Net casing), every token in GDScript (`AppDimens.asdp(64)`), C++ `appdimens::asdp(64)` / `64_asdp`, Unreal `ASdp`/`FTSdp` nodes. The Qt and games skills, adapters and `plugin/` follow; two new upstream claims (151 in total).
+- **Games layout:** paths follow the per-platform repository (`android/`, `native/`, `engines/{unity,unreal,godot}`, `dotnet/`).
+
 ## 0.3.0
 
 - **Roku:** new `appdimens-roku` skill (BrightScript / SceneGraph: coordinate space from `ui_resolutions`, reference / tv modes, `ad.sdp`, `ad.fontSize`, `ad.safeRect`, custom strategies); `detect` recognises Roku channels (`manifest` with `major_version=` / `ui_resolutions=`); schema target `roku` / library `appdimens-roku`; Cursor/Copilot/Windsurf glob `*.brs`.
@@ -7,7 +12,7 @@
 - **Platform router:** rows for Qt, GTK, LVGL, Roku, Python/Blender and the Unity/Unreal/Godot evidence files.
 - **Claude plugin directory:** `plugin/` (built by `scripts/build-plugin.mjs`, checked in CI) is the folder to submit — manifest, icon, skills, README and LICENSE only, no hooks or executables. The npm CLI moved from `bin/` to `cli/` (claude.ai does not install plugins with a `bin/` directory), no file carries an executable bit, and the changelog no longer names a bundled image path.
 
-## Unreleased
+## Custom strategies (shipped in 0.3.0)
 
 - **New skill `appdimens-custom-strategies`** (workflow group, installed with `--skills detected`): one place for custom strategies on every platform — which form to pick (typed one-liner, text formula, full config, shared JSON), the shared text language and JSON essentials, a per-platform syntax table verified against each library's source (Android/KMP/Games Kotlin, Unity C#, .NET, Swift, Flutter, Web, React Native), the rules (declare once, purity, fast path, value bounds ≥ 0, strict atomic JSON) and kit verification (`custom check`, `custom explain --formula`, `normalize --formula`). References: `references/platforms.md`, `references/language-and-json.md`. Linked from every platform skill's custom section, the decision table and the platform router; new eval case `custom-dotnet-desktop-rule`.
 - **Custom scaling strategies.** This release supports the new custom modules of every AppDimens library: `appdimens-dynamic-custom`, `appdimens-kmp-custom`, `appdimens-games-custom` (+ Unity C#), `AppDimensCustom`, `appdimens_custom`, `appdimens-react-native/custom`, `webdimens/custom` and `AppDimens.Net.Custom`.
