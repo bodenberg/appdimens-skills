@@ -139,6 +139,8 @@ const C = [
   // ---------- appdimens-qt / gtk / lvgl / py
   ['qt', 'AppDimens::Scope + registerQmlTypes', 'appdimens-qt', 'static void registerQmlTypes'],
   ['qt', 'bindStyleSheet', 'appdimens-qt', 'void bindStyleSheet\\('],
+  ['qt', 'QML AppDimens.sdp(16) / C++ ad->sdp(16) / 16_sdp', 'appdimens-qt', 'qreal sdp\\(qreal v\\) const'],
+  ['games', 'C# 64f.ASdp() / C++ appdimens::asdp / GDScript asdp(v)', 'appdimens-games', 'public static float ASdp\\(this float v\\)'],
   ['gtk', 'appdimens_scope_new_for_widget', 'appdimens-gtk', 'appdimens_scope_new_for_widget'],
   ['gtk', 'appdimens_scope_add_css', 'appdimens-gtk', 'guint appdimens_scope_add_css'],
   ['lvgl', 'lv_appdimens_init', 'appdimens-lvgl', 'void lv_appdimens_init'],

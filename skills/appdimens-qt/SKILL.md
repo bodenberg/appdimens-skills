@@ -1,6 +1,6 @@
 ---
 name: appdimens-qt
-description: Implement layout intent in Qt 5.12+/Qt 6 apps with appdimens-qt — QML/Qt Quick (width: 120 * AppDimens.sdp, font.pixelSize: 14 * AppDimens.ssp, DimensScope per window) and Widgets (AppDimens::Scope, bindStyleSheet with 16sdp tokens, px("8sdp"), 16_sdp literals) on Windows, macOS, Linux, Android, iOS and embedded eglfs. Use when sizing Qt UI, fixing HiDPI/multi-monitor sizes, or porting dp/sp layouts to Qt.
+description: Implement layout intent in Qt 5.12+/Qt 6 apps with appdimens-qt — QML/Qt Quick (width: AppDimens.sdp(120), font.pixelSize: AppDimens.ssp(14), DimensScope per window) and Widgets (AppDimens::Scope, bindStyleSheet with 16sdp tokens, px("8sdp"), 16_sdp literals) on Windows, macOS, Linux, Android, iOS and embedded eglfs. Use when sizing Qt UI, fixing HiDPI/multi-monitor sizes, or porting dp/sp layouts to Qt.
 ---
 
 # Qt — `appdimens-qt` 3.2.0
@@ -17,13 +17,13 @@ Decide intent first with `appdimens-layout-intent`. Upstream skill: `bodenberg/a
 
 | Intent | QML | Widgets / C++ |
 |---|---|---|
-| spacing, sizes (phone-first) | `16 * AppDimens.sdp` | `scope->px("16sdp")` |
-| desktop/tablet/TV sizes | `16 * AppDimens.asdp` | `scope->dimen("16asdp")` |
-| text | `font.pixelSize: 14 * AppDimens.ssp` / `assp` | style sheet `font-size: 14ssp` |
-| must never overflow | `120 * AppDimens.ftsdp` | `resolve("ftsdp", 120)` |
-| rotation inverters | `AppDimens.sdpPh`, `AppDimens.hdpLw` | `resolve("hdpLw", 50)` |
+| spacing, sizes (phone-first) | `AppDimens.sdp(16)` | `ad->sdp(16)` · `AppDimens::sdp(16)` · `16_sdp` · `px("16sdp")` (int) |
+| desktop/tablet/TV sizes | `AppDimens.asdp(16)` | `ad->asdp(16)` · `16_asdp` |
+| text | `font.pixelSize: AppDimens.ssp(14)` / `assp` | style sheet `font-size: 14ssp` |
+| must never overflow | `AppDimens.ftsdp(120)` | `ad->ftsdp(120)` |
+| rotation inverters | `AppDimens.sdpPh(16)`, `AppDimens.hdpLw(50)` | `ad->hdpLw(50)` |
 
-Factor properties are reactive (NOTIFY); `AppDimens.dimen("16sdp")` is a function — add `AppDimens.revision` to the binding if you need it reactive.
+Tokens are used the AppDimens way — applied to a value (`AppDimens.sdp(16)`, like `16.sdp` / `sdp(16)` elsewhere) — and are reactive in bindings, as are `dimen()`/`resolve()`. Never write `16 * AppDimens.sdp` (old factor form); raw factors are `AppDimens.factors.sdp` / `ad->sdpFactor()`.
 
 ## Rules
 
