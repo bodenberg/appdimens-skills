@@ -30,3 +30,8 @@ Factor properties are reactive (NOTIFY); `AppDimens.dimen("16sdp")` is a functio
 - Values are **logical px**: never multiply by `devicePixelRatio` (use `Px` tokens only for QImage/OpenGL buffers).
 - Widgets: `bindStyleSheet(widget, "QPushButton { padding: 8sdp; font-size: 14ssp; }")` re-applies on every change; re-layout margins in `changed()`.
 - Validate at 300 × 533 (identity), maximized 1080p, 4K @ 150 %, and after moving the window to another monitor.
+
+## Custom strategies
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own rule); never invent ids.
+`#define ADC_IMPLEMENTATION` + `#include "appdimens/appdimens_custom.h"` → `adc_load_json(text, err, n)`, `adc_dp(adc_get("id"), &scope->metrics(), 16)`. Full flow: `appdimens-custom-strategies`.

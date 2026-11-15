@@ -315,6 +315,8 @@ test('detectTargets finds Qt, GTK, LVGL, Python/Blender, Unity, Unreal and Godot
   assert.deepEqual(platformsOf({ 'meson.build': "gtk = dependency('gtk4')" }), ['gtk:appdimens-gtk']);
   assert.deepEqual(platformsOf({ 'main/idf_component.yml': 'dependencies:\n  lvgl/lvgl: "^9.2"' }), ['lvgl:appdimens-lvgl']);
   assert.deepEqual(platformsOf({ 'lv_conf.h': '#define LV_COLOR_DEPTH 16' }), ['lvgl:appdimens-lvgl']);
+  assert.deepEqual(platformsOf({ manifest: 'title=My Channel\nmajor_version=1\nui_resolutions=fhd\n' }), ['roku:appdimens-roku']);
+  assert.deepEqual(platformsOf({ manifest: 'name: something else\n' }), []);
   assert.deepEqual(platformsOf({ 'requirements.txt': 'pygame-ce==2.5\n' }), ['python:appdimens-py']);
   assert.deepEqual(platformsOf({ 'requirements.txt': 'requests==2.32\n' }), []);
   assert.deepEqual(platformsOf({ 'requirements.txt': 'pygame==2.6\n' }), ['python:appdimens-py']);

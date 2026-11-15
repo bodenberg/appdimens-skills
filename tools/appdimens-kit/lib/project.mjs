@@ -167,7 +167,9 @@ export function detectTargets(dir) {
       else if (name === 'blender_manifest.toml' || (name === '__init__.py' && /\bbl_info\s*=/.test(text()))) found.push({ platform: 'python', library: 'appdimens-py (Blender add-on)', evidence: p });
       else if (name === 'pyproject.toml' || name === 'requirements.txt' || name === 'setup.py') {
         if (/\b(tkinter|PySide[26]|PyQt[56]|kivy|pygame|pyglet|arcade|wxPython|dearpygui|panda3d|ursina|appdimens)\b/i.test(text())) found.push({ platform: 'python', library: 'appdimens-py', evidence: p });
-      } else if (name === 'lv_conf.h' || (name === 'idf_component.yml' && /lvgl\/lvgl/.test(text())) || (name === 'platformio.ini' && /lvgl/.test(text())))
+      } else if (name === 'manifest' && /^\s*(major_version|ui_resolutions)\s*=/m.test(text()))
+        found.push({ platform: 'roku', library: 'appdimens-roku', evidence: p });
+      else if (name === 'lv_conf.h' || (name === 'idf_component.yml' && /lvgl\/lvgl/.test(text())) || (name === 'platformio.ini' && /lvgl/.test(text())))
         found.push({ platform: 'lvgl', library: 'appdimens-lvgl', evidence: p });
       else if (name === 'meson.build' || name === 'CMakeLists.txt' || name.endsWith('.pro')) {
         const t = text();

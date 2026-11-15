@@ -24,6 +24,7 @@ const GLOBS = {
   'appdimens-web': '**/*.css,**/*.scss,**/*.html,**/*.vue,**/*.svelte,**/*.astro',
   'appdimens-dotnet': '**/*.xaml', // .cs also matches Unity games
   'appdimens-qt': '**/*.qml',
+  'appdimens-roku': '**/*.brs,**/*.bs',
   'appdimens-python': '**/*.py',
   'appdimens-games': '**/*.gd,**/*.uproject,**/*.uplugin',
 };

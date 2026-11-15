@@ -28,3 +28,8 @@ Call `lv_appdimens_init(NULL)` after the display is registered — it follows re
 - Integer hot path (no FPU): fine inside draw/event callbacks. `lv_ad_dimen("16sdp")` parses — config only.
 - `LV_APPDIMENS_MODE_DPI` only when panels differ a lot in DPI. Unbind (`lv_ad_style_unbind`) before `lv_style_reset`.
 - Validate on the smallest and largest panel and after rotation.
+
+## Custom strategies
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own rule); never invent ids.
+`#define ADC_IMPLEMENTATION` + `#include "appdimens_custom.h"` (FPU builds) → `adc_load_json(text, err, n)`, `adc_dp(adc_get("id"), lv_appdimens_get_metrics(), 16)`. Full flow: `appdimens-custom-strategies`.

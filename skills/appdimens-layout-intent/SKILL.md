@@ -82,7 +82,7 @@ Rules that are easy to get wrong:
 
 ## Step 6 — implement through the platform skill
 
-`appdimens-android`, `appdimens-android-xml`, `appdimens-kmp`, `appdimens-apple`, `appdimens-flutter`, `appdimens-react-native`, `appdimens-web`, `appdimens-dotnet`, `appdimens-qt`, `appdimens-gtk`, `appdimens-lvgl`, `appdimens-python`, `appdimens-games` (Unity, Unreal, Godot, C/C++, .NET, Android): install lines, setup, imports, token syntax, intent → native primitives. The library's own upstream skill (in its repo under `skills/`) is the authority on API details; this package is the authority on base screen and intent.
+`appdimens-android`, `appdimens-android-xml`, `appdimens-kmp`, `appdimens-apple`, `appdimens-flutter`, `appdimens-react-native`, `appdimens-web`, `appdimens-dotnet`, `appdimens-qt`, `appdimens-gtk`, `appdimens-lvgl`, `appdimens-roku`, `appdimens-python`, `appdimens-games` (Unity, Unreal, Godot, C/C++, .NET, Android): install lines, setup, imports, token syntax, intent → native primitives. The library's own upstream skill (in its repo under `skills/`) is the authority on API details; this package is the authority on base screen and intent.
 
 ## Step 7 — validate
 

@@ -39,6 +39,7 @@
               "qt",
               "gtk",
               "lvgl",
+              "roku",
               "python",
               "games"
             ]
@@ -59,6 +60,7 @@
               "appdimens-qt",
               "appdimens-gtk",
               "appdimens-lvgl",
+              "appdimens-roku",
               "appdimens-py",
               "appdimens-games"
             ]

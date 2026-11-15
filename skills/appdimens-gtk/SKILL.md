@@ -27,3 +27,8 @@ Decide intent first with `appdimens-layout-intent`. Upstream skill: `bodenberg/a
 - GTK CSS px are logical: never use `Px` tokens in CSS; never multiply by the scale factor.
 - Re-layout in the `changed` signal; don't poll. Re-read `appdimens_scope_get_metrics()` each frame (double-buffered).
 - Plain C/C++ toolkits: `#include "appdimens/appdimens.h"`, build an `ad_metrics` with `ad_metrics_make(&m, w, h, density, font_scale)` on resize, then `ad_sdp(&m, 16)`.
+
+## Custom strategies
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own rule); never invent ids.
+`#define ADC_IMPLEMENTATION` + `#include "appdimens/appdimens_custom.h"` → `adc_load_json(text, err, n)`, `adc_dp(adc_get("id"), appdimens_scope_get_metrics(scope), 16)`. Full flow: `appdimens-custom-strategies`.

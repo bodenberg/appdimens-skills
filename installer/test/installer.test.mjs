@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const BIN = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'bin', 'appdimens-skills.mjs');
+const BIN = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'cli', 'appdimens-skills.mjs');
 const run = (cwd, home, ...args) => spawnSync(process.execPath, [BIN, ...args], { cwd, encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home, NO_COLOR: '1' } });
 
 function sandbox() {

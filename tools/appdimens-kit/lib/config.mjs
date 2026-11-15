@@ -20,6 +20,7 @@ export const LIBRARIES_OF_PLATFORM = {
   qt: ['appdimens-qt'],
   gtk: ['appdimens-gtk'],
   lvgl: ['appdimens-lvgl'],
+  roku: ['appdimens-roku'],
   python: ['appdimens-py'],
   games: ['appdimens-games'],
 };

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Kept for compatibility: use `npx appdimens-skills` (bin/appdimens-skills.mjs) instead.
+// Kept for compatibility: use `npx appdimens-skills` (cli/appdimens-skills.mjs) instead.
 //   node scripts/install.mjs --target claude|codex|cursor|all <project-dir>
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
@@ -14,6 +14,6 @@ if (!agents) {
   console.error('Usage: node scripts/install.mjs --target claude|codex|cursor|all <project-dir>   (or: npx appdimens-skills)');
   process.exit(2);
 }
-const bin = join(dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'appdimens-skills.mjs');
+const bin = join(dirname(fileURLToPath(import.meta.url)), '..', 'cli', 'appdimens-skills.mjs');
 const r = spawnSync(process.execPath, [bin, 'install', '--dir', dir, '--agents', agents, '--skills', 'all', '--yes', '--no-config'], { stdio: 'inherit' });
 process.exit(r.status ?? 1);

@@ -38,6 +38,7 @@ const PLATFORM_OF_TARGET = {
   qt: 'appdimens-qt',
   gtk: 'appdimens-gtk',
   lvgl: 'appdimens-lvgl',
+  roku: 'appdimens-roku',
   python: 'appdimens-python',
   games: 'appdimens-games',
 };
@@ -56,6 +57,7 @@ const LIBRARY_OF_TARGET = {
   qt: 'appdimens-qt',
   gtk: 'appdimens-gtk',
   lvgl: 'appdimens-lvgl',
+  roku: 'appdimens-roku',
   python: 'appdimens-py',
   games: 'appdimens-games',
 };
@@ -77,6 +79,7 @@ const SUMMARY = {
   'appdimens-qt': 'Qt 5/6 Widgets and QML — appdimens-qt',
   'appdimens-gtk': 'GTK 3/4 and C/C++ toolkits — appdimens-gtk',
   'appdimens-lvgl': 'LVGL 8/9 on MCUs and embedded Linux — appdimens-lvgl',
+  'appdimens-roku': 'Roku BrightScript / SceneGraph channels — appdimens-roku',
   'appdimens-python': 'Tkinter, Qt for Python, Kivy, pygame, Blender — appdimens (PyPI)',
   'appdimens-games': 'Unity, Unreal, Godot, C/C++, .NET and Android games — appdimens-games',
 };

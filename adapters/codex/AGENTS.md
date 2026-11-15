@@ -25,6 +25,7 @@ This project uses AppDimens. The full kit is in `.appdimens/`. Before writing, c
 | Implement layout intent in Python apps and tools with appdimens (PyPI) — Tkinter, PySide/PyQt, Kivy, pygame, pyglet/arcade, wxPython, Dear PyGui, Panda3D/Ursina and Blender add-ons/render text — using ad.sdp(16), ad.ssp(14), ad.dimen("16sdp"), Dimens scopes and the toolkit adapters. | `.appdimens/skills/appdimens-python/SKILL.md` |
 | Implement layout intent in Qt 5.12+/Qt 6 apps with appdimens-qt — QML/Qt Quick (width: 120 * AppDimens.sdp, font.pixelSize: 14 * AppDimens.ssp, DimensScope per window) and Widgets (AppDimens::Scope, bindStyleSheet with 16sdp tokens, px("8sdp"), 16_sdp literals) on Windows, macOS, Linux, Android, iOS and embedded eglfs. | `.appdimens/skills/appdimens-qt/SKILL.md` |
 | Implement layout intent in React Native (iOS, Android, Expo, RN Web) with appdimens-react-native — sdp(16), ssp(16), createDimenStyles, useDimenMetrics, strategy sub-paths (appdimens-react-native/auto, /fluid, /percent, /resize). | `.appdimens/skills/appdimens-react-native/SKILL.md` |
+| Implement layout intent in Roku channels (BrightScript / SceneGraph) with appdimens-roku — AppDimens() per component, coordinate space from the manifest's ui_resolutions (FHD/HD/SD), reference / tv modes, ad.sdp / ad.fontSize / ad.safeRect / ad.resolve tokens, custom strategies. | `.appdimens/skills/appdimens-roku/SKILL.md` |
 | Implement layout intent on the web with webdimens (appdimens-web) — utility classes (class="p:16sdp fs:16ssp"), data-dimen, the PostCSS plugin (padding: 16sdp), Sass, dimens() inline styles and JS helpers — in plain HTML/CSS, React, Next, Vue, Nuxt, Svelte or Angular, including SSR. | `.appdimens/skills/appdimens-web/SKILL.md` |
 
 Validate every change: `node .appdimens/tools/appdimens-kit/cli.mjs lint <changed files>`.
@@ -107,7 +108,7 @@ Rules that are easy to get wrong:
 
 #### Step 6 — implement through the platform skill
 
-`appdimens-android`, `appdimens-android-xml`, `appdimens-kmp`, `appdimens-apple`, `appdimens-flutter`, `appdimens-react-native`, `appdimens-web`, `appdimens-dotnet`, `appdimens-qt`, `appdimens-gtk`, `appdimens-lvgl`, `appdimens-python`, `appdimens-games` (Unity, Unreal, Godot, C/C++, .NET, Android): install lines, setup, imports, token syntax, intent → native primitives. The library's own upstream skill (in its repo under `skills/`) is the authority on API details; this package is the authority on base screen and intent.
+`appdimens-android`, `appdimens-android-xml`, `appdimens-kmp`, `appdimens-apple`, `appdimens-flutter`, `appdimens-react-native`, `appdimens-web`, `appdimens-dotnet`, `appdimens-qt`, `appdimens-gtk`, `appdimens-lvgl`, `appdimens-roku`, `appdimens-python`, `appdimens-games` (Unity, Unreal, Godot, C/C++, .NET, Android): install lines, setup, imports, token syntax, intent → native primitives. The library's own upstream skill (in its repo under `skills/`) is the authority on API details; this package is the authority on base screen and intent.
 
 #### Step 7 — validate
 

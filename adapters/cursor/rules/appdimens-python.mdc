@@ -33,3 +33,8 @@ the delivery aspect changes (16:9 ↔ 9:16). The **Fit Text to Render** operator
 
 - One `Dimens` scope per window; re-layout in `scope.add_listener(cb)`.
 - Keep resolvers in loops: `f = scope.fn("asdp")` then `f(v)`.
+
+## Custom strategies
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own rule); never invent ids.
+`from appdimens import custom as c` → `c.load_scaling_strategies(text)`, `c.cdp(16, "id")`, `c.csp(14, "id")`; one-off math `c.scaling_formula("base * pow(sw / 360, 0.8)")`. Full flow: `appdimens-custom-strategies`.

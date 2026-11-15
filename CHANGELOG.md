@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- **Roku:** new `appdimens-roku` skill (BrightScript / SceneGraph: coordinate space from `ui_resolutions`, reference / tv modes, `ad.sdp`, `ad.fontSize`, `ad.safeRect`, custom strategies); `detect` recognises Roku channels (`manifest` with `major_version=` / `ui_resolutions=`); schema target `roku` / library `appdimens-roku`; Cursor/Copilot/Windsurf glob `*.brs`.
+- **Custom strategies on the new ports:** Python (`appdimens.custom`), C/C++ (`appdimens_custom.h` in GTK, Qt, LVGL, native games and Unreal) and Roku (`AppDimensCustom.brs`) in `appdimens-custom-strategies` and each platform skill.
+- **Platform router:** rows for Qt, GTK, LVGL, Roku, Python/Blender and the Unity/Unreal/Godot evidence files.
+- **Claude plugin directory:** `plugin/` (built by `scripts/build-plugin.mjs`, checked in CI) is the folder to submit — manifest, icon, skills, README and LICENSE only, no hooks or executables. The npm CLI moved from `bin/` to `cli/` (claude.ai does not install plugins with a `bin/` directory), no file carries an executable bit, and the changelog no longer names a bundled image path.
+
 ## Unreleased
 
 - **New skill `appdimens-custom-strategies`** (workflow group, installed with `--skills detected`): one place for custom strategies on every platform — which form to pick (typed one-liner, text formula, full config, shared JSON), the shared text language and JSON essentials, a per-platform syntax table verified against each library's source (Android/KMP/Games Kotlin, Unity C#, .NET, Swift, Flutter, Web, React Native), the rules (declare once, purity, fast path, value bounds ≥ 0, strict atomic JSON) and kit verification (`custom check`, `custom explain --formula`, `normalize --formula`). References: `references/platforms.md`, `references/language-and-json.md`. Linked from every platform skill's custom section, the decision table and the platform router; new eval case `custom-dotnet-desktop-rule`.
@@ -20,7 +27,7 @@
 
 ## 0.1.2
 
-- **Listing icon** for the Claude directory (`.claude-plugin/icon.png`).
+- **Listing icon** for the Claude directory.
 - **Lint rule ids renamed**: `px-token-in-css` is now `px-unit-in-css` and `js-only-token` is now `js-only-unit`. The kit's code and CLI output say "unit", "dimen" or "theme scale" instead of "token", which also means an access token. `normalize --theme` prints the same values under the header `theme scale`.
 - **README: Privacy and network** section. The plugin makes no network calls and reads no credentials or environment variables.
 - The visual eval screenshots are no longer committed; `compare.mjs` and `summary.mjs` regenerate them.

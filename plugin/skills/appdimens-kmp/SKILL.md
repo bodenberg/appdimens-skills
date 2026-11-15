@@ -1,0 +1,59 @@
+---
+name: appdimens-kmp
+description: Implement layout intent in Kotlin Multiplatform / Compose Multiplatform with appdimens-kmp (Android, iOS, JVM desktop, macOS, Linux, Windows, JS, Wasm) — 16.sdp, 16.ssp, 16.asdp from commonMain. Use when a KMP project uses or adopts AppDimens, when adding appdimens-kmp or a strategy module, or when mapping a design to Compose Multiplatform UI.
+---
+
+# Kotlin Multiplatform — `appdimens-kmp` 3.2.0
+
+Same vocabulary and math as `appdimens-dynamic`; packages are `com.appdimens.kmp.*`. Decide intent first with `appdimens-layout-intent`; the Compose mapping table in `appdimens-android` applies unchanged to Compose Multiplatform (use the multiplatform equivalents of Material 3 components). Upstream skill: `bodenberg/appdimens-kmp/skills/SKILL.md`.
+
+## Install (`commonMain`)
+
+```kotlin
+commonMain.dependencies {
+    implementation(project.dependencies.platform("io.github.bodenberg:appdimens-kmp-bom:3.2.0"))
+    implementation("io.github.bodenberg:appdimens-kmp")        // scaled + core
+    implementation("io.github.bodenberg:appdimens-kmp-auto")   // asdp / assp, only if used
+    // -percent -power -fluid -interpolated -logarithmic -diagonal -perimeter -fit -fill -density -resize -units
+}
+```
+
+## Imports and tokens
+
+| Policy | Import | Token |
+|---|---|---|
+| scaled | `com.appdimens.kmp.compose.*` | `16.sdp` `48.hdp` `100.wdp` `16.ssp` `16.sem` |
+| adaptive | `com.appdimens.kmp.compose.auto.asdp` / `.assp` | `16.asdp` `16.assp` |
+| bounded | `com.appdimens.kmp.compose.fluid.*` | `16.fsdp` `16.fssp` |
+| fraction | `com.appdimens.kmp.compose.percent.*` | `50.spaceW` |
+| fit-text | `com.appdimens.kmp.compose.resize.*` | `autoResizeTextSp(…)` in `BoxWithConstraints` |
+| non-Compose code | `com.appdimens.kmp.code.*` | needs an `AppDimensContext` |
+
+## Custom strategies (`appdimens-kmp-custom`, unreleased)
+
+Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
+
+Only when `appdimens.config.json` declares `customStrategies` (or the user asks for their own strategy). Use the declared ids, never invent one; see the decision table → *Project-defined strategies*. Free-form formulas (`"type": "expression"`, `"formula"`) live in the JSON file.
+
+Simplest strategy, when the user just wants to write the math: one typed line, autocompleted, typos fail to compile:
+
+```kotlin
+val Product = CustomScaleStrategy { (width / 360f).coerceIn(0.85f, 1.8f) }   // factor: once per window
+val Hud = scalingFormula { base * pow(sw / 360f, 0.8f) }                      // final value (base = the value passed)
+Modifier.padding(16.cdp(Product))
+```
+
+Scope names match the text language: `base` (formula only) `sw width height shortSide longSide diagonal perimeter aspectRatio ratio density fontScale device`, flags `phone tablet desktop tv watch car vr landscape portrait multiWindow`, math `pow sqrt ln log10 exp abs round min max clamp lerp smoothstep`. Inline text: `16.cdp("base * (sw / 360)")`. For JSON or remote config, the same formula as text: `{"id": "hud", "formula": "base * pow(sw / 360, 0.8)"}` (shaped `base * (…)` it costs one multiply). Check numbers with `appdimens-kit custom explain --formula "<text>" --devices …`.
+
+`implementation("io.github.bodenberg:appdimens-kmp-custom")` in `commonMain`. Compose: `import com.appdimens.kmp.compose.custom.*` → `16.cdp(Brand)`, `14.csp(Brand)`, `ProvideScalingStrategy(Brand) { … }`. Code API: `16.cdp(appContext, Brand)` → px. Load the JSON once with `ScalingStrategies.loadJson(text)` (read it from your resources), then `ScalingStrategies.getOrThrow("brand")`. The device class comes from the UI mode, and desktop targets map to `desktop`.
+
+## Platform notes
+
+- Compose: no setup for plain tokens; `AppDimensProvider { }` for facilitators (`sdpMode`, `sdpScreen`).
+- The window adapter is per platform: Android `Context`, JVM AWT window, iOS `UIScreen`, macOS `NSScreen`, JS/Wasm browser viewport. **Linux/MinGW have no windowing API**: build an `AppDimensContext` from a `ScreenConfiguration` or use the `DimenMetrics` overloads.
+- Desktop and web targets are large, resizable windows. If they are in `formFactors`, use the adaptive policy (`asdp`/`assp`) or bounded text (`fssp`), and constrain content with `widthIn(max = …)` `// ad:fixed max-content-width`.
+- Keep UI tokens in `commonMain`. Platform source sets should only adapt chrome.
+
+## Verify
+
+`./gradlew :composeApp:compileKotlinJvm` (or the relevant target), plus previews/desktop window at 300, the design width and ≥ 600.
