@@ -58,7 +58,7 @@ Every XAML prefix needs its `xmlns` (put them in one merged `AppDimensImports.xa
 | touch target | visual size as a token + `MinimumHeightRequest="48"` on the tappable container `<!-- ad:fixed touch-min -->` | visual token + `MinHeight="40"` (Fluent) on the control |
 | `adapt` | `{scaled:14, Tablet=18, Desktop=20}`, `{sdpQualifier:16, Qualified=20, QualifierType=SmallWidth, Threshold=600}` (SDPS), `VisualStateManager` adaptive triggers | `VisualStateManager` + `AdaptiveTrigger MinWindowWidth` |
 
-## Custom strategies (`AppDimens.Net.Custom`, unreleased — AppDimens.Net family only)
+## Custom strategies (`AppDimens.Net.Custom` — AppDimens.Net family only)
 
 Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
 

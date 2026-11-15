@@ -65,7 +65,7 @@ Decide intent first with `appdimens-layout-intent`. Units are **points**: a Figm
 
 `UIStackView(spacing: 16.sdp)`, `UICollectionViewCompositionalLayout` for list/grid/carousel (`.fractionalWidth`, `.estimated(…)` with sdp insets), Auto Layout anchors with `constant: 16.sdp`, `heightAnchor.constraint(greaterThanOrEqualToConstant: 44)` for touch minimums. `layer.cornerRadius = 12.sdp`.
 
-## Custom strategies (`AppDimensCustom`, unreleased)
+## Custom strategies (`AppDimensCustom`)
 
 Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
 

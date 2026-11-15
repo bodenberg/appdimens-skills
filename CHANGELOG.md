@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2
+
+- **Production status:** every AppDimens library and custom-strategy module is in production; the skills no longer call any module unreleased.
+- **Roku:** global tokens `sdp(720)` (like `sdp(16)` on the Web) and custom `cdp(16, "id")` / `csp(14, "id")` / `"16cdp-id"`; new upstream claim (152 in total).
+
 ## 0.3.1
 
 - **Qt and games: family token calls.** `appdimens-qt` uses the token applied to a value — QML `AppDimens.sdp(16)` (reactive), C++ `ad->sdp(16)`, `AppDimens::sdp(16)`, `16_sdp`; the factor form `16 * AppDimens.sdp` is gone. `appdimens-games`: C# `64f.ASdp()` (AppDimens.Net casing), every token in GDScript (`AppDimens.asdp(64)`), C++ `appdimens::asdp(64)` / `64_asdp`, Unreal `ASdp`/`FTSdp` nodes. The Qt and games skills, adapters and `plugin/` follow; two new upstream claims (151 in total).

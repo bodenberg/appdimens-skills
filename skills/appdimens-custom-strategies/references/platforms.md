@@ -1,6 +1,6 @@
 # Custom strategies — per-platform details
 
-Install, imports, default / scope, debug output and error types of every custom module. All modules are **unreleased** (on each library's main / feature branch). Each library's own guides are the authority on details; their paths are listed per platform.
+Install, imports, default / scope, debug output and error types of every custom module. Every module is in production on each library's `main`. Each library's own guides are the authority on details; their paths are listed per platform.
 
 ## Android — `appdimens-dynamic-custom` (Compose, Views, Java)
 
@@ -177,9 +177,9 @@ adc_register(adc_custom_factor("product", product_fn, NULL));
 
 ```brightscript
 err = AppDimens_LoadStrategies(ReadAsciiFile("pkg:/config/custom-strategies.json"))   ' "" = ok
-ad = AppDimens_Custom()
-pad = ad.cdp(16, "brand") : txt = ad.csp(14, "readableText")
-hud = ad.cdp(64, "base * pow(sw / 360, 0.8)")
+pad = cdp(16, "brand") : txt = csp(14, "readableText")     ' globals, like cdp(16, s) on the Web
+hud = cdp(64, "base * pow(sw / 360, 0.8)")
+gap = AppDimens_Custom().dimen("16cdp-brand")              ' literal form
 AppDimens_CustomFactor("product", function(s)
     return s.width / 360.0
 end function)

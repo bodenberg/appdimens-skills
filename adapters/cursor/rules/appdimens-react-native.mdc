@@ -70,7 +70,7 @@ RN styles are in dp. `*Px` functions (`sdpPx`) are only for Skia/native modules/
 
 Fold/flip, car, watch and desk modes come from the app via `<AppDimensProvider uiModeType={…}>`; TV is detected automatically.
 
-## Custom strategies (`appdimens-react-native/custom`, unreleased)
+## Custom strategies (`appdimens-react-native/custom`)
 
 Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
 

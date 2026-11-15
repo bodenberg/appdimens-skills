@@ -51,7 +51,7 @@ One folder per platform: `android/` (Gradle: Kotlin, Compose, Java, NDK — `cd 
 - Steam Deck/Proton: `adg_platform()` flags; REFERENCE mode is DPI-independent, so Wine's 96 DPI doesn't matter.
 - Validate at the reference (identity), 720p, 4K, 21:9/32:9, 16:10 (Deck) and a portrait phone.
 
-## Custom strategies (`appdimens-games-custom`, unreleased)
+## Custom strategies (`appdimens-games-custom`)
 
 Full decision flow, cross-platform syntax table, rules and kit checks: `appdimens-custom-strategies`.
 
