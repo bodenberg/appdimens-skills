@@ -1,5 +1,6 @@
 // Builds plugin/ — the folder submitted to the Claude plugin directory (Plugin path: "plugin").
-// It holds only what the directory lists: the manifest, the icon, the skills (Markdown), README and
+// It holds only what the directory lists: the manifest, the icon, the skills (Markdown), the JSON
+// schemas they link to, README and
 // LICENSE. No hooks, scripts or executables: the validation hook and the CLIs stay in the npm
 // package and the root marketplace plugin. `--check` fails when plugin/ is stale.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -35,6 +36,7 @@ function build(out) {
   writeFileSync(join(out, '.claude-plugin', 'plugin.json'), JSON.stringify(m, null, 2) + '\n');
   cpSync(join(root, '.claude-plugin', 'icon.png'), join(out, '.claude-plugin', 'icon.png'));
   cpSync(join(root, 'skills'), join(out, 'skills'), { recursive: true });
+  cpSync(join(root, 'schemas'), join(out, 'schemas'), { recursive: true });
   cpSync(join(root, 'LICENSE'), join(out, 'LICENSE'));
   writeFileSync(join(out, 'README.md'), README);
 }
